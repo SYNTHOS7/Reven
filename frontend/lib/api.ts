@@ -1,0 +1,76 @@
+import { defaultPolicy, disconnectedData } from "./empty-data";
+import type { DashboardData, PipelineResult, PolicySettings } from "./types";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+
+export async function loadDashboard(): Promise<DashboardData> {
+  if (!apiUrl) return disconnectedData;
+  try {
+    const [scorecardResponse, eventsResponse] = await Promise.all([
+      fetch(`${apiUrl}/eval/latest`, { cache: "no-store" }),
+      fetch(`${apiUrl}/events?limit=200`, { cache: "no-store" }),
+    ]);
+    if (!scorecardResponse.ok || !eventsResponse.ok) throw new Error("API unavailable");
+    const scorecard = await scorecardResponse.json();
+    const events = await eventsResponse.json();
+    return { scorecard, results: events.items, source: "api" };
+  } catch {
+    return disconnectedData;
+  }
+}
+
+export async function runEvaluation(): Promise<DashboardData> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/eval/run`, { method: "POST" });
+  if (!response.ok) throw new Error("Evaluation failed");
+  const data = await response.json();
+  return { ...data, source: "api" };
+}
+
+export async function loadPolicy(): Promise<PolicySettings> {
+  if (!apiUrl) return defaultPolicy;
+  try {
+    const response = await fetch(`${apiUrl}/settings`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Policy unavailable");
+    return response.json();
+  } catch {
+    return defaultPolicy;
+  }
+}
+
+export async function savePolicy(policy: PolicySettings): Promise<PolicySettings> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/settings`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(policy),
+  });
+  if (!response.ok) throw new Error("Policy update failed");
+  return response.json();
+}
+
+export async function loadCase(eventId: string): Promise<PipelineResult | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/events/${eventId}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.pipeline_result;
+  } catch {
+    return null;
+  }
+}
+
+export async function createPaymentLink(eventId: string): Promise<{ id: string; short_url: string; mode: string }> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/recovery/payment-link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event_id: eventId }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Payment Link could not be created");
+  }
+  return response.json();
+}

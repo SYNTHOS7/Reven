@@ -6,6 +6,7 @@ import { Shell } from "@/components/shell";
 import { StatusBadge } from "@/components/status-badge";
 import { PaymentLinkAction } from "@/components/payment-link-action";
 import { OperatorApprovalAction } from "@/components/operator-approval-action";
+import { RecoveryVerificationAction } from "@/components/recovery-verification-action";
 import { loadCase } from "@/lib/api";
 
 export default async function CasePage({ params }: { params: Promise<{ id: string }> }) {
@@ -45,8 +46,14 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         {!stopped && result.decision.action === "create_payment_link" && (
           <div className="actionBar"><div><span className="utilityLabel">OPERATOR ACTION</span><strong>Create a Razorpay test Payment Link</strong></div><PaymentLinkAction eventId={result.event_id} /></div>
         )}
-        {!stopped && result.decision.action === "escalate_human" && (
+        {!stopped && result.decision.action === "escalate_human" && !result.razorpay_payment_link_id && (
           <div className="actionBar approvalBar"><div><span className="utilityLabel">HUMAN APPROVAL REQUIRED</span><strong>Review the evidence, then authorize one Razorpay test Payment Link</strong><small>The operator token is used once and is never stored in the browser.</small></div><OperatorApprovalAction eventId={result.event_id} /></div>
+        )}
+        {!stopped && result.razorpay_payment_link_id && result.verified_recovered_amount === 0 && (
+          <div className="actionBar"><div><span className="utilityLabel">PAYMENT LINK PREPARED</span><strong>Verify the current paid status directly with Razorpay</strong><small>Use this if webhook delivery was delayed or interrupted.</small></div><RecoveryVerificationAction eventId={result.event_id} /></div>
+        )}
+        {result.verified_recovered_amount > 0 && (
+          <div className="actionBar"><div><span className="utilityLabel">VERIFIED RECOVERY</span><strong>₹{result.verified_recovered_amount.toLocaleString("en-IN")} received through the attributed Razorpay Payment Link</strong></div></div>
         )}
       </main>
     </Shell>

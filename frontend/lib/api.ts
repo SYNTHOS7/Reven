@@ -92,3 +92,20 @@ export async function approvePaymentLink(
   }
   return response.json();
 }
+
+export async function reconcilePaymentLink(
+  eventId: string,
+  adminToken: string,
+): Promise<{ status: string; payment_link_id: string; amount_recovered: number }> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/recovery/payment-link/reconcile`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Admin-Token": adminToken },
+    body: JSON.stringify({ event_id: eventId }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Recovery verification failed");
+  }
+  return response.json();
+}

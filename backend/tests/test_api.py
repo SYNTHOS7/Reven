@@ -92,3 +92,57 @@ def test_human_escalation_requires_operator_token_and_creates_one_link(monkeypat
             json={"event_id": event.id, "approval_note": "Reviewed evidence"},
         )
         assert duplicate.status_code == 409
+
+        monkeypatch.setattr(
+            razorpay,
+            "fetch_payment_link",
+            AsyncMock(return_value={"id": "plink_test", "status": "paid", "amount_paid": 10000}),
+        )
+        reconciled = client.post(
+            "/recovery/payment-link/reconcile",
+            headers={"x-admin-token": "operator-secret"},
+            json={"event_id": event.id},
+        )
+        assert reconciled.status_code == 200
+        assert reconciled.json()["amount_recovered"] == 100
+        assert repository.results[-1].verified_recovered_amount == 100
+
+
+def test_paid_webhook_falls_back_to_payment_link_id_when_notes_are_null() -> None:
+    repository.events.clear()
+    repository.results.clear()
+    repository.processed_webhook_ids.clear()
+    event = PaymentEvent(
+        id="rzp_pay_null_notes",
+        customer_id="customer_null_notes",
+        customer_name="Test customer",
+        type=EventType.PAYMENT_FAILED,
+        amount=100,
+        failure_code="unknown_processor_failure",
+    )
+    result = run_event(event, repository.policy)
+    result.razorpay_payment_link_id = "plink_null_notes"
+    repository.events.append(event)
+    repository.results.append(result)
+    payload = {
+        "event": "payment_link.paid",
+        "payload": {
+            "payment_link": {
+                "entity": {
+                    "id": "plink_null_notes",
+                    "notes": None,
+                    "amount_paid": 10000,
+                }
+            }
+        },
+    }
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/webhooks/razorpay",
+            headers={"x-razorpay-event-id": "hook_null_notes"},
+            json=payload,
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "recovery_recorded"
+        assert repository.results[-1].verified_recovered_amount == 100

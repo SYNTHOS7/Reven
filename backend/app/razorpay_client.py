@@ -50,6 +50,17 @@ class RazorpayClient:
             response.raise_for_status()
             return [item for item in response.json().get("items", []) if item.get("status") == "failed"]
 
+    async def fetch_payment_link(self, payment_link_id: str) -> dict:
+        if not self.configured:
+            raise RuntimeError("Razorpay test credentials are not configured")
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(
+                f"https://api.razorpay.com/v1/payment_links/{payment_link_id}",
+                auth=(self.config.razorpay_key_id or "", self.config.razorpay_key_secret or ""),
+            )
+            response.raise_for_status()
+            return response.json()
+
     def verify_webhook(self, body: bytes, signature: str | None) -> bool:
         secret = self.config.razorpay_webhook_secret
         if not secret:

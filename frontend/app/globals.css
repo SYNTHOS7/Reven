@@ -153,6 +153,13 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .operatorApprovalForm input { min-width: 0; height: 38px; padding: 0 10px; border: 1px solid var(--grid); background: rgba(0,0,0,.2); color: var(--paper); outline: 0; font: 500 10px/1 var(--mono); }
 .operatorApprovalForm input:focus { border-color: var(--warning); }
 .operatorApprovalForm small { grid-column: 1 / -1; font: 500 9px/1.4 var(--mono); }
+.verificationForm { display: grid; grid-template-columns: minmax(190px, 260px) auto; gap: 10px; align-items: end; }
+.verificationForm label { display: grid; gap: 7px; }
+.verificationForm label > span { color: var(--muted); font: 600 8px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.verificationForm input { height: 38px; padding: 0 10px; border: 1px solid var(--grid); background: rgba(0,0,0,.2); color: var(--paper); outline: 0; font: 500 10px/1 var(--mono); }
+.verificationForm input:focus { border-color: var(--recovery); }
+.verificationForm small { grid-column: 1 / -1; font: 500 9px/1.4 var(--mono); }
+.verifiedRecovery { display: flex; align-items: center; gap: 9px; color: var(--recovery); font: 600 11px/1.4 var(--mono); }
 .createdLink span { color: var(--recovery); font: 600 9px/1 var(--mono); letter-spacing: .1em; }
 .createdLink a { display: inline-flex; align-items: center; gap: 8px; color: var(--paper); border-bottom: 1px solid var(--paper); font: 550 11px/1.5 var(--mono); }
 .spin { animation: spin 1s linear infinite; }
@@ -192,6 +199,7 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
   .policyField input { width: 100px; }
   .policyFooter, .actionBar { align-items: stretch; flex-direction: column; }
   .operatorApprovalForm { width: 100%; grid-template-columns: 1fr; }
+  .verificationForm { grid-template-columns: 1fr; }
   .caseHeader { padding-inline: 20px; align-items: flex-start; flex-direction: column; }
   .caseDecision { justify-items: start; }
   .auditTrail { margin-inline: 18px; }

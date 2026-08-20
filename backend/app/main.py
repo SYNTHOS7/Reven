@@ -195,6 +195,39 @@ async def approve_payment_link(
     return {**link, "approval": "operator"}
 
 
+@app.post("/recovery/payment-link/reconcile")
+async def reconcile_payment_link(
+    request: PaymentLinkRequest,
+    x_admin_token: Annotated[str | None, Header()] = None,
+):
+    if not config.admin_token:
+        raise HTTPException(status_code=503, detail="Recovery verification is not configured")
+    if x_admin_token != config.admin_token:
+        raise HTTPException(status_code=401, detail="Invalid operator token")
+    result = latest_result(request.event_id)
+    if not result or not result.razorpay_payment_link_id:
+        raise HTTPException(status_code=404, detail="Prepared recovery Payment Link not found")
+    if result.verified_recovered_amount > 0:
+        return {
+            "status": "already_verified",
+            "payment_link_id": result.razorpay_payment_link_id,
+            "amount_recovered": result.verified_recovered_amount,
+        }
+    try:
+        entity = await razorpay.fetch_payment_link(result.razorpay_payment_link_id)
+    except (RuntimeError, httpx.HTTPError) as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if entity.get("status") != "paid":
+        raise HTTPException(status_code=409, detail=f"Razorpay Payment Link status is {entity.get('status', 'unknown')}")
+    amount_paid = float(entity.get("amount_paid", 0)) / 100
+    if amount_paid <= 0:
+        raise HTTPException(status_code=409, detail="Razorpay has not reported a positive paid amount")
+    repository.record_recovery(result.event_id, result.razorpay_payment_link_id, amount_paid)
+    result.verified_recovered_amount = amount_paid
+    repository.save_results([result])
+    return {"status": "verified", "payment_link_id": result.razorpay_payment_link_id, "amount_recovered": amount_paid}
+
+
 @app.post("/webhooks/razorpay", response_model=WebhookResponse)
 async def receive_razorpay_webhook(
     request: Request,
@@ -209,7 +242,8 @@ async def receive_razorpay_webhook(
     payload = json.loads(body)
     event_type = str(payload.get("event", "unknown"))
     webhook_id = x_razorpay_event_id or hashlib_fallback(body)
-    if not repository.mark_webhook_processed(webhook_id, event_type, body):
+    is_new_webhook = repository.mark_webhook_processed(webhook_id, event_type, body)
+    if not is_new_webhook and event_type != "payment_link.paid":
         return WebhookResponse(status="duplicate", event_id=webhook_id)
     if event_type == "payment.failed":
         payment = payload.get("payload", {}).get("payment", {}).get("entity", {})
@@ -223,13 +257,22 @@ async def receive_razorpay_webhook(
         return WebhookResponse(status="failure_evaluated", event_id=event.id)
     if event_type == "payment_link.paid":
         entity = payload.get("payload", {}).get("payment_link", {}).get("entity", {})
-        reven_event_id = entity.get("notes", {}).get("reven_event_id")
-        amount_paid = float(entity.get("amount_paid", 0)) / 100
-        repository.record_recovery(reven_event_id, entity.get("id"), amount_paid)
+        notes = entity.get("notes") if isinstance(entity.get("notes"), dict) else {}
+        reven_event_id = notes.get("reven_event_id")
+        payment_link_id = entity.get("id")
         result = latest_result(reven_event_id) if reven_event_id else None
-        if result:
-            result.verified_recovered_amount = amount_paid
-            repository.save_results([result])
+        if result is None and payment_link_id:
+            matches = (item for item in repository.results if item.razorpay_payment_link_id == payment_link_id)
+            result = max(matches, key=lambda item: item.created_at, default=None)
+            reven_event_id = result.event_id if result else None
+        if not result:
+            return WebhookResponse(status="unattributed_recovery", event_id=webhook_id)
+        if not is_new_webhook and result.verified_recovered_amount > 0:
+            return WebhookResponse(status="duplicate", event_id=webhook_id)
+        amount_paid = float(entity.get("amount_paid", 0)) / 100
+        repository.record_recovery(reven_event_id, payment_link_id, amount_paid)
+        result.verified_recovered_amount = amount_paid
+        repository.save_results([result])
         return WebhookResponse(status="recovery_recorded", event_id=reven_event_id)
     return WebhookResponse(status="ignored", event_id=webhook_id)
 

@@ -70,6 +70,12 @@ closed with `409`.
 }
 ```
 
+### `POST /recovery/payment-link/reconcile`
+
+Requires `X-Admin-Token`. Fetches the prepared Payment Link from Razorpay and
+records recovery only when Razorpay reports `status=paid` and a positive
+`amount_paid`. This is the safe fallback for delayed or failed webhook delivery.
+
 ### POST /recovery/payment-link
 Creates a Razorpay Payment Link in test mode only. The referenced event must already have a `create_payment_link` decision under the stored policy snapshot.
 Request: `{ event_id: string }`

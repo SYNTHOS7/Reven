@@ -72,12 +72,53 @@ class Repository:
                     self.policy = PolicySettings.model_validate(setting_rows.json()[0]["payload"])
 
                 recovery_rows = client.get(
-                    self._url("recovery_attempts?status=eq.completed&select=amount_recovered"), headers=self._headers()
+                    self._url("recovery_attempts?select=event_id,external_reference,status,amount_recovered,created_at"), headers=self._headers()
                 )
                 recovery_rows.raise_for_status()
-                self.actual_test_recovery = sum(float(row["amount_recovered"]) for row in recovery_rows.json())
+                recoveries = recovery_rows.json()
+                self.actual_test_recovery = sum(
+                    float(row["amount_recovered"])
+                    for row in recoveries
+                    if row.get("status") == "completed"
+                )
+                self._hydrate_recovery_state(recoveries)
         except (httpx.HTTPError, ValueError, KeyError) as exc:
             self.storage_error = str(exc)
+
+    def _hydrate_recovery_state(self, recoveries: list[dict]) -> None:
+        """Carry durable recovery evidence into every evaluation of the same event."""
+        for recovery in recoveries:
+            event_id = recovery.get("event_id")
+            if not event_id:
+                continue
+            for result in self.results:
+                if result.event_id != event_id:
+                    continue
+                if recovery.get("external_reference") and not result.razorpay_payment_link_id:
+                    result.razorpay_payment_link_id = str(recovery["external_reference"])
+                if recovery.get("status") == "completed":
+                    result.verified_recovered_amount = max(
+                        result.verified_recovered_amount,
+                        float(recovery.get("amount_recovered", 0)),
+                    )
+
+    def _preserve_recovery_state(self, results: list[PipelineResult]) -> None:
+        """A fresh diagnosis must not erase a prepared or verified recovery."""
+        by_event: dict[str, list[PipelineResult]] = {}
+        for existing in self.results:
+            by_event.setdefault(existing.event_id, []).append(existing)
+        for result in results:
+            prior = by_event.get(result.event_id, [])
+            payment_link_id = next(
+                (item.razorpay_payment_link_id for item in sorted(prior, key=lambda item: item.created_at, reverse=True) if item.razorpay_payment_link_id),
+                None,
+            )
+            if payment_link_id and not result.razorpay_payment_link_id:
+                result.razorpay_payment_link_id = payment_link_id
+            result.verified_recovered_amount = max(
+                result.verified_recovered_amount,
+                *(item.verified_recovered_amount for item in prior),
+            ) if prior else result.verified_recovered_amount
 
     def save_event(self, event: PaymentEvent) -> None:
         existing_index = next((index for index, item in enumerate(self.events) if item.id == event.id), None)
@@ -96,6 +137,7 @@ class Repository:
         response.raise_for_status()
 
     def save_results(self, results: list[PipelineResult]) -> None:
+        self._preserve_recovery_state(results)
         result_ids = {item.id for item in results}
         self.results = [item for item in self.results if item.id not in result_ids] + results
         if not self.persistent or not results:

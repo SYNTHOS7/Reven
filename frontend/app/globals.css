@@ -145,6 +145,14 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .actionBar strong { font: 550 14px/1.3 var(--mono); }
 .paymentLinkControl, .createdLink { display: grid; justify-items: end; gap: 9px; }
 .paymentLinkControl small { font: 500 9px/1.4 var(--mono); }
+.approvalBar { border-color: rgba(244,183,64,.32); background: rgba(244,183,64,.055); align-items: flex-start; }
+.approvalBar > div > small { max-width: 430px; color: var(--muted); font: 500 9px/1.5 var(--mono); }
+.operatorApprovalForm { width: min(520px, 55vw); display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.operatorApprovalForm label { display: grid; gap: 7px; }
+.operatorApprovalForm label > span { color: var(--muted); font: 600 8px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.operatorApprovalForm input { min-width: 0; height: 38px; padding: 0 10px; border: 1px solid var(--grid); background: rgba(0,0,0,.2); color: var(--paper); outline: 0; font: 500 10px/1 var(--mono); }
+.operatorApprovalForm input:focus { border-color: var(--warning); }
+.operatorApprovalForm small { grid-column: 1 / -1; font: 500 9px/1.4 var(--mono); }
 .createdLink span { color: var(--recovery); font: 600 9px/1 var(--mono); letter-spacing: .1em; }
 .createdLink a { display: inline-flex; align-items: center; gap: 8px; color: var(--paper); border-bottom: 1px solid var(--paper); font: 550 11px/1.5 var(--mono); }
 .spin { animation: spin 1s linear infinite; }
@@ -183,6 +191,7 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
   .policyField { grid-template-columns: 1fr 100px; padding: 22px; }
   .policyField input { width: 100px; }
   .policyFooter, .actionBar { align-items: stretch; flex-direction: column; }
+  .operatorApprovalForm { width: 100%; grid-template-columns: 1fr; }
   .caseHeader { padding-inline: 20px; align-items: flex-start; flex-direction: column; }
   .caseDecision { justify-items: start; }
   .auditTrail { margin-inline: 18px; }

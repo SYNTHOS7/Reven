@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_config
 from app.evaluation import run_evaluation
 from app.ingestion import payment_event_from_razorpay
-from app.models import GroundTruthUpdate, PaymentLinkRequest, PolicySettings, WebhookResponse
+from app.models import Action, GroundTruthUpdate, OperatorApprovalRequest, PaymentLinkRequest, PolicySettings, WebhookResponse
 from app.pipeline.engine import run_event
 from app.razorpay_client import RazorpayClient
 from app.repository import repository
@@ -23,6 +23,11 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+def latest_result(event_id: str):
+    matches = (item for item in repository.results if item.event_id == event_id)
+    return max(matches, key=lambda item: item.created_at, default=None)
 
 
 @app.get("/health")
@@ -41,7 +46,9 @@ def health():
 def list_events(limit: int = 200, offset: int = 0):
     latest_by_event = {}
     for result in repository.results:
-        latest_by_event[result.event_id] = result
+        current = latest_by_event.get(result.event_id)
+        if current is None or result.created_at > current.created_at:
+            latest_by_event[result.event_id] = result
     ordered = sorted(latest_by_event.values(), key=lambda item: item.created_at, reverse=True)
     results = ordered[offset : offset + min(limit, 300)]
     return {"items": results, "total": len(ordered)}
@@ -52,7 +59,7 @@ def get_event(event_id: str):
     event = next((item for item in repository.events if item.id == event_id), None)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
-    result = next((item for item in reversed(repository.results) if item.event_id == event_id), None)
+    result = latest_result(event_id)
     return {"event": event, "pipeline_result": result}
 
 
@@ -140,18 +147,52 @@ async def sync_razorpay_payments(
 @app.post("/recovery/payment-link")
 async def create_payment_link(request: PaymentLinkRequest):
     event = next((item for item in repository.events if item.id == request.event_id), None)
-    result = next((item for item in repository.results if item.event_id == request.event_id), None)
+    result = latest_result(request.event_id)
     if not event or not result:
         raise HTTPException(status_code=404, detail="Evaluated event not found")
     if result.decision.action.value != "create_payment_link":
         raise HTTPException(status_code=409, detail="Policy did not approve a payment link for this event")
+    if result.razorpay_payment_link_id:
+        raise HTTPException(status_code=409, detail="A recovery Payment Link already exists for this event")
     try:
         link = await razorpay.create_payment_link(event)
     except (RuntimeError, httpx.HTTPError) as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     result.razorpay_payment_link_id = link["id"]
     repository.save_results([result])
+    repository.record_prepared_recovery(event.id, link["id"])
     return link
+
+
+@app.post("/recovery/payment-link/approve")
+async def approve_payment_link(
+    request: OperatorApprovalRequest,
+    x_admin_token: Annotated[str | None, Header()] = None,
+):
+    if not config.admin_token:
+        raise HTTPException(status_code=503, detail="Operator approval is not configured")
+    if x_admin_token != config.admin_token:
+        raise HTTPException(status_code=401, detail="Invalid operator token")
+    event = next((item for item in repository.events if item.id == request.event_id), None)
+    result = latest_result(request.event_id)
+    if not event or not result:
+        raise HTTPException(status_code=404, detail="Evaluated event not found")
+    if result.trust_gate.status == "suspicious":
+        raise HTTPException(status_code=409, detail="Suspicious events cannot be approved")
+    if result.decision.action != Action.ESCALATE_HUMAN:
+        raise HTTPException(status_code=409, detail="Only human-escalated events can be operator-approved")
+    if result.razorpay_payment_link_id:
+        raise HTTPException(status_code=409, detail="A recovery Payment Link already exists for this event")
+    try:
+        link = await razorpay.create_payment_link(event)
+    except (RuntimeError, httpx.HTTPError) as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    event.ground_truth_source = f"operator_approved_recovery: {request.approval_note}"
+    result.razorpay_payment_link_id = link["id"]
+    repository.save_event(event)
+    repository.save_results([result])
+    repository.record_prepared_recovery(event.id, link["id"])
+    return {**link, "approval": "operator"}
 
 
 @app.post("/webhooks/razorpay", response_model=WebhookResponse)
@@ -185,7 +226,7 @@ async def receive_razorpay_webhook(
         reven_event_id = entity.get("notes", {}).get("reven_event_id")
         amount_paid = float(entity.get("amount_paid", 0)) / 100
         repository.record_recovery(reven_event_id, entity.get("id"), amount_paid)
-        result = next((item for item in reversed(repository.results) if item.event_id == reven_event_id), None)
+        result = latest_result(reven_event_id) if reven_event_id else None
         if result:
             result.verified_recovered_amount = amount_paid
             repository.save_results([result])

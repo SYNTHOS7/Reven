@@ -56,6 +56,20 @@ Used so the dashboard can display AND (for demo purposes) let a judge tweak a li
 
 ## Recovery
 
+### `POST /recovery/payment-link/approve`
+
+Creates one Razorpay test Payment Link for a case whose current decision is
+`escalate_human`. Requires the Render-generated `X-Admin-Token` header and a
+5-500 character `approval_note`. Suspicious cases and duplicate links fail
+closed with `409`.
+
+```json
+{
+  "event_id": "rzp_pay_...",
+  "approval_note": "Processor evidence reviewed by operator"
+}
+```
+
 ### POST /recovery/payment-link
 Creates a Razorpay Payment Link in test mode only. The referenced event must already have a `create_payment_link` decision under the stored policy snapshot.
 Request: `{ event_id: string }`

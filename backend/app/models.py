@@ -140,6 +140,11 @@ class PaymentLinkRequest(BaseModel):
     event_id: str
 
 
+class OperatorApprovalRequest(BaseModel):
+    event_id: str
+    approval_note: str = Field(min_length=5, max_length=500)
+
+
 class GroundTruthUpdate(BaseModel):
     correct_cause: str
     correct_action: Action

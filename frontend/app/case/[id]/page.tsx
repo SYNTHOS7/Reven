@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Shell } from "@/components/shell";
 import { StatusBadge } from "@/components/status-badge";
 import { PaymentLinkAction } from "@/components/payment-link-action";
+import { OperatorApprovalAction } from "@/components/operator-approval-action";
 import { loadCase } from "@/lib/api";
 
 export default async function CasePage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,6 +44,9 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         </section>
         {!stopped && result.decision.action === "create_payment_link" && (
           <div className="actionBar"><div><span className="utilityLabel">OPERATOR ACTION</span><strong>Create a Razorpay test Payment Link</strong></div><PaymentLinkAction eventId={result.event_id} /></div>
+        )}
+        {!stopped && result.decision.action === "escalate_human" && (
+          <div className="actionBar approvalBar"><div><span className="utilityLabel">HUMAN APPROVAL REQUIRED</span><strong>Review the evidence, then authorize one Razorpay test Payment Link</strong><small>The operator token is used once and is never stored in the browser.</small></div><OperatorApprovalAction eventId={result.event_id} /></div>
         )}
       </main>
     </Shell>

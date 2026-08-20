@@ -155,6 +155,16 @@ class Repository:
         )
         response.raise_for_status()
 
+    def record_prepared_recovery(self, event_id: str, external_reference: str) -> None:
+        if not self.persistent:
+            return
+        response = httpx.post(
+            self._url("recovery_attempts"), headers=self._headers("return=minimal"),
+            json={"event_id": event_id, "external_reference": external_reference, "action": "create_payment_link", "status": "prepared", "amount_recovered": 0},
+            timeout=12,
+        )
+        response.raise_for_status()
+
 
 InMemoryRepository = Repository
 repository = Repository()

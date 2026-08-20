@@ -74,3 +74,21 @@ export async function createPaymentLink(eventId: string): Promise<{ id: string; 
   }
   return response.json();
 }
+
+export async function approvePaymentLink(
+  eventId: string,
+  approvalNote: string,
+  adminToken: string,
+): Promise<{ id: string; short_url: string; mode: string; approval: string }> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/recovery/payment-link/approve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Admin-Token": adminToken },
+    body: JSON.stringify({ event_id: eventId, approval_note: approvalNote }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Operator approval failed");
+  }
+  return response.json();
+}

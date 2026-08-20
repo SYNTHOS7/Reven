@@ -130,6 +130,10 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .caseHeader p { margin: 0; color: var(--muted); text-transform: uppercase; font-size: 12px; }
 .caseDecision { display: grid; gap: 12px; justify-items: end; }
 .caseDecision > span { color: var(--muted); font: 600 9px/1 var(--mono); letter-spacing: .12em; }
+.decisionTraceIntro { margin: 0 36px; min-height: 150px; padding: 30px 25px; border-inline: 1px solid var(--grid); border-bottom: 1px solid var(--grid); display: grid; grid-template-columns: minmax(250px, .9fr) minmax(310px, 1.35fr); gap: 38px; align-items: end; background: linear-gradient(105deg, rgba(57,217,138,.09), transparent 58%); }
+.decisionTraceIntro h2 { margin: 9px 0 0; font: 560 clamp(24px, 2.5vw, 34px)/1 var(--mono); letter-spacing: -.05em; }
+.decisionTraceIntro p { margin: 0; max-width: 620px; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.decisionTraceIntro p strong { color: var(--paper); font-weight: 600; }
 .auditTrail { margin: 0 36px; border-inline: 1px solid var(--grid); }
 .auditStep { min-height: 145px; display: grid; grid-template-columns: 90px 260px 1fr; border-bottom: 1px solid var(--grid); }
 .stepIndex, .stepTitle, .stepEvidence { padding: 25px; border-right: 1px solid var(--grid); }
@@ -139,6 +143,8 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .stepTitle > span { font: 550 13px/1 var(--mono); text-transform: uppercase; }
 .stepEvidence strong { display: block; max-width: 680px; font-size: 14px; line-height: 1.6; font-weight: 520; }
 .stepEvidence p { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.decisionBoundary { display: inline-flex; margin-top: 14px; padding: 5px 7px; border: 1px solid rgba(57,217,138,.28); color: var(--recovery); background: rgba(57,217,138,.05); font: 600 8px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.policyBoundary { color: var(--warning); border-color: rgba(244,183,64,.32); background: rgba(244,183,64,.05); }
 .mutedStep { opacity: .34; }
 .actionBar { margin: 28px 36px 0; padding: 24px; border: 1px solid rgba(57,217,138,.3); background: rgba(57,217,138,.055); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .actionBar > div { display: grid; gap: 9px; }
@@ -202,6 +208,7 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
   .verificationForm { grid-template-columns: 1fr; }
   .caseHeader { padding-inline: 20px; align-items: flex-start; flex-direction: column; }
   .caseDecision { justify-items: start; }
+  .decisionTraceIntro { margin-inline: 18px; grid-template-columns: 1fr; gap: 20px; }
   .auditTrail { margin-inline: 18px; }
   .auditStep { grid-template-columns: 58px 1fr; }
   .stepTitle { border-right: 0; }

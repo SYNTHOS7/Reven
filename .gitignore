@@ -12,3 +12,6 @@ coverage/
 .DS_Store
 *.log
 deploy/*.zip
+tools/
+pitch-assets/
+Reven-Buildathon-Pitch*.mp4

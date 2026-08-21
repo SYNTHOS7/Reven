@@ -46,12 +46,16 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
   const connected = data.source === "api";
   const hasData = score.total_cases > 0;
   return (
-    <main>
+    <main className="dashboardPage">
       <section className="hero">
         <div className="heroCopy">
           <div className="eyebrow"><span>03</span> AI REVENUE RECOVERY</div>
           <h1>Revenue recovery,<br /><em>under control.</em></h1>
           <p>Detect lost revenue. Refuse unsafe actions. Prove every decision against human-reviewed evidence.</p>
+          <div className="proofStrip" aria-label="Reven operating principles">
+            <span>Webhook-led</span><span>Human-guarded</span><span>Verified attribution</span>
+          </div>
+          <div className="heroSignal" aria-hidden="true"><span>05</span><small>control stages</small></div>
         </div>
         <div className="runPanel">
           <div>
@@ -71,10 +75,10 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
       {notice && <div className="notice" role="status">{notice}</div>}
 
       <section className="ledger" aria-label="Evaluation scorecard">
-        <Metric label="Diagnosis match" value={score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"} detail={`${score.labeled_cases} human-labelled cases`} />
-        <Metric label="Action match" value={score.labeled_cases ? `${score.action_accuracy_pct}%` : "—"} detail={`${score.escalated_cases} safely escalated`} />
-        <Metric label="Policy compliance" value={hasData ? `${score.policy_compliance_pct}%` : "—"} detail={`${score.suspicious_refusals} suspicious refused`} />
-        <Metric label="Verified test recovery" value={hasData ? money.format(score.actual_test_recovery) : "—"} detail="from signed paid webhooks" accent />
+        <Metric index={0} label="Diagnosis match" value={score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"} detail={`${score.labeled_cases} human-labelled cases`} />
+        <Metric index={1} label="Action match" value={score.labeled_cases ? `${score.action_accuracy_pct}%` : "—"} detail={`${score.escalated_cases} safely escalated`} />
+        <Metric index={2} label="Policy compliance" value={hasData ? `${score.policy_compliance_pct}%` : "—"} detail={`${score.suspicious_refusals} suspicious refused`} />
+        <Metric index={3} label="Verified test recovery" value={hasData ? money.format(score.actual_test_recovery) : "—"} detail="from signed paid webhooks" accent />
       </section>
 
       <section className="splitSection">
@@ -121,8 +125,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
               {filtered.length === 0 && (
                 <tr><td colSpan={7} className="emptyTable">No Razorpay test failures received yet. Connect the backend, configure the signed webhook, then create a failed test payment.</td></tr>
               )}
-              {filtered.map((result) => (
-                <tr key={result.event_id}>
+              {filtered.map((result, index) => (
+                <tr key={result.event_id} style={{ "--row-index": index } as React.CSSProperties}>
                   <td><Link href={`/case/${result.event_id}`}>{result.event_id}</Link><small>{result.event_type.replaceAll("_", " ")}</small></td>
                   <td>{result.customer_name}</td>
                   <td className="number">{money.format(result.amount)}</td>
@@ -140,6 +144,6 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
   );
 }
 
-function Metric({ label, value, detail, accent = false }: { label: string; value: string; detail: string; accent?: boolean }) {
-  return <div className={accent ? "metric accentMetric" : "metric"}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>;
+function Metric({ index, label, value, detail, accent = false }: { index: number; label: string; value: string; detail: string; accent?: boolean }) {
+  return <div className={accent ? "metric accentMetric" : "metric"} style={{ "--metric-index": index } as React.CSSProperties}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>;
 }

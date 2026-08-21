@@ -8,6 +8,7 @@ import { runEvaluation } from "@/lib/api";
 import type { DashboardData } from "@/lib/types";
 import { Button } from "./ui/button";
 import { PipelineRail } from "./pipeline-rail";
+import { RecoveryCommandDeck } from "./recovery-command-deck";
 import { StatusBadge } from "./status-badge";
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -73,6 +74,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
 
       <PipelineRail running={running} />
       {notice && <div className="notice" role="status">{notice}</div>}
+
+      <RecoveryCommandDeck results={data.results} policy={score.policy_snapshot} connected={connected} />
 
       <section className="ledger" aria-label="Evaluation scorecard">
         <Metric index={0} label="Diagnosis match" value={score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"} detail={`${score.labeled_cases} human-labelled cases`} />

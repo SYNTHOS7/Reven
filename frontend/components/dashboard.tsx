@@ -7,6 +7,7 @@ import { ArrowUpRight, RefreshCcw, Search } from "lucide-react";
 import { runEvaluation } from "@/lib/api";
 import type { DashboardData } from "@/lib/types";
 import { Button } from "./ui/button";
+import { DecisionInspector } from "./decision-inspector";
 import { PipelineRail } from "./pipeline-rail";
 import { RecoveryCommandDeck } from "./recovery-command-deck";
 import { StatusBadge } from "./status-badge";
@@ -74,6 +75,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
 
       <PipelineRail running={running} />
       {notice && <div className="notice" role="status">{notice}</div>}
+
+      <DecisionInspector results={data.results} policy={score.policy_snapshot} />
 
       <RecoveryCommandDeck results={data.results} policy={score.policy_snapshot} connected={connected} />
 

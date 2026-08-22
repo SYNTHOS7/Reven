@@ -22,6 +22,36 @@ export interface StageResult {
   reason: string;
 }
 
+export interface HumanReviewAudit {
+  human_reviewed_cause: string;
+  human_reviewed_action: Action;
+  human_reviewed_note: string;
+  human_reviewed_at: string;
+}
+
+export interface PaymentEventDetails {
+  id: string;
+  customer_id: string;
+  customer_name: string;
+  type: string;
+  amount: number;
+  failure_code: string;
+  occurred_at: string;
+  payment_method?: string | null;
+  error_description?: string | null;
+  bank?: string | null;
+  wallet?: string | null;
+  vpa?: string | null;
+  card_network?: string | null;
+  card_type?: string | null;
+  error_source?: string | null;
+  error_step?: string | null;
+  human_reviewed_cause?: string | null;
+  human_reviewed_action?: Action | null;
+  human_reviewed_note?: string | null;
+  human_reviewed_at?: string | null;
+}
+
 export interface PipelineResult {
   id: string;
   run_id: string;
@@ -34,11 +64,39 @@ export interface PipelineResult {
   occurred_at: string;
   detection: StageResult;
   trust_gate: StageResult;
-  diagnosis: { cause: string; method: string; confidence: number; reason: string };
+  diagnosis: {
+    cause: string;
+    method: string;
+    confidence: number;
+    reason: string;
+    evidence_used?: string[];
+  };
   decision: { action: Action; reason: string; requires_customer_contact: boolean };
   generated_message: string | null;
   verified_recovered_amount: number;
   razorpay_payment_link_id?: string | null;
+}
+
+export interface CaseDetailResponse {
+  event: PaymentEventDetails;
+  pipeline_result: PipelineResult;
+}
+
+export interface PolicyReplayRequest {
+  event_id: string;
+  policy: PolicySettings;
+}
+
+export interface PolicyReplayResponse {
+  event_id: string;
+  original_policy: PolicySettings;
+  original_decision: { action: Action; reason: string; requires_customer_contact: boolean };
+  original_diagnosis: { cause: string; method: string; confidence: number; reason: string };
+  proposed_policy: PolicySettings;
+  proposed_decision: { action: Action; reason: string; requires_customer_contact: boolean };
+  proposed_message: string | null;
+  is_dry_run: boolean;
+  disclaimer: string;
 }
 
 export interface Scorecard {
@@ -70,3 +128,4 @@ export interface DashboardData {
   results: PipelineResult[];
   source: "api" | "disconnected";
 }
+

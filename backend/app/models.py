@@ -52,7 +52,18 @@ class PaymentEvent(BaseModel):
     source_event_id: str | None = None
     payment_method: str | None = None
     error_description: str | None = None
+    bank: str | None = None
+    wallet: str | None = None
+    vpa: str | None = None
+    card_network: str | None = None
+    card_type: str | None = None
+    error_source: str | None = None
+    error_step: str | None = None
     ground_truth_source: str | None = None
+    human_reviewed_cause: str | None = None
+    human_reviewed_action: Action | None = None
+    human_reviewed_note: str | None = None
+    human_reviewed_at: datetime | None = None
 
 
 class PolicySettings(BaseModel):
@@ -75,6 +86,7 @@ class DiagnosisResult(BaseModel):
     method: str
     confidence: float = Field(ge=0, le=1)
     reason: str
+    evidence_used: list[str] = Field(default_factory=list)
 
 
 class DecisionResult(BaseModel):
@@ -151,6 +163,24 @@ class GroundTruthUpdate(BaseModel):
     reviewer_notes: str = Field(min_length=3, max_length=1000)
 
 
+class PolicyReplayRequest(BaseModel):
+    event_id: str
+    policy: PolicySettings
+
+
+class PolicyReplayResponse(BaseModel):
+    event_id: str
+    original_policy: PolicySettings
+    original_decision: DecisionResult
+    original_diagnosis: DiagnosisResult
+    proposed_policy: PolicySettings
+    proposed_decision: DecisionResult
+    proposed_message: str | None = None
+    is_dry_run: bool = True
+    disclaimer: str = "Dry run — no customer action, message, payment link, or revenue metric was changed."
+
+
 class WebhookResponse(BaseModel):
     status: str
     event_id: str | None = None
+

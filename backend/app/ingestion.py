@@ -17,6 +17,11 @@ def payment_event_from_razorpay(payment: dict) -> PaymentEvent:
     customer_name = str(notes.get("customer_name") or "Razorpay test customer")
     instrument = payment.get("card_id") or payment.get("token_id") or payment.get("vpa")
     instrument_hash = hashlib.sha256(str(instrument).encode()).hexdigest()[:20] if instrument else None
+
+    card_obj = payment.get("card") if isinstance(payment.get("card"), dict) else {}
+    card_network = card_obj.get("network") or card_obj.get("sub_type")
+    card_type = card_obj.get("type")
+
     return PaymentEvent(
         id=f"rzp_{payment_id}",
         customer_id=_anonymous_customer(payment),
@@ -34,4 +39,12 @@ def payment_event_from_razorpay(payment: dict) -> PaymentEvent:
         source_event_id=payment_id,
         payment_method=payment.get("method"),
         error_description=payment.get("error_description"),
+        bank=payment.get("bank"),
+        wallet=payment.get("wallet"),
+        vpa=payment.get("vpa"),
+        card_network=str(card_network) if card_network else None,
+        card_type=str(card_type) if card_type else None,
+        error_source=payment.get("error_source"),
+        error_step=payment.get("error_step"),
     )
+

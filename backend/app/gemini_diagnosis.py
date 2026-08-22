@@ -32,11 +32,18 @@ def diagnose_ambiguous_with_gemini(event: PaymentEvent, config: AppConfig) -> Di
             "Use only the supplied processor evidence. Do not infer identity or protected traits.\n"
             f"failure_code={event.failure_code}\n"
             f"error_description={event.error_description or 'not supplied'}\n"
+            f"error_source={event.error_source or 'unknown'}\n"
+            f"error_step={event.error_step or 'unknown'}\n"
             f"payment_method={event.payment_method or 'unknown'}\n"
+            f"bank={event.bank or 'unknown'}\n"
+            f"wallet={event.wallet or 'unknown'}\n"
+            f"card_network={event.card_network or 'unknown'}\n"
+            f"attempt_count={event.retry_count + 1}\n"
             f"amount_inr={event.amount}\n"
             f"successful_payments={event.history.successful_payments}\n"
             f"prior_failures={event.history.prior_failures}\n"
-            f"customer_tenure_days={event.history.tenure_days}"
+            f"customer_tenure_days={event.history.tenure_days}\n\n"
+            "If the processor evidence is generic or insufficient to diagnose the root cause, set cause to 'unknown' and confidence to 0.35."
         )
         with genai.Client(api_key=config.gemini_api_key) as client:
             response = client.models.generate_content(

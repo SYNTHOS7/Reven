@@ -2,7 +2,6 @@ from app.config import get_config
 from app.gemini_diagnosis import diagnose_ambiguous_with_gemini
 from app.models import DiagnosisResult, PaymentEvent
 
-
 RULES: dict[str, tuple[str, str]] = {
     "insufficient_funds": ("temporary_funds_shortage", "Issuer reported insufficient funds"),
     "card_expired": ("expired_payment_method", "Card expiry is explicit"),
@@ -20,26 +19,66 @@ RULES: dict[str, tuple[str, str]] = {
 }
 
 
+def build_evidence_list(event: PaymentEvent) -> list[str]:
+    evidence = []
+    if event.failure_code:
+        evidence.append(f"failure_code: {event.failure_code}")
+    if event.error_description:
+        evidence.append(f"error_description: {event.error_description}")
+    if event.payment_method:
+        evidence.append(f"payment_method: {event.payment_method}")
+    if event.bank:
+        evidence.append(f"bank: {event.bank}")
+    if event.wallet:
+        evidence.append(f"wallet: {event.wallet}")
+    if event.vpa:
+        evidence.append(f"vpa: {event.vpa}")
+    if event.card_network:
+        evidence.append(f"card_network: {event.card_network}")
+    if event.retry_count > 0:
+        evidence.append(f"attempt_count: {event.retry_count + 1}")
+    if event.amount:
+        evidence.append(f"amount: ₹{event.amount:,.0f}")
+    return evidence
+
+
 def diagnose(event: PaymentEvent) -> DiagnosisResult:
+    evidence = build_evidence_list(event)
+
     if event.failure_code in RULES:
         cause, reason = RULES[event.failure_code]
-        return DiagnosisResult(cause=cause, method="rule", confidence=1, reason=reason)
+        return DiagnosisResult(
+            cause=cause,
+            method="rule",
+            confidence=1.0,
+            reason=reason,
+            evidence_used=evidence,
+        )
 
     gemini_result = diagnose_ambiguous_with_gemini(event, get_config())
     if gemini_result:
+        gemini_result.evidence_used = evidence
         return gemini_result
 
-    # Safe fallback when Gemini is unconfigured, unavailable or invalid.
-    if event.history.successful_payments >= 8 and event.history.prior_failures <= 2:
+    # Safe fallback when Gemini is unconfigured, unavailable, or invalid.
+    generic_codes = {"unknown", "unknown_processor_failure", "generic_error", "bad_request_error"}
+    if (
+        event.history.successful_payments >= 8
+        and event.history.prior_failures <= 2
+        and event.failure_code not in generic_codes
+    ):
         return DiagnosisResult(
             cause="likely_transient_failure",
             method="heuristic_fallback",
             confidence=0.58,
-            reason="Strong payment history but the processor supplied no actionable code",
+            reason="Strong payment history but the processor supplied no explicit rule code",
+            evidence_used=evidence,
         )
+
     return DiagnosisResult(
         cause="unknown",
         method="heuristic_fallback",
         confidence=0.35,
-        reason="Insufficient evidence for a reliable diagnosis",
+        reason="Unknown from available processor evidence",
+        evidence_used=evidence,
     )

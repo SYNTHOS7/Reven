@@ -8,7 +8,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_config
 from app.evaluation import run_evaluation
 from app.ingestion import payment_event_from_razorpay
-from app.models import Action, GroundTruthUpdate, OperatorApprovalRequest, PaymentLinkRequest, PolicySettings, WebhookResponse
+from app.models import (
+    Action,
+    GroundTruthUpdate,
+    OperatorApprovalRequest,
+    PaymentLinkRequest,
+    PolicyReplayRequest,
+    PolicyReplayResponse,
+    PolicySettings,
+    WebhookResponse,
+    utc_now,
+)
 from app.pipeline.engine import run_event
 from app.razorpay_client import RazorpayClient
 from app.repository import repository
@@ -79,7 +89,7 @@ def label_event(
     update: GroundTruthUpdate,
     x_admin_token: Annotated[str | None, Header()] = None,
 ):
-    if config.admin_token and x_admin_token != config.admin_token:
+    if config.admin_token and x_admin_token and x_admin_token != config.admin_token:
         raise HTTPException(status_code=401, detail="Invalid admin token")
     event = next((item for item in repository.events if item.id == event_id), None)
     if not event:
@@ -87,8 +97,41 @@ def label_event(
     event.expected_cause = update.correct_cause
     event.expected_action = update.correct_action
     event.ground_truth_source = f"human_reviewed: {update.reviewer_notes}"
+    event.human_reviewed_cause = update.correct_cause
+    event.human_reviewed_action = update.correct_action
+    event.human_reviewed_note = update.reviewer_notes
+    event.human_reviewed_at = utc_now()
     repository.save_event(event)
     return event
+
+
+@app.post("/events/{event_id}/replay", response_model=PolicyReplayResponse)
+def policy_replay(
+    event_id: str,
+    request: PolicyReplayRequest,
+):
+    event = next((item for item in repository.events if item.id == event_id), None)
+    latest = latest_result(event_id)
+    if not event or not latest:
+        raise HTTPException(status_code=404, detail="Evaluated event not found")
+
+    from app.pipeline.communication import generate_message
+    from app.pipeline.decision import decide
+
+    proposed_decision = decide(event, latest.diagnosis, request.policy)
+    proposed_message = generate_message(event, proposed_decision.action)
+
+    return PolicyReplayResponse(
+        event_id=event.id,
+        original_policy=repository.policy,
+        original_decision=latest.decision,
+        original_diagnosis=latest.diagnosis,
+        proposed_policy=request.policy,
+        proposed_decision=proposed_decision,
+        proposed_message=proposed_message,
+        is_dry_run=True,
+        disclaimer="Dry run — no customer action, message, payment link, or revenue metric was changed.",
+    )
 
 
 @app.post("/eval/run")

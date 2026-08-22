@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 
 import type { PipelineResult, PolicySettings } from "@/lib/types";
+import { formatConfidence } from "@/lib/confidence";
+import { getWhyThisAction } from "@/lib/utils";
 import { StatusBadge } from "./status-badge";
 
 const money = new Intl.NumberFormat("en-IN", {
@@ -35,15 +37,7 @@ export function DecisionInspector({ results, policy }: DecisionInspectorProps) {
   const selected = cases[activeIndex];
   const hasResults = cases.length > 0;
 
-  const escalationPct =
-    policy.diagnosis_confidence_escalation_threshold <= 1
-      ? (policy.diagnosis_confidence_escalation_threshold * 100).toFixed(0)
-      : policy.diagnosis_confidence_escalation_threshold.toString();
-
-  const isHumanApprovalRequired =
-    selected &&
-    (selected.decision.action === "escalate_human" ||
-      selected.amount > policy.human_approval_amount_threshold);
+  const isHumanReviewRequired = selected && selected.decision.action === "escalate_human";
 
   return (
     <section className="inspectorSection" aria-label="Explainable recovery decision inspector">
@@ -193,7 +187,7 @@ export function DecisionInspector({ results, policy }: DecisionInspectorProps) {
                 <div className="fieldGroup">
                   <span className="fieldLabel">Confidence</span>
                   <strong className="fieldValueAccent">
-                    {(selected.diagnosis.confidence * 100).toFixed(0)}%
+                    {formatConfidence(selected.diagnosis.confidence)}
                   </strong>
                 </div>
 
@@ -202,11 +196,22 @@ export function DecisionInspector({ results, policy }: DecisionInspectorProps) {
                   <p className="fieldDescription">{selected.diagnosis.reason}</p>
                 </div>
 
+                {selected.diagnosis.evidence_used && selected.diagnosis.evidence_used.length > 0 && (
+                  <div className="fieldGroup">
+                    <span className="fieldLabel">Evidence Trace</span>
+                    <div className="evidenceTraceList">
+                      {selected.diagnosis.evidence_used.map((ev, i) => (
+                        <span key={i} className="evidenceChip">{ev}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="policyBox">
                   <span className="policyBoxTitle">Policy Limit</span>
                   <div className="policyLimitLine">
                     <dt>Escalation threshold</dt>
-                    <dd>{escalationPct}%</dd>
+                    <dd>{formatConfidence(policy.diagnosis_confidence_escalation_threshold)}</dd>
                   </div>
                 </div>
               </div>
@@ -232,21 +237,26 @@ export function DecisionInspector({ results, policy }: DecisionInspectorProps) {
                   <p className="fieldDescription">{selected.decision.reason}</p>
                 </div>
 
+                <div className="fieldGroup">
+                  <span className="fieldLabel">Why This Action?</span>
+                  <p className="fieldDescription whyActionText">{getWhyThisAction(selected, policy)}</p>
+                </div>
+
                 <div className="policyBox">
                   <span className="policyBoxTitle">Policy Rules</span>
                   <dl className="policyLimitsList">
                     <div>
-                      <dt>Above threshold ({money.format(policy.human_approval_amount_threshold)})</dt>
-                      <dd>{selected.amount > policy.human_approval_amount_threshold ? "Yes" : "No"}</dd>
+                      <dt>Exceeds threshold ({money.format(policy.human_approval_amount_threshold)})</dt>
+                      <dd>{selected.amount >= policy.human_approval_amount_threshold ? "Yes" : "No"}</dd>
                     </div>
                     <div>
                       <dt>Requires customer contact</dt>
                       <dd>{selected.decision.requires_customer_contact ? "Yes" : "No"}</dd>
                     </div>
                     <div className="highlightRule">
-                      <dt>Human approval required</dt>
-                      <dd className={isHumanApprovalRequired ? "textWarning" : "textMuted"}>
-                        {isHumanApprovalRequired ? "Yes" : "No"}
+                      <dt>Human review required</dt>
+                      <dd className={isHumanReviewRequired ? "textWarning" : "textMuted"}>
+                        {isHumanReviewRequired ? "Yes" : "No"}
                       </dd>
                     </div>
                   </dl>
@@ -268,7 +278,7 @@ export function DecisionInspector({ results, policy }: DecisionInspectorProps) {
                     <strong className="recoveryHeading">
                       ₹{selected.verified_recovered_amount.toLocaleString("en-IN")} verified recovered
                     </strong>
-                    <p className="fieldDescription">A Razorpay paid webhook verified the recovery.</p>
+                    <p className="fieldDescription">A Razorpay paid webhook confirmed recovery.</p>
                   </div>
                 ) : selected.razorpay_payment_link_id ? (
                   <div className="recoveryCard awaiting">

@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, RefreshCcw, Search } from "lucide-react";
+import { ArrowUpRight, RefreshCcw, Search, ShieldCheck } from "lucide-react";
 
 import { runEvaluation } from "@/lib/api";
 import type { DashboardData } from "@/lib/types";
+import { formatConfidence } from "@/lib/confidence";
+import { getWhyThisAction } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { DecisionInspector } from "./decision-inspector";
 import { PipelineRail } from "./pipeline-rail";
@@ -31,6 +33,22 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
     );
   }, [data.results, query]);
 
+  const outcomeMatrix = useMemo(() => {
+    const safeActions = data.results.filter((r) =>
+      ["retry_later", "create_payment_link", "update_payment_method"].includes(r.decision.action),
+    ).length;
+    const humanReviews = data.results.filter((r) => r.decision.action === "escalate_human").length;
+    const policyBlocks = data.results.filter((r) =>
+      ["stop_limit_reached", "refuse_suspicious"].includes(r.decision.action),
+    ).length;
+    const awaitingPayment = data.results.filter(
+      (r) => r.razorpay_payment_link_id && r.verified_recovered_amount === 0,
+    ).length;
+    const verifiedRecoveries = data.results.filter((r) => r.verified_recovered_amount > 0).length;
+
+    return { safeActions, humanReviews, policyBlocks, awaitingPayment, verifiedRecoveries };
+  }, [data.results]);
+
   async function handleRun() {
     setRunning(true);
     setNotice(null);
@@ -47,6 +65,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
   const score = data.scorecard;
   const connected = data.source === "api";
   const hasData = score.total_cases > 0;
+
   return (
     <main className="dashboardPage">
       <section className="hero">
@@ -69,7 +88,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
             <RefreshCcw size={15} className={running ? "spin" : ""} />
             {running ? "Running pipeline" : "Run evaluation"}
           </Button>
-          <span className="modeLabel">{connected ? "RAZORPAY TEST EVIDENCE" : "BACKEND DISCONNECTED"}</span>
+          <span className="modeLabel">{connected ? "RAZORPAY TEST MODE" : "BACKEND DISCONNECTED"}</span>
         </div>
       </section>
 
@@ -79,6 +98,44 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
       <DecisionInspector results={data.results} policy={score.policy_snapshot} />
 
       <RecoveryCommandDeck results={data.results} policy={score.policy_snapshot} connected={connected} />
+
+      {/* Outcome Matrix */}
+      <section className="outcomeMatrixSection" aria-label="Recovery outcome matrix">
+        <div className="outcomeMatrixHeader">
+          <div>
+            <span className="utilityLabel">OUTCOME MATRIX</span>
+            <h2>Real-time Action Distribution</h2>
+          </div>
+          <span className="matrixBadge">RAZORPAY TEST MODE</span>
+        </div>
+        <div className="matrixGrid">
+          <div className="matrixCard">
+            <span className="matrixCount">{outcomeMatrix.safeActions}</span>
+            <span className="matrixLabel">Safe Automated Actions</span>
+            <small>Within policy bounds</small>
+          </div>
+          <div className="matrixCard">
+            <span className="matrixCount warningText">{outcomeMatrix.humanReviews}</span>
+            <span className="matrixLabel">Human Reviews</span>
+            <small>Uncertainty or high amount</small>
+          </div>
+          <div className="matrixCard">
+            <span className="matrixCount riskText">{outcomeMatrix.policyBlocks}</span>
+            <span className="matrixLabel">Policy Blocks</span>
+            <small>Retries or contact capped</small>
+          </div>
+          <div className="matrixCard">
+            <span className="matrixCount">{outcomeMatrix.awaitingPayment}</span>
+            <span className="matrixLabel">Awaiting Payment</span>
+            <small>Payment link created</small>
+          </div>
+          <div className="matrixCard accentCard">
+            <span className="matrixCount recoveryText">{outcomeMatrix.verifiedRecoveries}</span>
+            <span className="matrixLabel">Verified Recoveries</span>
+            <small>Paid webhook confirmed</small>
+          </div>
+        </div>
+      </section>
 
       <section className="ledger" aria-label="Evaluation scorecard">
         <Metric index={0} label="Diagnosis match" value={score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"} detail={`${score.labeled_cases} human-labelled cases`} />
@@ -126,7 +183,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
         </div>
         <div className="tableWrap">
           <table>
-            <thead><tr><th>Case</th><th>Customer</th><th>Amount</th><th>Cause</th><th>Action</th><th>Verified</th><th><span className="srOnly">Open</span></th></tr></thead>
+            <thead><tr><th>Case</th><th>Customer</th><th>Amount</th><th>Cause</th><th>Action & Rationale</th><th>Verified</th><th><span className="srOnly">Open</span></th></tr></thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr><td colSpan={7} className="emptyTable">No Razorpay test failures received yet. Connect the backend, configure the signed webhook, then create a failed test payment.</td></tr>
@@ -136,14 +193,47 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
                   <td><Link href={`/case/${result.event_id}`}>{result.event_id}</Link><small>{result.event_type.replaceAll("_", " ")}</small></td>
                   <td>{result.customer_name}</td>
                   <td className="number">{money.format(result.amount)}</td>
-                  <td>{result.diagnosis.cause.replaceAll("_", " ")}<small>{result.diagnosis.method} · {(result.diagnosis.confidence * 100).toFixed(0)}%</small></td>
-                  <td><StatusBadge value={result.decision.action} /></td>
+                  <td>{result.diagnosis.cause.replaceAll("_", " ")}<small>{result.diagnosis.method} · {formatConfidence(result.diagnosis.confidence)}</small></td>
+                  <td>
+                    <StatusBadge value={result.decision.action} />
+                    <small className="tableWhyText">{getWhyThisAction(result, score.policy_snapshot)}</small>
+                  </td>
                   <td className="number recovered">{result.verified_recovered_amount ? money.format(result.verified_recovered_amount) : "—"}</td>
                   <td><Link className="rowLink" href={`/case/${result.event_id}`} aria-label={`Open ${result.event_id}`}><ArrowUpRight size={16} /></Link></td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* What makes Reven different */}
+      <section className="differentiationSection" aria-label="What makes Reven different">
+        <div className="diffHeader">
+          <div className="utilityLabel"><ShieldCheck size={14} /> CORE DIFFERENTIATOR</div>
+          <h2>Automation with proof, not blind retries.</h2>
+        </div>
+        <div className="diffGrid">
+          <div className="diffCard">
+            <span className="diffNumber">01</span>
+            <h3>Evidence before action</h3>
+            <p>Diagnosis requires rich processor signals (error code, method, bank, attempt history). Generic evidence fails safe to human review.</p>
+          </div>
+          <div className="diffCard">
+            <span className="diffNumber">02</span>
+            <h3>Policy bounds around AI</h3>
+            <p>Hard financial limits (₹ threshold, retry limit, confidence floor) are strictly code-enforced. AI can diagnose but never bypasses policy.</p>
+          </div>
+          <div className="diffCard">
+            <span className="diffNumber">03</span>
+            <h3>Human review for uncertainty</h3>
+            <p>Low confidence or high-value cases are escalated to human operators, complete with full audit traces and side-by-side feedback tracking.</p>
+          </div>
+          <div className="diffCard">
+            <span className="diffNumber">04</span>
+            <h3>Recovery counted only after paid webhook verification</h3>
+            <p>Generating a link is never counted as recovered revenue. Attribution occurs only when a signed Razorpay paid webhook confirms payment.</p>
+          </div>
         </div>
       </section>
     </main>

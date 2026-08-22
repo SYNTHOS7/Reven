@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 
 import type { PipelineResult, PolicySettings } from "@/lib/types";
+import { formatConfidence } from "@/lib/confidence";
+import { getWhyThisAction } from "@/lib/utils";
 import { StatusBadge } from "./status-badge";
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -52,7 +54,11 @@ export function RecoveryCommandDeck({
           {queue.map((result, index) => (
             <Link className="queueRow" href={`/case/${result.event_id}`} key={result.event_id}>
               <span className="queueIndex">0{index + 1}</span>
-              <div className="queueCase"><strong>{result.event_id}</strong><small>{result.diagnosis.cause.replaceAll("_", " ")} · {(result.diagnosis.confidence * 100).toFixed(0)}% confidence</small></div>
+              <div className="queueCase">
+                <strong>{result.event_id}</strong>
+                <small>{result.diagnosis.cause.replaceAll("_", " ")} · {formatConfidence(result.diagnosis.confidence)} confidence</small>
+                <p className="whyActionSubtext">{getWhyThisAction(result, policy)}</p>
+              </div>
               <StatusBadge value={result.decision.action} />
               <ArrowUpRight size={16} />
             </Link>
@@ -62,7 +68,7 @@ export function RecoveryCommandDeck({
 
       <div className="policyKernel">
         <div className="deckKicker"><BrainCircuit size={14} /> POLICY KERNEL</div>
-        <div className="kernelLine"><span>confidence floor</span><strong>{policy.diagnosis_confidence_escalation_threshold}%</strong></div>
+        <div className="kernelLine"><span>confidence floor</span><strong>{formatConfidence(policy.diagnosis_confidence_escalation_threshold)}</strong></div>
         <div className="kernelLine"><span>approval above</span><strong>{money.format(policy.human_approval_amount_threshold)}</strong></div>
         <div className="kernelLine"><span>retry limit</span><strong>{policy.max_retries_per_payment} / payment</strong></div>
         <div className="integrityList" aria-label="System integrity status">

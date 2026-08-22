@@ -1,5 +1,5 @@
 import { defaultPolicy, disconnectedData } from "./empty-data";
-import type { DashboardData, PipelineResult, PolicySettings } from "./types";
+import type { Action, CaseDetailResponse, DashboardData, PipelineResult, PolicyReplayResponse, PolicySettings } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 
@@ -106,6 +106,61 @@ export async function reconcilePaymentLink(
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     throw new Error(data?.detail ?? "Recovery verification failed");
+  }
+  return response.json();
+}
+
+export async function loadCaseDetails(eventId: string): Promise<CaseDetailResponse | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/events/${eventId}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function submitOperatorFeedback(
+  eventId: string,
+  correctCause: string,
+  correctAction: Action,
+  reviewerNotes: string,
+  adminToken?: string,
+): Promise<{ expected_cause: string; expected_action: string; ground_truth_source: string }> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (adminToken) headers["X-Admin-Token"] = adminToken;
+  const response = await fetch(`${apiUrl}/events/${eventId}/ground-truth`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({
+      correct_cause: correctCause,
+      correct_action: correctAction,
+      reviewer_notes: reviewerNotes,
+    }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Failed to save operator feedback");
+  }
+  return response.json();
+}
+
+export async function runPolicyReplay(
+  eventId: string,
+  policy: PolicySettings,
+): Promise<PolicyReplayResponse> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/events/${eventId}/replay`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event_id: eventId, policy }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Policy replay failed");
   }
   return response.json();
 }

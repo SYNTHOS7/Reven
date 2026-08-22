@@ -1,5 +1,13 @@
 import { defaultPolicy, disconnectedData } from "./empty-data";
-import type { Action, CaseDetailResponse, DashboardData, PipelineResult, PolicyReplayResponse, PolicySettings } from "./types";
+import type {
+  Action,
+  CaseDetailResponse,
+  DashboardData,
+  PipelineResult,
+  PolicyReplayResponse,
+  PolicySettings,
+  RecoveryIntelligenceResponse,
+} from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 
@@ -164,3 +172,15 @@ export async function runPolicyReplay(
   }
   return response.json();
 }
+
+export async function loadRecoveryIntelligence(): Promise<RecoveryIntelligenceResponse | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/metrics/recovery-intelligence`, { cache: "no-store" });
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+

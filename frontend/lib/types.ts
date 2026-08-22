@@ -129,3 +129,62 @@ export interface DashboardData {
   source: "api" | "disconnected";
 }
 
+export interface CauseMetrics {
+  cause: string;
+  total_cases: number;
+  verified_recovered_amount: number;
+  recovery_rate_pct: number | null;
+}
+
+export interface ActionMetrics {
+  action: Action;
+  cases: number;
+  verified_recoveries: number;
+  verified_recovered_amount: number;
+}
+
+export interface ConfidenceDistribution {
+  high_confidence_count: number;
+  low_confidence_count: number;
+}
+
+export interface HumanOverrideMetrics {
+  total_reviewed_cases: number;
+  override_count: number;
+  override_rate_pct: number | null;
+}
+
+export interface WebhookIntegrityMetrics {
+  valid_webhooks_processed: number;
+  duplicate_webhooks_ignored: number;
+  invalid_webhooks_rejected: number;
+}
+
+export interface SafetyAndLearningMetrics {
+  confidence_distribution: ConfidenceDistribution;
+  human_override: HumanOverrideMetrics;
+  webhook_integrity: WebhookIntegrityMetrics;
+}
+
+export interface PrimaryRecoveryMetrics {
+  verified_recovery_amount: number;
+  payment_link_conversion_rate_pct: number | null;
+  created_payment_links_count: number;
+  paid_payment_links_count: number;
+  median_time_to_recovery_minutes: number | null;
+  verified_recovery_cases_count: number;
+  human_review_rate_pct: number | null;
+  total_evaluated_cases: number;
+  escalated_cases_count: number;
+  policy_block_count: number;
+}
+
+export interface RecoveryIntelligenceResponse {
+  primary: PrimaryRecoveryMetrics;
+  by_cause: CauseMetrics[];
+  by_action: ActionMetrics[];
+  safety_and_learning: SafetyAndLearningMetrics;
+  data_source: string;
+}
+
+

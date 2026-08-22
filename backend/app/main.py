@@ -16,6 +16,7 @@ from app.models import (
     PolicyReplayRequest,
     PolicyReplayResponse,
     PolicySettings,
+    RecoveryIntelligenceResponse,
     WebhookResponse,
     utc_now,
 )
@@ -267,8 +268,14 @@ async def reconcile_payment_link(
         raise HTTPException(status_code=409, detail="Razorpay has not reported a positive paid amount")
     repository.record_recovery(result.event_id, result.razorpay_payment_link_id, amount_paid)
     result.verified_recovered_amount = amount_paid
+    result.recovered_at = result.recovered_at or utc_now()
     repository.save_results([result])
     return {"status": "verified", "payment_link_id": result.razorpay_payment_link_id, "amount_recovered": amount_paid}
+
+
+@app.get("/metrics/recovery-intelligence", response_model=RecoveryIntelligenceResponse)
+def get_recovery_intelligence():
+    return compute_recovery_intelligence(repository)
 
 
 @app.post("/webhooks/razorpay", response_model=WebhookResponse)
@@ -281,6 +288,7 @@ async def receive_razorpay_webhook(
     if config.app_env == "production" and not repository.persistent:
         raise HTTPException(status_code=503, detail="Persistent Supabase storage is required in production")
     if not razorpay.verify_webhook(body, x_razorpay_signature):
+        repository.record_rejected_webhook()
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
     payload = json.loads(body)
     event_type = str(payload.get("event", "unknown"))
@@ -315,9 +323,11 @@ async def receive_razorpay_webhook(
         amount_paid = float(entity.get("amount_paid", 0)) / 100
         repository.record_recovery(reven_event_id, payment_link_id, amount_paid)
         result.verified_recovered_amount = amount_paid
+        result.recovered_at = result.recovered_at or utc_now()
         repository.save_results([result])
         return WebhookResponse(status="recovery_recorded", event_id=reven_event_id)
     return WebhookResponse(status="ignored", event_id=webhook_id)
+
 
 
 def hashlib_fallback(body: bytes) -> str:

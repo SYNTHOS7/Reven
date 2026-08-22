@@ -12,6 +12,7 @@ import { Button } from "./ui/button";
 import { DecisionInspector } from "./decision-inspector";
 import { PipelineRail } from "./pipeline-rail";
 import { RecoveryCommandDeck } from "./recovery-command-deck";
+import { RecoveryIntelligence } from "./recovery-intelligence";
 import { StatusBadge } from "./status-badge";
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -94,6 +95,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
 
       <PipelineRail running={running} />
       {notice && <div className="notice" role="status">{notice}</div>}
+
+      <RecoveryIntelligence />
 
       <DecisionInspector results={data.results} policy={score.policy_snapshot} />
 

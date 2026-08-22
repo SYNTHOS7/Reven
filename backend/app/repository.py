@@ -17,6 +17,9 @@ class Repository:
         self.scorecards: list[ScorecardRun] = []
         self.policy = PolicySettings()
         self.processed_webhook_ids: set[str] = set()
+        self.valid_webhooks_processed = 0
+        self.duplicate_webhooks_ignored = 0
+        self.invalid_webhooks_rejected = 0
         self.actual_test_recovery = 0.0
         self.storage_error: str | None = None
         self._lock = Lock()
@@ -113,8 +116,14 @@ class Repository:
                 (item.razorpay_payment_link_id for item in sorted(prior, key=lambda item: item.created_at, reverse=True) if item.razorpay_payment_link_id),
                 None,
             )
+            prior_recovered_at = next(
+                (item.recovered_at for item in sorted(prior, key=lambda item: item.created_at, reverse=True) if item.recovered_at),
+                None,
+            )
             if payment_link_id and not result.razorpay_payment_link_id:
                 result.razorpay_payment_link_id = payment_link_id
+            if prior_recovered_at and not result.recovered_at:
+                result.recovered_at = prior_recovered_at
             result.verified_recovered_amount = max(
                 result.verified_recovered_amount,
                 *(item.verified_recovered_amount for item in prior),
@@ -173,6 +182,7 @@ class Repository:
     def mark_webhook_processed(self, event_id: str, event_type: str = "unknown", body: bytes = b"") -> bool:
         with self._lock:
             if event_id in self.processed_webhook_ids:
+                self.duplicate_webhooks_ignored += 1
                 return False
             if self.persistent:
                 response = httpx.post(
@@ -181,10 +191,16 @@ class Repository:
                     timeout=12,
                 )
                 if response.status_code == 409:
+                    self.duplicate_webhooks_ignored += 1
                     return False
                 response.raise_for_status()
             self.processed_webhook_ids.add(event_id)
+            self.valid_webhooks_processed += 1
             return True
+
+    def record_rejected_webhook(self) -> None:
+        with self._lock:
+            self.invalid_webhooks_rejected += 1
 
     def record_recovery(self, event_id: str | None, external_reference: str | None, amount: float) -> None:
         self.actual_test_recovery += amount
@@ -206,6 +222,7 @@ class Repository:
             timeout=12,
         )
         response.raise_for_status()
+
 
 
 InMemoryRepository = Repository

@@ -112,6 +112,7 @@ class PipelineResult(BaseModel):
     generated_message: str | None = None
     verified_recovered_amount: float = 0
     razorpay_payment_link_id: str | None = None
+    recovered_at: datetime | None = None
     created_at: datetime = Field(default_factory=utc_now)
     source: str = "razorpay_test"
     source_event_id: str | None = None
@@ -180,7 +181,66 @@ class PolicyReplayResponse(BaseModel):
     disclaimer: str = "Dry run — no customer action, message, payment link, or revenue metric was changed."
 
 
+class CauseMetrics(BaseModel):
+    cause: str
+    total_cases: int
+    verified_recovered_amount: float
+    recovery_rate_pct: float | None = None
+
+
+class ActionMetrics(BaseModel):
+    action: Action
+    cases: int
+    verified_recoveries: int
+    verified_recovered_amount: float
+
+
+class ConfidenceDistribution(BaseModel):
+    high_confidence_count: int
+    low_confidence_count: int
+
+
+class HumanOverrideMetrics(BaseModel):
+    total_reviewed_cases: int
+    override_count: int
+    override_rate_pct: float | None = None
+
+
+class WebhookIntegrityMetrics(BaseModel):
+    valid_webhooks_processed: int
+    duplicate_webhooks_ignored: int
+    invalid_webhooks_rejected: int
+
+
+class SafetyAndLearningMetrics(BaseModel):
+    confidence_distribution: ConfidenceDistribution
+    human_override: HumanOverrideMetrics
+    webhook_integrity: WebhookIntegrityMetrics
+
+
+class PrimaryRecoveryMetrics(BaseModel):
+    verified_recovery_amount: float
+    payment_link_conversion_rate_pct: float | None = None
+    created_payment_links_count: int
+    paid_payment_links_count: int
+    median_time_to_recovery_minutes: float | None = None
+    verified_recovery_cases_count: int
+    human_review_rate_pct: float | None = None
+    total_evaluated_cases: int
+    escalated_cases_count: int
+    policy_block_count: int
+
+
+class RecoveryIntelligenceResponse(BaseModel):
+    primary: PrimaryRecoveryMetrics
+    by_cause: list[CauseMetrics]
+    by_action: list[ActionMetrics]
+    safety_and_learning: SafetyAndLearningMetrics
+    data_source: str = "razorpay_test"
+
+
 class WebhookResponse(BaseModel):
     status: str
     event_id: str | None = None
+
 

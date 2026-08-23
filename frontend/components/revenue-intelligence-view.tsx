@@ -56,7 +56,7 @@ export function RevenueIntelligenceView() {
       {/* Top Source Mode Strip */}
       <div className="sourceIndicatorStrip">
         <div className="sourceIndicatorLeft">
-          <span className="sourcePillTitle">ACTIVE TELEMETRY SOURCE:</span>
+          <span className="sourcePillTitle">ENVIRONMENT:</span>
           {activeDataSource === "demo" ? (
             <span className="sourceIndicatorBadge badgeDemo">
               <Sparkles size={13} /> SIMULATED DEMO DATA (500 TRANSACTIONS)

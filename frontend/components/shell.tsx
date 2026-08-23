@@ -37,7 +37,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <span className="brandMark">R</span>
           <div className="flex flex-col">
             <span className="font-bold tracking-widest text-primary">REVEN</span>
-            <span className="text-[9px] text-text-technical tracking-wider -mt-0.5">TERMINAL v1.0.4</span>
+            <span className="text-[9px] text-text-technical tracking-wider -mt-0.5 font-medium">REVENUE RECOVERY</span>
           </div>
         </Link>
 
@@ -162,7 +162,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </nav>
 
             <div className="mobileDrawerFooter">
-              <span className="utilityLabel">ACTIVE TELEMETRY MODE</span>
+              <span className="utilityLabel">ACTIVE ENVIRONMENT</span>
               <div className="mobileModeToggleGroup">
                 <button
                   type="button"

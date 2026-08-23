@@ -87,10 +87,10 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
 
   return (
     <main className="dashboardPage">
-      {/* Telemetry Source Indicator Bar */}
+      {/* Environment Indicator Bar */}
       <div className="sourceIndicatorStrip">
         <div className="sourceIndicatorLeft">
-          <span className="sourcePillTitle">ACTIVE TELEMETRY VIEW:</span>
+          <span className="sourcePillTitle">ENVIRONMENT:</span>
           <span className="sourceIndicatorBadge badgeLive">
             <span className="liveDot" /> LIVE RAZORPAY TEST MODE (SIGNED WEBHOOK LEDGER)
           </span>
@@ -102,8 +102,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
         </div>
       </div>
 
-      {/* Stitch 5-Column Metric Ribbon */}
-      <section className="terminalMetricRibbon" aria-label="Terminal Metrics">
+      {/* 5-Column Metric Ribbon */}
+      <section className="terminalMetricRibbon" aria-label="Revenue Metrics">
         <div className="terminalMetricCol">
           <span className="terminalMetricLabel">Revenue at Risk</span>
           <span className="terminalMetricValue risk">{money.format(revenueAtRisk || 42089)}</span>
@@ -158,14 +158,14 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
           <EvidenceChain />
         </div>
         <div className="lg:col-span-4">
-          {/* Live Razorpay Evidence Terminal Log (from Stitch) */}
+          {/* Live Razorpay Evidence Stream */}
           <div className="terminalLogCard h-full">
             <div className="terminalLogHeader">
               <div className="terminalLogTitle">
                 <span className="w-2 h-2 rounded-full bg-status-amber animate-pulse" />
-                <span>Live Telemetry Stream</span>
+                <span>Live Event Feed</span>
               </div>
-              <span className="font-mono text-[10px] text-text-technical uppercase">SYS_LOG</span>
+              <span className="font-mono text-[10px] text-text-technical uppercase">LIVE STREAM</span>
             </div>
             <div className="terminalLogContent">
               <div><span className="logTag warn">[WARN]</span> 14:28:44 Gateway timeout detected.</div>
@@ -175,7 +175,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
               <div><span className="logTag info">[INFO]</span> 14:28:46 Evaluating policy ruleset [ID: POL-882]</div>
               <div><span className="logTag warn">[WARN]</span> 14:28:47 Soft decline: 'insufficient_funds'</div>
               <div><span className="logTag actn">[ACTN]</span> 14:28:47 Queued smart retry strategy T+2h</div>
-              <div className="mt-2 text-text-primary text-[11px] font-bold">● Telemetry sync active.</div>
+              <div className="mt-2 text-text-primary text-[11px] font-bold">● Real-time event sync active.</div>
             </div>
           </div>
         </div>

@@ -2,59 +2,182 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTransactions } from "@/lib/transaction-context";
-import { Activity, ArrowRight, BarChart3, Database, ShieldAlert, Sparkles, X } from "lucide-react";
+import {
+  Activity,
+  ArrowRight,
+  Database,
+  Menu,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { activeDataSource, setActiveDataSource, notification, clearNotification } = useTransactions();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  function toggleMode() {
+    setActiveDataSource(activeDataSource === "live" ? "demo" : "live");
+  }
+
+  const isOverview = pathname === "/";
+  const isIntelligence = pathname === "/intelligence" || pathname === "/revenue";
+  const isQueue = pathname === "/queue" || pathname === "/recovery-queue";
+  const isData = pathname === "/data" || pathname === "/transactions" || pathname === "/transaction-data";
+  const isPolicy = pathname === "/settings";
 
   return (
     <div className="siteShell">
       <header className="topbar">
-        <Link href="/" className="brand" aria-label="Reven dashboard">
+        {/* Left: Brand */}
+        <Link href="/" className="brand" aria-label="Reven dashboard" onClick={() => setMobileMenuOpen(false)}>
           <span className="brandMark">R</span>
           <span>REVEN</span>
         </Link>
-        <nav aria-label="Primary navigation" className="mainNav">
-          <Link href="/" className={pathname === "/" ? "activeNavLink" : ""}>
+
+        {/* Center: Simplified Desktop Navigation */}
+        <nav aria-label="Primary navigation" className="desktopNav">
+          <Link href="/" className={isOverview ? "activeNavLink" : ""}>
             Overview
           </Link>
-          <Link href="/revenue" className={pathname === "/revenue" ? "activeNavLink" : ""}>
-            Revenue Intelligence
+          <Link href="/intelligence" className={isIntelligence ? "activeNavLink" : ""}>
+            Intelligence
           </Link>
-          <Link href="/queue" className={pathname === "/queue" ? "activeNavLink" : ""}>
+          <Link href="/queue" className={isQueue ? "activeNavLink" : ""}>
             Recovery Queue
           </Link>
-          <Link href="/transactions" className={pathname === "/transactions" || pathname === "/transaction-data" ? "activeNavLink" : ""}>
-            Transaction Data
+          <Link href="/data" className={isData ? "activeNavLink" : ""}>
+            Data
           </Link>
-          <Link href="/settings" className={pathname === "/settings" ? "activeNavLink" : ""}>
+          <Link href="/settings" className={isPolicy ? "activeNavLink" : ""}>
             Policy
           </Link>
         </nav>
-        <div className="systemStateContainer">
-          <div className="sourceToggleGroup" role="group" aria-label="Data source mode">
-            <button
-              type="button"
-              onClick={() => setActiveDataSource("live")}
-              className={`sourceBadgeBtn ${activeDataSource === "live" ? "activeLive" : ""}`}
-              title="Signed Razorpay Webhook Events"
-            >
-              <span className="liveDot" /> LIVE RAZORPAY TEST
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveDataSource("demo")}
-              className={`sourceBadgeBtn ${activeDataSource === "demo" ? "activeDemo" : ""}`}
-              title="Seeded / Uploaded CSV Demo Dataset"
-            >
-              <Sparkles size={11} /> SIMULATED DEMO
-            </button>
-          </div>
+
+        {/* Right: Compact Mode Pill & Mobile Menu Toggle */}
+        <div className="topbarRight">
+          <button
+            type="button"
+            onClick={toggleMode}
+            className={`compactModePill ${activeDataSource === "live" ? "pillLive" : "pillDemo"}`}
+            title={`Click to switch to ${activeDataSource === "live" ? "Demo Sandbox" : "Live Test Mode"}`}
+            aria-label={`Current mode: ${activeDataSource === "live" ? "Live Test Mode" : "Demo Sandbox"}. Click to toggle.`}
+          >
+            {activeDataSource === "live" ? (
+              <>
+                <span className="liveDot" />
+                <span>Live Test Mode</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={11} className="sparkleMini" />
+                <span>Demo Sandbox</span>
+              </>
+            )}
+          </button>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            type="button"
+            className="mobileMenuToggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
       </header>
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="mobileMenuOverlay" onClick={() => setMobileMenuOpen(false)}>
+          <div className="mobileMenuDrawer" onClick={(e) => e.stopPropagation()}>
+            <div className="mobileDrawerHeader">
+              <span className="utilityLabel">NAVIGATION</span>
+              <button
+                type="button"
+                className="closeDrawerBtn"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <nav className="mobileNavLinks" aria-label="Mobile navigation">
+              <Link
+                href="/"
+                className={`mobileNavLink ${isOverview ? "activeMobileLink" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Overview</span>
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                href="/intelligence"
+                className={`mobileNavLink ${isIntelligence ? "activeMobileLink" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Intelligence</span>
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                href="/queue"
+                className={`mobileNavLink ${isQueue ? "activeMobileLink" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Recovery Queue</span>
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                href="/data"
+                className={`mobileNavLink ${isData ? "activeMobileLink" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Data</span>
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                href="/settings"
+                className={`mobileNavLink ${isPolicy ? "activeMobileLink" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Policy</span>
+                <ArrowRight size={14} />
+              </Link>
+            </nav>
+
+            <div className="mobileDrawerFooter">
+              <span className="utilityLabel">ACTIVE TELEMETRY MODE</span>
+              <div className="mobileModeToggleGroup">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveDataSource("live");
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`mobileModeBtn ${activeDataSource === "live" ? "activeLive" : ""}`}
+                >
+                  <span className="liveDot" /> Live Test Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveDataSource("demo");
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`mobileModeBtn ${activeDataSource === "demo" ? "activeDemo" : ""}`}
+                >
+                  <Sparkles size={12} /> Demo Sandbox
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global Notification Toast */}
       {notification && (
@@ -72,17 +195,17 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <footer className="footer">
         <div className="footerLeft">
-          <span>REVEN / REVENUE INTELLIGENCE & RECOVERY CONTROL</span>
+          <span>REVEN / RECOVERY CONTROL</span>
           <span className="footerDivider">·</span>
           <span className="footerDisclaimer">
             {activeDataSource === "demo"
-              ? "DEMO MODE — All communications & links are simulated. No live cards/PII stored."
+              ? "DEMO DATA — simulated, no customer communication is sent."
               : "RAZORPAY TEST MODE ONLY — Real signed webhook verification active."}
           </span>
         </div>
         <div className="footerRight">
-          <Link href="/transactions" className="footerLink">
-            <Database size={12} /> CSV Ingestion
+          <Link href="/data" className="footerLink">
+            <Database size={12} /> Data
           </Link>
           <Link href="/queue" className="footerLink">
             <Activity size={12} /> Recovery Queue

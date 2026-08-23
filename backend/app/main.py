@@ -24,6 +24,7 @@ from app.models import (
 )
 from app.pipeline.engine import run_event
 from app.razorpay_client import RazorpayClient
+from app.recovery_intelligence import compute_recovery_intelligence
 from app.repository import repository
 
 config = get_config()

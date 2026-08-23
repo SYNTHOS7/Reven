@@ -5,18 +5,14 @@ import {
   AlertCircle,
   ArrowDownToLine,
   CheckCircle2,
-  Database,
-  FileSpreadsheet,
-  FileText,
   Info,
   RefreshCw,
   Search,
   Sparkles,
-  Trash2,
   Upload,
 } from "lucide-react";
 import { useTransactions } from "@/lib/transaction-context";
-import type { CSVValidationError, Transaction } from "@/lib/types";
+import type { CSVValidationError } from "@/lib/types";
 
 const money = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -31,7 +27,6 @@ export function TransactionDataView() {
     resetDemo,
     uploadCsvText,
     downloadSampleCsv,
-    isSimulated,
   } = useTransactions();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -152,10 +147,10 @@ export function TransactionDataView() {
 
       <section className="pageIntro">
         <div className="eyebrow">
-          <span>01</span> TRANSACTION DATA INGESTION
+          <span>01</span> DATA &amp; CSV INGESTION
         </div>
         <h1>
-          Merchant Transaction Ledger &amp; <em>CSV Pipeline</em>
+          Transaction Data &amp; <em>CSV Pipeline</em>
         </h1>
         <p>
           Upload your payment failure logs or explore the 500-transaction seeded online-course

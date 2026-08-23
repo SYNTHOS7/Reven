@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Activity,
   ChevronDown,
@@ -8,6 +8,7 @@ import {
   Clock,
   FileCheck,
   Percent,
+  RefreshCw,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -28,20 +29,32 @@ export function RecoveryIntelligence() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
+  const fetchMetrics = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await loadRecoveryIntelligence();
+      setData(res);
+    } catch {
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    let active = true;
+    let isMounted = true;
     loadRecoveryIntelligence()
       .then((res) => {
-        if (active) setData(res);
+        if (isMounted) setData(res);
       })
       .catch(() => {
-        if (active) setData(null);
+        if (isMounted) setData(null);
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (isMounted) setLoading(false);
       });
     return () => {
-      active = false;
+      isMounted = false;
     };
   }, []);
 
@@ -49,10 +62,15 @@ export function RecoveryIntelligence() {
     return (
       <section className="recoveryIntelSection" aria-label="Recovery Intelligence Metrics">
         <div className="intelHeader">
-          <div className="utilityLabel"><Sparkles size={14} /> RECOVERY INTELLIGENCE</div>
+          <div className="utilityLabel">
+            <Sparkles size={14} /> RECOVERY INTELLIGENCE
+          </div>
           <h2>What Reven is learning from real recovery evidence.</h2>
         </div>
-        <div className="intelLoading">Loading recovery intelligence metrics...</div>
+        <div className="intelLoading">
+          <RefreshCw size={16} className="spin" />
+          <span>Loading recovery intelligence metrics...</span>
+        </div>
       </section>
     );
   }
@@ -61,11 +79,24 @@ export function RecoveryIntelligence() {
     return (
       <section className="recoveryIntelSection" aria-label="Recovery Intelligence Metrics">
         <div className="intelHeader">
-          <div className="utilityLabel"><Sparkles size={14} /> RECOVERY INTELLIGENCE</div>
-          <h2>What Reven is learning from real recovery evidence.</h2>
+          <div>
+            <div className="eyebrow">
+              <Sparkles size={14} />
+              <span>RECOVERY INTELLIGENCE</span>
+            </div>
+            <h2>What Reven is learning from real recovery evidence.</h2>
+          </div>
+          <button
+            type="button"
+            onClick={fetchMetrics}
+            className="button buttonSmall buttonOutline retryBtn"
+          >
+            <RefreshCw size={13} />
+            <span>Retry</span>
+          </button>
         </div>
-        <div className="intelEmpty">
-          Backend API disconnected or no recovery intelligence metrics available yet.
+        <div className="intelEmptyState">
+          <p>Recovery Intelligence is temporarily unavailable. Retry after the API is online.</p>
         </div>
       </section>
     );
@@ -251,7 +282,7 @@ export function RecoveryIntelligence() {
             {/* C. Safety and Learning */}
             <div className="breakdownCol safetyCol">
               <div className="breakdownHeading">
-                <span className="utilityLabel">C. SAFETY & LEARNING</span>
+                <span className="utilityLabel">C. SAFETY &amp; LEARNING</span>
                 <h3>Control Metrics</h3>
               </div>
 

@@ -55,7 +55,7 @@ export function generateSeededDemoTransactions(): Transaction[] {
 
   let idCounter = 1000;
 
-  function makeCustomer(idx: number) {
+  function makeCustomer() {
     const fn = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)];
     const ln = LAST_NAMES[Math.floor(rand() * LAST_NAMES.length)];
     const name = `${fn} ${ln}`;
@@ -71,7 +71,7 @@ export function generateSeededDemoTransactions(): Transaction[] {
 
   for (let i = 0; i < 20 && currentRecovered < targetRecovered; i++) {
     idCounter++;
-    const cust = makeCustomer(i);
+    const cust = makeCustomer();
     const amt = recoveredAmounts[i % recoveredAmounts.length];
     if (currentRecovered + amt > targetRecovered + 1000) {
       const remaining = targetRecovered - currentRecovered;
@@ -145,7 +145,7 @@ export function generateSeededDemoTransactions(): Transaction[] {
   while (currentLost < targetLost) {
     idCounter++;
     failIndex++;
-    const cust = makeCustomer(failIndex + 100);
+    const cust = makeCustomer();
     const chosenAmt = highTicketTiers[failIndex % highTicketTiers.length];
     const needed = targetLost - currentLost;
     const finalAmt = needed < chosenAmt ? needed : chosenAmt;
@@ -193,7 +193,7 @@ export function generateSeededDemoTransactions(): Transaction[] {
   const remainingCount = 500 - transactions.length;
   for (let i = 0; i < remainingCount; i++) {
     idCounter++;
-    const cust = makeCustomer(i + 300);
+    const cust = makeCustomer();
     const tier = COURSE_TIERS[Math.floor(rand() * COURSE_TIERS.length)];
     const methodChoice = rand() < 0.55 ? "upi" : rand() < 0.85 ? "card" : "netbanking";
     const dateStr = dates[i % dates.length];

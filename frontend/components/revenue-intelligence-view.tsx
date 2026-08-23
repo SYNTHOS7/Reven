@@ -7,21 +7,14 @@ import {
   AlertTriangle,
   ArrowRight,
   ArrowUpRight,
-  BarChart3,
   CheckCircle,
-  CreditCard,
-  HelpCircle,
   Percent,
-  Radio,
-  ShieldAlert,
   Sparkles,
   TrendingUp,
   Users,
-  Wallet,
   Zap,
 } from "lucide-react";
 import { useTransactions } from "@/lib/transaction-context";
-import type { FailureReasonStat, Transaction } from "@/lib/types";
 
 const money = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -34,11 +27,8 @@ export function RevenueIntelligenceView() {
     metrics,
     activeDataSource,
     setActiveDataSource,
-    performAction,
-    isSimulated,
   } = useTransactions();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "failures" | "trends">("overview");
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
 

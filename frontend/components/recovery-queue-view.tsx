@@ -2,20 +2,12 @@
 
 import React, { useMemo, useState } from "react";
 import {
-  AlertTriangle,
-  ArrowDownUp,
-  ArrowUpRight,
   CheckCircle2,
-  ChevronDown,
   Copy,
   ExternalLink,
-  Filter,
   Flame,
-  Info,
   Mail,
   MessageSquare,
-  Play,
-  RotateCw,
   Search,
   Send,
   ShieldAlert,
@@ -25,7 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useTransactions } from "@/lib/transaction-context";
-import type { DemoActionType, Transaction } from "@/lib/types";
+import type { Transaction } from "@/lib/types";
 
 const money = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -38,8 +30,6 @@ export function RecoveryQueueView() {
     transactions,
     performAction,
     recoverAllHighPriority,
-    isSimulated,
-    lastActionSummary,
   } = useTransactions();
 
   // Search and Filters
@@ -72,7 +62,7 @@ export function RecoveryQueueView() {
 
   // Filter and Sort Logic
   const filteredAndSorted = useMemo(() => {
-    let result = transactions.filter((tx) => {
+    const result = transactions.filter((tx) => {
       // Search
       if (query) {
         const q = query.toLowerCase();
@@ -243,7 +233,7 @@ export function RecoveryQueueView() {
             <select
               value={amountFilter}
               onChange={(e) => {
-                setAmountFilter(e.target.value as any);
+                setAmountFilter(e.target.value as "all" | "high" | "mid" | "low");
                 setPage(1);
               }}
               className="filterSelect"
@@ -301,7 +291,7 @@ export function RecoveryQueueView() {
             <select
               value={probabilityFilter}
               onChange={(e) => {
-                setProbabilityFilter(e.target.value as any);
+                setProbabilityFilter(e.target.value as "all" | "high" | "med" | "low");
                 setPage(1);
               }}
               className="filterSelect"

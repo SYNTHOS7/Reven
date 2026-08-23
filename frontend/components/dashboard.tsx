@@ -78,8 +78,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
           </span>
         </div>
         <div className="sourceIndicatorRight">
-          <Link href="/revenue" className="sourceIndicatorBadge badgeDemo">
-            <Sparkles size={12} /> Switch to Simulated Revenue Intelligence →
+          <Link href="/intelligence" className="sourceIndicatorBadge badgeDemo">
+            <Sparkles size={12} /> Switch to Simulated Intelligence →
           </Link>
         </div>
       </div>

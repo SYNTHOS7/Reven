@@ -1,5 +1,4 @@
 import type {
-  DemoActionType,
   FailureReasonStat,
   RecoveryTrendPoint,
   RevenueIntelligenceMetrics,
@@ -226,7 +225,7 @@ export function computeRevenueIntelligence(transactions: Transaction[]): Revenue
 
   // Failure Reason Stats array sorted by lostAmount desc
   const failureReasonStats: FailureReasonStat[] = Object.entries(failureReasonMap)
-    .filter(([_, data]) => data.count > 0)
+    .filter(([, data]) => data.count > 0)
     .map(([key, data]) => ({
       reason: key,
       label: data.label,

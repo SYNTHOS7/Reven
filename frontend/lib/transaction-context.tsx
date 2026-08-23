@@ -37,8 +37,33 @@ const STORAGE_KEY = "reven_demo_transactions_v2";
 const SOURCE_KEY = "reven_data_source_mode";
 
 export function TransactionProvider({ children }: { children: React.ReactNode }) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [activeDataSource, setActiveDataSourceState] = useState<"demo" | "live">("demo");
+  const [activeDataSource, setActiveDataSourceState] = useState<"demo" | "live">(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedSource = localStorage.getItem(SOURCE_KEY) as "demo" | "live" | null;
+        if (savedSource === "live" || savedSource === "demo") return savedSource;
+      } catch {
+        // ignore
+      }
+    }
+    return "demo";
+  });
+
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return generateSeededDemoTransactions();
+  });
+
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "info";
     message: string;
@@ -48,39 +73,7 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     amount: number;
     timestamp: number;
   } | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Initialize from LocalStorage or Seeded Data
-  useEffect(() => {
-    try {
-      const savedSource = localStorage.getItem(SOURCE_KEY) as "demo" | "live" | null;
-      if (savedSource === "live" || savedSource === "demo") {
-        setActiveDataSourceState(savedSource);
-      }
-
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setTransactions(parsed);
-          setIsInitialized(true);
-          return;
-        }
-      }
-    } catch {
-      // Fallback
-    }
-
-    // Default: initialize with seeded demo dataset
-    const seeded = generateSeededDemoTransactions();
-    setTransactions(seeded);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-    } catch {
-      // ignore
-    }
-    setIsInitialized(true);
-  }, []);
+  const [isInitialized] = useState(true);
 
   // Save to LocalStorage whenever transactions change
   useEffect(() => {

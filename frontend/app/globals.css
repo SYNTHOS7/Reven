@@ -1,26 +1,67 @@
 :root {
-  --carbon: #000;
-  --panel: #080a0a;
-  --panel-raised: #0d1010;
-  --grid: #1a1d1c;
-  --grid-soft: rgba(255, 255, 255, 0.055);
-  --paper: #f2f0e9;
-  --muted: #8f9692;
-  --recovery: #39d98a;
-  --warning: #f4b740;
-  --risk: #c93a3a;
+  --carbon: #050505;
+  --background: #131313;
+  --surface: #131313;
+  --surface-lowest: #0e0e0e;
+  --surface-low: #1c1b1b;
+  --surface-container: #201f1f;
+  --surface-high: #2a2a2a;
+  --surface-highest: #353534;
+  --surface-hover: #161616;
+  --panel: #0e0e0e;
+  --panel-raised: #1c1b1b;
+  --grid: #242424;
+  --grid-soft: rgba(255, 255, 255, 0.04);
+  --border-subtle: #242424;
+  --border-strong: #343434;
+  --paper: #F5F5F5;
+  --on-surface: #e5e2e1;
+  --on-surface-variant: #bacbbc;
+  --muted: #8E8E8E;
+  --text-technical: #8E8E8E;
+  --text-primary: #F5F5F5;
+  --recovery: #26E38A;
+  --primary: #26E38A;
+  --primary-container: #26E38A;
+  --primary-light: #62ffa7;
+  --warning: #F5B942;
+  --status-amber: #F5B942;
+  --risk: #FF6262;
+  --status-red: #FF6262;
   --max-width: 1440px;
-  --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-  --sans: "IBM Plex Sans", Inter, Arial, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; background: var(--carbon); }
-body { margin: 0; background: var(--carbon); color: var(--paper); font-family: var(--sans); min-width: 320px; }
-body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .62; background-image: linear-gradient(var(--grid-soft) 1px, transparent 1px), linear-gradient(90deg, var(--grid-soft) 1px, transparent 1px); background-size: 100% 72px, 112px 100%; mask-image: linear-gradient(to bottom, black 0%, transparent 86%); z-index: 0; }
+body { margin: 0; background: var(--background); color: var(--paper); font-family: var(--sans); min-width: 320px; }
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .45; background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px), linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(to bottom, black 0%, transparent 88%); z-index: 0; }
 a { color: inherit; text-decoration: none; }
-button, input { font: inherit; }
-button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--recovery); outline-offset: 3px; }
+button, input, select { font: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--recovery); outline-offset: 2px; }
+
+/* Custom scrollbar for Midnight Terminal */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #050505; }
+::-webkit-scrollbar-thumb { background: #242424; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #343434; }
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
 .siteShell { position: relative; z-index: 1; width: min(100%, var(--max-width)); margin: 0 auto; border-inline: 1px solid var(--grid-soft); min-height: 100vh; }
 .topbar { height: 64px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 28px; border-bottom: 1px solid var(--grid); background: rgba(0,0,0,.88); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 20; }
 .brand { display: flex; gap: 10px; align-items: center; font: 650 13px/1 var(--mono); letter-spacing: .14em; }
@@ -1385,4 +1426,310 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
   .whyDrawer { width: 100vw; }
   .whyThresholdRow { grid-template-columns: 8px 1fr auto; }
   .thresholdValue { display: none; }
+}
+
+/* ==========================================================================
+   MIDNIGHT TERMINAL DESIGN SYSTEM COMPONENTS
+   ========================================================================== */
+
+/* Sub Header Banner */
+.terminalSubNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: var(--surface-lowest);
+  border-bottom: 1px solid var(--border-strong);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.terminalBrandBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.terminalVersionTag {
+  color: var(--text-technical);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 5-Column Metric Ribbon */
+.terminalMetricRibbon {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-lowest);
+  margin-bottom: 24px;
+}
+
+.terminalMetricCol {
+  padding: 20px 24px;
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+}
+
+.terminalMetricCol:last-child {
+  border-right: none;
+}
+
+.terminalMetricLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-technical);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.terminalMetricValue {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.terminalMetricValue.risk { color: var(--status-red); }
+.terminalMetricValue.recovered { color: var(--primary); }
+.terminalMetricValue.rate { color: var(--text-primary); }
+.terminalMetricValue.review { color: var(--status-amber); }
+.terminalMetricValue.blocked { color: var(--text-technical); }
+
+/* Live Terminal Log Stream */
+.terminalLogCard {
+  border: 1px solid var(--border-strong);
+  background: #050505;
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+.terminalLogHeader {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--surface-high);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.terminalLogTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.terminalLogContent {
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-technical);
+  overflow-y: auto;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logTag {
+  font-weight: 700;
+  display: inline-block;
+  min-width: 48px;
+}
+
+.logTag.warn { color: var(--status-amber); }
+.logTag.info { color: var(--on-surface-variant); }
+.logTag.actn { color: var(--primary); }
+.logTag.err { color: var(--status-red); }
+
+/* Stitch Action Deck & Filter Toolbar */
+.stitchFilterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 16px;
+}
+
+.stitchFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 12px;
+  border-right: 1px solid var(--border-subtle);
+  color: var(--text-technical);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.stitchSelect {
+  background: #0e0e0e;
+  border: 1px solid var(--border-subtle);
+  color: var(--on-surface);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.stitchSelect:focus {
+  border-color: var(--primary);
+}
+
+.stitchInput {
+  background: #0e0e0e;
+  border: 1px solid var(--border-subtle);
+  color: var(--on-surface);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.stitchInput:focus {
+  border-color: var(--primary);
+}
+
+/* Micro-dot Status Badges */
+.stitchBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.stitchBadgeDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.stitchBadge-recovered {
+  background: rgba(38, 227, 138, 0.1);
+  border-color: rgba(38, 227, 138, 0.3);
+  color: var(--primary);
+}
+.stitchBadge-recovered .stitchBadgeDot {
+  background: var(--primary);
+}
+
+.stitchBadge-review {
+  background: rgba(245, 185, 66, 0.1);
+  border-color: rgba(245, 185, 66, 0.3);
+  color: var(--status-amber);
+}
+.stitchBadge-review .stitchBadgeDot {
+  background: var(--status-amber);
+}
+
+.stitchBadge-failed, .stitchBadge-risk {
+  background: rgba(255, 98, 98, 0.1);
+  border-color: rgba(255, 98, 98, 0.3);
+  color: var(--status-red);
+}
+.stitchBadge-failed .stitchBadgeDot, .stitchBadge-risk .stitchBadgeDot {
+  background: var(--status-red);
+}
+
+.stitchBadge-neutral {
+  background: rgba(142, 142, 142, 0.1);
+  border-color: rgba(142, 142, 142, 0.25);
+  color: var(--text-technical);
+}
+.stitchBadge-neutral .stitchBadgeDot {
+  background: var(--text-technical);
+}
+
+/* Button Primary Midnight */
+.btnMidnightPrimary {
+  background: var(--primary);
+  color: #050505;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  min-height: 40px;
+  border: 1px solid var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btnMidnightPrimary:hover {
+  background: var(--primary-light);
+}
+
+.btnMidnightSecondary {
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  min-height: 40px;
+  border: 1px solid var(--border-subtle);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btnMidnightSecondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+@media (max-width: 1024px) {
+  .terminalMetricRibbon {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .terminalMetricCol {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 640px) {
+  .terminalMetricRibbon {
+    grid-template-columns: 1fr;
+  }
 }

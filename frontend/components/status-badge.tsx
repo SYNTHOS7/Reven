@@ -10,6 +10,10 @@ const labels: Record<string, string> = {
   update_payment_method: "Update payment method",
   awaiting_payment: "Recovery link created — awaiting payment",
   verified_recovered: "Verified recovered by Razorpay webhook",
+  recovered: "Recovered",
+  failed: "Failed",
+  pending: "Pending",
+  review: "Review",
 };
 
 const safe = new Set([
@@ -22,6 +26,9 @@ const safe = new Set([
   "Retry scheduled",
   "Update payment method",
   "Verified recovered by Razorpay webhook",
+  "recovered",
+  "Recovered",
+  "RECOVERED",
 ]);
 
 const warning = new Set([
@@ -29,17 +36,28 @@ const warning = new Set([
   "unknown",
   "Human review required",
   "Recovery link created — awaiting payment",
+  "review",
+  "Review",
+  "REVIEW",
+  "pending",
+  "Pending",
 ]);
 
 export function StatusBadge({ value }: { value: string }) {
   const displayLabel = labels[value] || value.replaceAll("_", " ");
   const tone = safe.has(value) || safe.has(displayLabel)
-    ? "safe"
+    ? "recovered"
     : warning.has(value) || warning.has(displayLabel)
-    ? "warning"
-    : value.includes("suspicious") || value.includes("refuse") || value.includes("Blocked")
+    ? "review"
+    : value.includes("suspicious") || value.includes("refuse") || value.includes("Blocked") || value.toLowerCase().includes("fail")
     ? "risk"
     : "neutral";
 
-  return <span className={cn("statusBadge", `status-${tone}`)}>{displayLabel}</span>;
+  return (
+    <span className={cn("stitchBadge", `stitchBadge-${tone}`)}>
+      <span className="stitchBadgeDot" />
+      <span>{displayLabel}</span>
+    </span>
+  );
 }
+

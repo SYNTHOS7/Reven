@@ -30,14 +30,18 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="siteShell">
+      {/* Top Header Bar */}
       <header className="topbar">
         {/* Left: Brand */}
         <Link href="/" className="brand" aria-label="Reven dashboard" onClick={() => setMobileMenuOpen(false)}>
           <span className="brandMark">R</span>
-          <span>REVEN</span>
+          <div className="flex flex-col">
+            <span className="font-bold tracking-widest text-primary">REVEN</span>
+            <span className="text-[9px] text-text-technical tracking-wider -mt-0.5">TERMINAL v1.0.4</span>
+          </div>
         </Link>
 
-        {/* Center: Simplified Desktop Navigation */}
+        {/* Center: Desktop Navigation */}
         <nav aria-label="Primary navigation" className="desktopNav">
           <Link href="/" className={isOverview ? "activeNavLink" : ""}>
             Overview
@@ -52,28 +56,35 @@ export function Shell({ children }: { children: ReactNode }) {
             Data
           </Link>
           <Link href="/settings" className={isPolicy ? "activeNavLink" : ""}>
-            Policy
+            Policy & Rules
           </Link>
         </nav>
 
-        {/* Right: Compact Mode Pill & Mobile Menu Toggle */}
+        {/* Right: Mode Indicator & Toggler */}
         <div className="topbarRight">
+          <div className="flex items-center gap-2 border border-border-subtle bg-surface-container-highest px-3 py-1 mr-2 hidden sm:flex">
+            <div className={`w-1.5 h-1.5 rounded-full ${activeDataSource === "live" ? "bg-status-amber animate-pulse" : "bg-primary"}`} />
+            <span className={`font-mono text-[11px] font-semibold uppercase ${activeDataSource === "live" ? "text-status-amber" : "text-primary"}`}>
+              {activeDataSource === "live" ? "Live Test Mode" : "Demo Sandbox"}
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={toggleMode}
-            className={`compactModePill ${activeDataSource === "live" ? "pillLive" : "pillDemo"}`}
+            className="btnMidnightSecondary text-[10px] h-8 px-3"
             title={`Click to switch to ${activeDataSource === "live" ? "Demo Sandbox" : "Live Test Mode"}`}
             aria-label={`Current mode: ${activeDataSource === "live" ? "Live Test Mode" : "Demo Sandbox"}. Click to toggle.`}
           >
             {activeDataSource === "live" ? (
               <>
-                <span className="liveDot" />
-                <span>Live Test Mode</span>
+                <Sparkles size={12} className="text-primary" />
+                <span>Switch to Demo</span>
               </>
             ) : (
               <>
-                <Sparkles size={11} className="sparkleMini" />
-                <span>Demo Sandbox</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-status-amber animate-pulse" />
+                <span>Switch to Live</span>
               </>
             )}
           </button>

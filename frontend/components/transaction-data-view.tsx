@@ -1,24 +1,43 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowDownToLine,
+  BarChart3,
   CheckCircle2,
+  ChevronRight,
+  FileCheck,
   Info,
+  Layers,
   RefreshCw,
   Search,
+  Shield,
   Sparkles,
   Upload,
+  Zap,
 } from "lucide-react";
 import { useTransactions } from "@/lib/transaction-context";
-import type { CSVValidationError } from "@/lib/types";
+import { maskEmail } from "@/lib/utils";
+import { categorizeFailureReasonKey } from "@/lib/recovery-logic";
+import type { CSVValidationError, Transaction } from "@/lib/types";
 
 const money = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
   maximumFractionDigits: 0,
 });
+
+/* ── Analysis Workbench Step Definitions ── */
+type WorkbenchStep = "raw" | "validate" | "classify" | "evaluate" | "queue";
+
+const STEPS: { key: WorkbenchStep; label: string; icon: React.ElementType; desc: string }[] = [
+  { key: "raw", label: "Raw Data", icon: Layers, desc: "Ingested transaction rows before processing" },
+  { key: "validate", label: "Validation", icon: FileCheck, desc: "Schema & field-level quality checks" },
+  { key: "classify", label: "Classification", icon: Zap, desc: "Root-cause tagging & failure bucketing" },
+  { key: "evaluate", label: "Policy Evaluation", icon: Shield, desc: "Recovery probability & action scoring" },
+  { key: "queue", label: "Queue", icon: BarChart3, desc: "Prioritised recovery worklist output" },
+];
 
 export function TransactionDataView() {
   const {
@@ -37,6 +56,10 @@ export function TransactionDataView() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const pageSize = 15;
+
+  /* workbench state */
+  const [activeStep, setActiveStep] = useState<WorkbenchStep>("raw");
+  const [showHowToRead, setShowHowToRead] = useState(false);
 
   function handleFile(file: File) {
     setValidationErrors([]);
@@ -103,7 +126,6 @@ export function TransactionDataView() {
     return (
       t.transaction_id.toLowerCase().includes(q) ||
       t.customer_name.toLowerCase().includes(q) ||
-      t.customer_email.toLowerCase().includes(q) ||
       t.failure_reason.toLowerCase().includes(q) ||
       t.payment_method.toLowerCase().includes(q)
     );
@@ -129,6 +151,65 @@ export function TransactionDataView() {
   const cardFailurePct =
     totalFailuresCount > 0 ? Math.round((cardFailuresCount / totalFailuresCount) * 100) : 0;
 
+  /* ── Data Quality Stats (for workbench validation step) ── */
+  const dataQuality = useMemo(() => {
+    const ids = new Set<string>();
+    let duplicates = 0;
+    let missingFields = 0;
+    let invalidAmounts = 0;
+    let validRows = 0;
+
+    for (const tx of transactions) {
+      let rowValid = true;
+      if (ids.has(tx.transaction_id)) { duplicates++; rowValid = false; }
+      ids.add(tx.transaction_id);
+      if (!tx.customer_name || !tx.transaction_id) { missingFields++; rowValid = false; }
+      if (typeof tx.amount !== "number" || tx.amount <= 0) { invalidAmounts++; rowValid = false; }
+      if (rowValid) validRows++;
+    }
+
+    return {
+      total: transactions.length,
+      valid: validRows,
+      invalid: transactions.length - validRows,
+      duplicates,
+      missingFields,
+      invalidAmounts,
+    };
+  }, [transactions]);
+
+  /* ── Classification Breakdown ── */
+  const classificationBreakdown = useMemo(() => {
+    const buckets: Record<string, { count: number; amount: number }> = {};
+    for (const tx of transactions) {
+      if (tx.status === "successful") continue;
+      const key = categorizeFailureReasonKey(tx.failure_reason, tx.retry_count, tx.status);
+      if (!buckets[key]) buckets[key] = { count: 0, amount: 0 };
+      buckets[key].count++;
+      buckets[key].amount += tx.amount;
+    }
+    return Object.entries(buckets)
+      .map(([key, val]) => ({ key, ...val }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [transactions]);
+
+  /* ── Policy Evaluation Summary ── */
+  const policySummary = useMemo(() => {
+    const highProb = transactions.filter((t) => (t.recovery_probability ?? 0) >= 75 && t.status !== "successful" && t.status !== "recovered").length;
+    const medProb = transactions.filter((t) => { const p = t.recovery_probability ?? 0; return p >= 40 && p < 75 && t.status !== "successful" && t.status !== "recovered"; }).length;
+    const lowProb = transactions.filter((t) => (t.recovery_probability ?? 0) < 40 && t.status !== "successful" && t.status !== "recovered").length;
+    const highPriority = transactions.filter((t) => t.is_high_priority).length;
+    return { highProb, medProb, lowProb, highPriority };
+  }, [transactions]);
+
+  /* ── Queue Preview ── */
+  const queuePreview = useMemo(() => {
+    return transactions
+      .filter((t) => t.is_high_priority && t.status !== "recovered" && t.status !== "successful")
+      .sort((a, b) => (b.recovery_probability ?? 0) - (a.recovery_probability ?? 0))
+      .slice(0, 8);
+  }, [transactions]);
+
   return (
     <main className="transactionDataPage">
       {/* Simulation Banner */}
@@ -136,7 +217,7 @@ export function TransactionDataView() {
         <div className="demoSimulationContent">
           <Sparkles size={16} className="sparkleIcon" />
           <div>
-            <strong>Demo data — simulated, no customer communication is sent.</strong>
+            <strong>SIMULATED MERCHANT SCENARIO — No customer communication is sent.</strong>
             <span>
               Transactions uploaded or seeded here are isolated to the revenue intelligence &amp;
               recovery sandbox. Real payment credentials (card numbers, CVVs, OTPs) are never stored.
@@ -300,6 +381,75 @@ export function TransactionDataView() {
         </div>
       </section>
 
+      {/* ═══════════════════════════ ANALYSIS WORKBENCH ═══════════════════════════ */}
+      {transactions.length > 0 && (
+        <section className="analysisWorkbenchSection" aria-label="Analysis Workbench">
+          <div className="workbenchHeader">
+            <div>
+              <span className="utilityLabel">ANALYSIS WORKBENCH</span>
+              <h2>Step-by-step data pipeline</h2>
+            </div>
+            <button
+              type="button"
+              className="button buttonOutline buttonSmall"
+              onClick={() => setShowHowToRead((v) => !v)}
+            >
+              <Info size={14} />
+              {showHowToRead ? "Hide Guide" : "How to read this"}
+            </button>
+          </div>
+
+          {/* "How to read this" panel */}
+          {showHowToRead && (
+            <div className="howToReadPanel" role="note">
+              <h4>How to read the Analysis Workbench</h4>
+              <p>
+                Each step transforms the raw dataset progressively. Click a step to see its output:
+              </p>
+              <ol>
+                <li><strong>Raw Data</strong> — All ingested rows as received, before any processing.</li>
+                <li><strong>Validation</strong> — Schema checks: duplicates, missing fields, invalid amounts. Only valid rows proceed.</li>
+                <li><strong>Classification</strong> — Each failure is bucketed by root cause using deterministic pattern matching on the failure reason, method, and retry count.</li>
+                <li><strong>Policy Evaluation</strong> — Recovery probability is scored and high-value thresholds are checked. This produces the priority flag.</li>
+                <li><strong>Queue</strong> — The final prioritised worklist: items sorted by recovery probability, ready for action in the Recovery Queue page.</li>
+              </ol>
+              <p className="howToReadDisclaimer">
+                <strong>Methodology note:</strong> All classification is deterministic (rule-based pattern matching, not ML). Recovery probabilities are
+                heuristic scores based on failure type, method, and retry count — not trained predictions.
+                This ensures full explainability and auditability.
+              </p>
+            </div>
+          )}
+
+          {/* Step Tabs */}
+          <div className="workbenchStepTabs" role="tablist">
+            {STEPS.map((step, i) => (
+              <button
+                key={step.key}
+                role="tab"
+                aria-selected={activeStep === step.key}
+                className={`workbenchTab ${activeStep === step.key ? "activeTab" : ""}`}
+                onClick={() => setActiveStep(step.key)}
+              >
+                <span className="tabStepNum">{String(i + 1).padStart(2, "0")}</span>
+                <step.icon size={16} />
+                <span>{step.label}</span>
+                {i < STEPS.length - 1 && <ChevronRight size={12} className="tabArrow" />}
+              </button>
+            ))}
+          </div>
+
+          {/* Step Content */}
+          <div className="workbenchContent">
+            {activeStep === "raw" && <RawDataPanel transactions={transactions} totalCount={totalCount} />}
+            {activeStep === "validate" && <ValidationPanel quality={dataQuality} />}
+            {activeStep === "classify" && <ClassificationPanel breakdown={classificationBreakdown} totalFailures={totalFailuresCount} />}
+            {activeStep === "evaluate" && <EvaluationPanel summary={policySummary} />}
+            {activeStep === "queue" && <QueuePreviewPanel items={queuePreview} />}
+          </div>
+        </section>
+      )}
+
       {/* Transaction Data Table */}
       <section className="eventsSection" id="transactions-ledger">
         <div className="eventsHeader">
@@ -369,7 +519,7 @@ export function TransactionDataView() {
                   <td className="monoCode">{tx.transaction_id}</td>
                   <td>
                     <strong>{tx.customer_name}</strong>
-                    <small className="tableSubText">{tx.customer_email || tx.customer_phone}</small>
+                    <small className="tableSubText">{maskEmail(tx.customer_email)}</small>
                   </td>
                   <td className="number fontMedium">{money.format(tx.amount)}</td>
                   <td>
@@ -437,5 +587,134 @@ export function TransactionDataView() {
         )}
       </section>
     </main>
+  );
+}
+
+/* ═══════════════════════════ WORKBENCH SUB-PANELS ═══════════════════════════ */
+
+function RawDataPanel({ transactions, totalCount }: { transactions: Transaction[]; totalCount: number }) {
+  const statusCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const tx of transactions) { m[tx.status] = (m[tx.status] || 0) + 1; }
+    return m;
+  }, [transactions]);
+
+  return (
+    <div className="workbenchPanel">
+      <h4>Raw Ingested Data</h4>
+      <p className="workbenchPanelDesc">
+        {totalCount} rows loaded into the pipeline. No transformations applied at this stage.
+      </p>
+      <div className="dqCardGrid">
+        <DQCard label="Total Rows" value={totalCount.toString()} />
+        {Object.entries(statusCounts).map(([s, c]) => (
+          <DQCard key={s} label={s.charAt(0).toUpperCase() + s.slice(1)} value={c.toString()} subtle />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ValidationPanel({ quality }: { quality: { total: number; valid: number; invalid: number; duplicates: number; missingFields: number; invalidAmounts: number } }) {
+  return (
+    <div className="workbenchPanel">
+      <h4>Data Quality Report</h4>
+      <p className="workbenchPanelDesc">
+        Schema validation checks: duplicates, missing required fields, and invalid amounts.
+      </p>
+      <div className="dqCardGrid">
+        <DQCard label="Total Rows" value={quality.total.toString()} />
+        <DQCard label="Valid Rows" value={quality.valid.toString()} accent="green" />
+        <DQCard label="Invalid Rows" value={quality.invalid.toString()} accent={quality.invalid > 0 ? "red" : undefined} />
+        <DQCard label="Duplicate IDs" value={quality.duplicates.toString()} accent={quality.duplicates > 0 ? "amber" : undefined} />
+        <DQCard label="Missing Fields" value={quality.missingFields.toString()} accent={quality.missingFields > 0 ? "amber" : undefined} />
+        <DQCard label="Invalid Amounts" value={quality.invalidAmounts.toString()} accent={quality.invalidAmounts > 0 ? "red" : undefined} />
+      </div>
+    </div>
+  );
+}
+
+function ClassificationPanel({ breakdown, totalFailures }: { breakdown: { key: string; count: number; amount: number }[]; totalFailures: number }) {
+  return (
+    <div className="workbenchPanel">
+      <h4>Failure Classification Buckets</h4>
+      <p className="workbenchPanelDesc">
+        {totalFailures} non-successful transactions classified by root-cause pattern.
+      </p>
+      {breakdown.length === 0 ? (
+        <p className="mutedText">No failures to classify. Load data to see classification output.</p>
+      ) : (
+        <div className="classificationTable">
+          <div className="classRow classRowHeader">
+            <span>Bucket</span><span>Count</span><span>Lost Revenue</span><span>Share</span>
+          </div>
+          {breakdown.map((b) => (
+            <div key={b.key} className="classRow">
+              <span className="classBucket">{b.key.replaceAll("_", " ")}</span>
+              <span>{b.count}</span>
+              <span className="riskText">{money.format(b.amount)}</span>
+              <span>{totalFailures > 0 ? Math.round((b.count / totalFailures) * 100) : 0}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EvaluationPanel({ summary }: { summary: { highProb: number; medProb: number; lowProb: number; highPriority: number } }) {
+  return (
+    <div className="workbenchPanel">
+      <h4>Policy Evaluation Results</h4>
+      <p className="workbenchPanelDesc">
+        Recovery probability scores and priority flags applied by the deterministic policy engine.
+      </p>
+      <div className="dqCardGrid">
+        <DQCard label="High Probability (≥75%)" value={summary.highProb.toString()} accent="green" />
+        <DQCard label="Medium (40–75%)" value={summary.medProb.toString()} accent="amber" />
+        <DQCard label="Low (<40%)" value={summary.lowProb.toString()} accent="red" />
+        <DQCard label="High Priority Flagged" value={summary.highPriority.toString()} accent="green" />
+      </div>
+    </div>
+  );
+}
+
+function QueuePreviewPanel({ items }: { items: Transaction[] }) {
+  return (
+    <div className="workbenchPanel">
+      <h4>Recovery Queue Preview (Top 8)</h4>
+      <p className="workbenchPanelDesc">
+        Highest-priority items ready for the Recovery Queue page.
+      </p>
+      {items.length === 0 ? (
+        <p className="mutedText">No high-priority items. Load data to populate the queue.</p>
+      ) : (
+        <div className="queuePreviewList">
+          {items.map((tx) => (
+            <div key={tx.transaction_id} className="queuePreviewItem">
+              <div className="queuePreviewLeft">
+                <strong>{tx.customer_name}</strong>
+                <small>{maskEmail(tx.customer_email)}</small>
+              </div>
+              <span className="riskText fontMedium">{money.format(tx.amount)}</span>
+              <span className={`probBadge ${(tx.recovery_probability ?? 0) >= 75 ? "probHigh" : "probMed"}`}>
+                {tx.recovery_probability ?? 0}%
+              </span>
+              <span className="queuePreviewAction">{tx.recommended_action}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Shared Data Quality Card ── */
+function DQCard({ label, value, accent, subtle }: { label: string; value: string; accent?: "green" | "amber" | "red"; subtle?: boolean }) {
+  return (
+    <div className={`dqCard ${accent ? `dqCard-${accent}` : ""} ${subtle ? "dqCardSubtle" : ""}`}>
+      <span className="dqCardLabel">{label}</span>
+      <strong className="dqCardValue">{value}</strong>
+    </div>
   );
 }

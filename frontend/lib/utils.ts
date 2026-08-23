@@ -55,3 +55,22 @@ export function getWhyThisAction(result: PipelineResult, policy?: PolicySettings
   }
   return result.decision.reason || "Action evaluated under active policy bounds.";
 }
+
+/* ── PII Masking ── */
+
+export function maskEmail(email: string): string {
+  if (!email || !email.includes("@")) return "••••@••••";
+  const [local, domain] = email.split("@");
+  const visible = local.slice(0, 2);
+  return `${visible}${"•".repeat(Math.max(local.length - 2, 3))}@${domain}`;
+}
+
+export function maskPhone(phone: string): string {
+  if (!phone || phone.length < 4) return "••••••••••";
+  const digits = phone.replace(/\D/g, "");
+  return `${"•".repeat(Math.max(digits.length - 4, 6))}${digits.slice(-4)}`;
+}
+
+export function maskPII(value: string, type: "email" | "phone"): string {
+  return type === "email" ? maskEmail(value) : maskPhone(value);
+}

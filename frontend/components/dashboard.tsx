@@ -10,6 +10,7 @@ import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { DecisionInspector } from "./decision-inspector";
+import { EvidenceChain } from "./evidence-chain";
 import { PipelineRail } from "./pipeline-rail";
 import { RecoveryCommandDeck } from "./recovery-command-deck";
 import { RecoveryIntelligence } from "./recovery-intelligence";
@@ -110,6 +111,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
 
       <PipelineRail running={running} />
       {notice && <div className="notice" role="status">{notice}</div>}
+
+      <EvidenceChain />
 
       <RecoveryIntelligence />
 

@@ -6,6 +6,7 @@ import {
   Copy,
   ExternalLink,
   Flame,
+  HelpCircle,
   Mail,
   MessageSquare,
   Search,
@@ -17,6 +18,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useTransactions } from "@/lib/transaction-context";
+import { maskEmail, maskPhone } from "@/lib/utils";
+import { WhyDrawer } from "./why-drawer";
 import type { Transaction } from "@/lib/types";
 
 const money = new Intl.NumberFormat("en-IN", {
@@ -49,6 +52,7 @@ export function RecoveryQueueView() {
   const [escalateNote, setEscalateNote] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
   const [batchAnimating, setBatchAnimating] = useState(false);
+  const [whyDrawerTx, setWhyDrawerTx] = useState<Transaction | null>(null);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -399,8 +403,8 @@ export function RecoveryQueueView() {
                     <td>
                       <div className="customerCell">
                         <strong>{tx.customer_name}</strong>
-                        <small className="tableSubText">{tx.customer_email}</small>
-                        <small className="phoneText">{tx.customer_phone}</small>
+                        <small className="tableSubText">{maskEmail(tx.customer_email)}</small>
+                        <small className="phoneText">{maskPhone(tx.customer_phone)}</small>
                       </div>
                     </td>
 
@@ -455,9 +459,17 @@ export function RecoveryQueueView() {
                       </div>
                     </td>
 
-                    {/* Recommended Action */}
+                    {/* Recommended Action + Why */}
                     <td className="recommendedActionCell">
                       <span className="recommendationText">{tx.recommended_action}</span>
+                      <button
+                        type="button"
+                        className="whyBtn"
+                        title="Why this recommendation?"
+                        onClick={() => setWhyDrawerTx(tx)}
+                      >
+                        <HelpCircle size={12} /> Why?
+                      </button>
                     </td>
 
                     {/* Action Controls & Status */}
@@ -787,6 +799,11 @@ export function RecoveryQueueView() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Why this recommendation? drawer */}
+      {whyDrawerTx && (
+        <WhyDrawer tx={whyDrawerTx} onClose={() => setWhyDrawerTx(null)} />
       )}
     </main>
   );

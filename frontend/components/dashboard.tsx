@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, RefreshCcw, Search, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, RefreshCcw, Search, ShieldCheck, Sparkles } from "lucide-react";
 
 import { runEvaluation } from "@/lib/api";
 import type { DashboardData } from "@/lib/types";
@@ -69,6 +69,21 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
 
   return (
     <main className="dashboardPage">
+      {/* Telemetry Source Indicator Bar */}
+      <div className="sourceIndicatorStrip">
+        <div className="sourceIndicatorLeft">
+          <span className="sourcePillTitle">ACTIVE TELEMETRY VIEW:</span>
+          <span className="sourceIndicatorBadge badgeLive">
+            <span className="liveDot" /> LIVE RAZORPAY TEST MODE (SIGNED WEBHOOK LEDGER)
+          </span>
+        </div>
+        <div className="sourceIndicatorRight">
+          <Link href="/revenue" className="sourceIndicatorBadge badgeDemo">
+            <Sparkles size={12} /> Switch to Simulated Revenue Intelligence →
+          </Link>
+        </div>
+      </div>
+
       <section className="hero">
         <div className="heroCopy">
           <div className="eyebrow"><span>03</span> AI REVENUE RECOVERY</div>

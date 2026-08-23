@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
 import json
 from typing import Annotated
+from pydantic import BaseModel
 
 import httpx
 from fastapi import Body, FastAPI, Header, HTTPException, Request
@@ -328,6 +330,128 @@ async def receive_razorpay_webhook(
         return WebhookResponse(status="recovery_recorded", event_id=reven_event_id)
     return WebhookResponse(status="ignored", event_id=webhook_id)
 
+
+# --------------------------------------------------------------------------
+# CSV UPLOAD & SIMULATED DEMO DATASET ENDPOINTS
+# --------------------------------------------------------------------------
+from app.demo_transactions import DemoTransaction, demo_store, derive_intelligence
+
+
+@app.get("/data/demo/transactions")
+def get_demo_transactions(
+    limit: int = 500,
+    offset: int = 0,
+    status: str | None = None,
+    payment_method: str | None = None,
+):
+    items = demo_store.transactions
+    if status and status != "all":
+        items = [t for t in items if t.status == status]
+    if payment_method and payment_method != "all":
+        items = [t for t in items if t.payment_method == payment_method]
+
+    paginated = items[offset : offset + limit]
+    return {
+        "items": paginated,
+        "total": len(items),
+        "data_source": "simulated_demo_data",
+        "disclaimer": "Demo data — simulated, no customer communication is sent.",
+    }
+
+
+@app.post("/data/demo/seed")
+def seed_demo_transactions():
+    count = demo_store.seed_demo_data()
+    return {"status": "seeded", "count": count, "data_source": "simulated_demo_data"}
+
+
+@app.post("/data/demo/reset")
+def reset_demo_transactions():
+    count = demo_store.seed_demo_data()
+    return {"status": "reset", "count": count, "data_source": "simulated_demo_data"}
+
+
+@app.post("/data/csv/upload")
+def upload_csv_transactions(transactions: list[DemoTransaction]):
+    if not transactions:
+        raise HTTPException(status_code=400, detail="Transaction list cannot be empty")
+    demo_store.transactions = transactions
+    return {
+        "status": "imported",
+        "count": len(transactions),
+        "data_source": "uploaded_csv_data",
+    }
+
+
+@app.get("/metrics/revenue-intelligence-demo")
+def get_demo_revenue_intelligence():
+    txs = demo_store.transactions
+    total_attempted = sum(t.amount for t in txs)
+    collected = sum(t.amount for t in txs if t.status == "successful")
+    lost = sum(t.amount for t in txs if t.status in ("failed", "abandoned"))
+    recovered = sum(t.amount for t in txs if t.status == "recovered")
+    potentially_recoverable = sum(
+        t.amount * ((t.recovery_probability or 50) / 100)
+        for t in txs
+        if t.status in ("failed", "abandoned") and (t.recovery_probability or 0) >= 50
+    )
+    affected_customers = len({t.customer_email for t in txs if t.status in ("failed", "abandoned")})
+    total_fail_volume = lost + recovered
+    recovery_rate = round((recovered / total_fail_volume) * 100, 1) if total_fail_volume > 0 else 0.0
+
+    return {
+        "data_source": "simulated_demo_data",
+        "total_attempted_revenue": total_attempted,
+        "revenue_collected": collected,
+        "revenue_lost": lost,
+        "potentially_recoverable_revenue": potentially_recoverable,
+        "revenue_recovered": recovered,
+        "recovery_rate_pct": recovery_rate,
+        "affected_customers_count": affected_customers,
+        "disclaimer": "Demo data — simulated, no customer communication is sent.",
+    }
+
+
+class DemoActionRequest(BaseModel):
+    transaction_id: str
+    action_type: str
+    note: str | None = None
+
+
+@app.post("/recovery/demo/action")
+def perform_demo_action(req: DemoActionRequest):
+    tx = next((t for t in demo_store.transactions if t.transaction_id == req.transaction_id), None)
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    is_rec = req.action_type == "mark_recovered"
+    if is_rec:
+        tx.status = "recovered"
+        tx.recovered_at = datetime.now(timezone.utc).isoformat()
+    tx.action_status = req.action_type
+    tx.action_note = req.note or f"Simulated {req.action_type}"
+    if req.action_type == "create_payment_link":
+        tx.simulated_link = f"https://pay.reven.ai/rec/{tx.transaction_id}"
+
+    return {"status": "action_applied", "transaction": tx}
+
+
+@app.post("/recovery/demo/recover-all")
+def recover_all_high_priority():
+    count = 0
+    amount = 0.0
+    now = datetime.now(timezone.utc).isoformat()
+    for tx in demo_store.transactions:
+        if tx.status in ("failed", "abandoned") and tx.is_high_priority:
+            count += 1
+            amount += tx.amount
+            tx.status = "recovered"
+            tx.action_status = "mark_recovered"
+            tx.action_note = "Batch recovered via 1-click High-Priority Recovery simulation"
+            tx.simulated_link = f"https://pay.reven.ai/rec/{tx.transaction_id}"
+            tx.recovered_at = now
+
+    return {"status": "batch_recovered", "recovered_count": count, "recovered_amount": amount}
 
 
 def hashlib_fallback(body: bytes) -> str:

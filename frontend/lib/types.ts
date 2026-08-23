@@ -187,4 +187,85 @@ export interface RecoveryIntelligenceResponse {
   data_source: string;
 }
 
+// ---------------- CSV & Demo Data Types ----------------
+export type TransactionStatus = "successful" | "failed" | "abandoned" | "recovered";
+
+export type DemoActionType =
+  | "not_started"
+  | "preview_whatsapp"
+  | "preview_email"
+  | "create_payment_link"
+  | "recommend_alternative"
+  | "escalate_high_value"
+  | "mark_recovered";
+
+export interface Transaction {
+  transaction_id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  amount: number;
+  currency: string;
+  status: TransactionStatus;
+  payment_method: string;
+  failure_reason: string;
+  attempted_at: string;
+  retry_count: number;
+
+  // Derived Intelligence
+  likely_root_cause?: string;
+  recovery_probability?: number; // 0 - 100
+  recommended_action?: string;
+  action_status?: DemoActionType;
+  action_note?: string;
+  simulated_link?: string;
+  recovered_at?: string;
+  is_high_priority?: boolean;
+}
+
+export interface CSVValidationError {
+  row: number;
+  field?: string;
+  message: string;
+  value?: string;
+}
+
+export interface CSVValidationResult {
+  valid: boolean;
+  transactions: Transaction[];
+  errors: CSVValidationError[];
+  totalRows: number;
+  validRows: number;
+}
+
+export interface RevenueIntelligenceMetrics {
+  totalAttemptedRevenue: number;
+  revenueCollected: number;
+  revenueLost: number;
+  potentiallyRecoverableRevenue: number;
+  revenueRecovered: number;
+  recoveryRatePct: number;
+  affectedCustomersCount: number;
+  failureReasonStats: FailureReasonStat[];
+  recoveryTrends: RecoveryTrendPoint[];
+  highPriorityOpportunities: Transaction[];
+}
+
+export interface FailureReasonStat {
+  reason: string;
+  label: string;
+  count: number;
+  lostAmount: number;
+  percentage: number;
+  recommendedAlternative: string;
+  isCardPattern: boolean;
+}
+
+export interface RecoveryTrendPoint {
+  date: string;
+  attempted: number;
+  lost: number;
+  recovered: number;
+}
+
 

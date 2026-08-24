@@ -25,7 +25,7 @@ export function Shell({ children }: { children: ReactNode }) {
     setActiveDataSource(activeDataSource === "live" ? "demo" : "live");
   }
 
-  const isHome = pathname === "/";
+  const isHome = pathname === "/home";
   const isAnalyse =
     pathname === "/analyse" ||
     pathname === "/intelligence" ||
@@ -42,17 +42,13 @@ export function Shell({ children }: { children: ReactNode }) {
       {/* Top Header Bar */}
       <header className="topbar">
         {/* Left: Brand */}
-        <Link href="/" className="brand" aria-label="Reven dashboard" onClick={() => setMobileMenuOpen(false)}>
-          <span className="brandMark">R</span>
-          <div className="flex flex-col">
-            <span className="font-bold tracking-widest text-primary">REVEN</span>
-            <span className="text-[9px] text-text-technical tracking-wider -mt-0.5 font-medium">REVENUE RECOVERY</span>
-          </div>
+        <Link href="/" className="brand" aria-label="Reven landing page" onClick={() => setMobileMenuOpen(false)}>
+          <span className="font-bold tracking-widest text-primary">REVEN</span>
         </Link>
 
         {/* Center: Desktop Navigation (5 Sections) */}
         <nav aria-label="Primary navigation" className="desktopNav">
-          <Link href="/" className={isHome ? "activeNavLink" : ""}>
+          <Link href="/home" className={isHome ? "activeNavLink" : ""}>
             Home
           </Link>
           <Link href="/analyse" className={isAnalyse ? "activeNavLink" : ""}>
@@ -133,7 +129,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
             <nav className="mobileNavLinks" aria-label="Mobile navigation">
               <Link
-                href="/"
+                href="/home"
                 className={`mobileNavLink ${isHome ? "activeMobileLink" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >

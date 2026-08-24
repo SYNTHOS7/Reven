@@ -127,7 +127,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
             <span className="kpiLabel">REVENUE AT RISK</span>
             <HelpTooltip topic="revenue_at_risk" />
           </div>
-          <strong className="kpiValue riskText">{money.format(revenueAtRisk || 139980)}</strong>
+          <strong className="kpiValue riskText">{money.format(revenueAtRisk)}</strong>
           <p className="kpiExplainer">
             Money from failed or abandoned payments not yet collected.
           </p>
@@ -146,7 +146,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
             <HelpTooltip topic="recoverable_opportunity" />
           </div>
           <strong className="kpiValue warningText">
-            {money.format(recoverableOpportunity || 46390)}
+            {money.format(recoverableOpportunity)}
           </strong>
           <p className="kpiExplainer">
             Estimated value of payments that may be recovered safely.
@@ -165,7 +165,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
             <span className="kpiLabel">AWAITING REVIEW</span>
             <HelpTooltip topic="human_review" />
           </div>
-          <strong className="kpiValue">{awaitingReviewCount || 14} cases</strong>
+          <strong className="kpiValue">{awaitingReviewCount} cases</strong>
           <p className="kpiExplainer">
             High-value or uncertain cases requiring human approval.
           </p>
@@ -184,7 +184,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
             <HelpTooltip topic="verified_recovery" />
           </div>
           <strong className="kpiValue recoveryText">
-            {money.format(verifiedRecovery || 46390)}
+            {money.format(verifiedRecovery)}
           </strong>
           <p className="kpiExplainer">
             Revenue counted only after Razorpay payment confirmation.

@@ -13,7 +13,7 @@ export function LandingPage() {
   return (
     <main className="landingPage">
       <header className="landingNav">
-        <Link className="landingBrand" href="/" aria-label="Reven home">REVEN</Link>
+        <Link className="landingBrand" href="/" aria-label="Reven home"><svg className="revenLogo" viewBox="0 0 28 28" aria-hidden="true"><path d="M4 4h10.5a5 5 0 0 1 0 10H9l12 10H14L4 15V4Zm5 5v3h5.5a1.5 1.5 0 0 0 0-3H9Z" /></svg>REVEN</Link>
         <nav aria-label="Landing navigation">
           <a href="#how-it-works">How it works</a>
           <a href="#proof">Evidence</a>

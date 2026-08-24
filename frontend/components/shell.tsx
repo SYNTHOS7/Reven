@@ -43,6 +43,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="topbar">
         {/* Left: Brand */}
         <Link href="/" className="brand" aria-label="Reven landing page" onClick={() => setMobileMenuOpen(false)}>
+          <svg className="revenLogo" viewBox="0 0 28 28" aria-hidden="true"><path d="M4 4h10.5a5 5 0 0 1 0 10H9l12 10H14L4 15V4Zm5 5v3h5.5a1.5 1.5 0 0 0 0-3H9Z" /></svg>
           <span className="font-bold tracking-widest text-primary">REVEN</span>
         </Link>
 

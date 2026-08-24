@@ -68,6 +68,14 @@ export function RevenueIntelligenceView() {
     ...recoveryTrends.map((t) => Math.max(t.attempted, t.lost + t.recovered)),
     1000
   );
+  const chartWidth = 720;
+  const chartHeight = 230;
+  const chartPadding = { top: 18, right: 16, bottom: 30, left: 42 };
+  const plotWidth = chartWidth - chartPadding.left - chartPadding.right;
+  const plotHeight = chartHeight - chartPadding.top - chartPadding.bottom;
+  const pointX = (index: number) => chartPadding.left + (recoveryTrends.length > 1 ? (index / (recoveryTrends.length - 1)) * plotWidth : plotWidth / 2);
+  const pointY = (value: number) => chartPadding.top + plotHeight - (value / maxTrendVal) * plotHeight;
+  const linePath = (values: number[]) => values.map((value, index) => `${index === 0 ? "M" : "L"}${pointX(index)} ${pointY(value)}`).join(" ");
 
   function handleFile(file: File) {
     setValidationErrors([]);
@@ -375,47 +383,24 @@ export function RevenueIntelligenceView() {
                   </div>
                 </div>
 
-                <div className="trendBarsGrid">
-                  {recoveryTrends.map((pt, idx) => {
-                    const isHovered = hoveredPoint === idx;
-                    const hAttempted = Math.max(12, (pt.attempted / maxTrendVal) * 160);
-                    const hLost = (pt.lost / maxTrendVal) * 160;
-                    const hRecovered = (pt.recovered / maxTrendVal) * 160;
-
-                    return (
-                      <div
-                        key={pt.date}
-                        className="trendBarColumn"
-                        onMouseEnter={() => setHoveredPoint(idx)}
-                        onMouseLeave={() => setHoveredPoint(null)}
-                      >
-                        {isHovered && (
-                          <div className="barTooltip">
-                            <div className="tooltipDate">{pt.date}</div>
-                            <div className="tooltipRow">
-                              <span>Attempted:</span>
-                              <strong>{money.format(pt.attempted)}</strong>
-                            </div>
-                            <div className="tooltipRow riskText">
-                              <span>Lost:</span>
-                              <strong>{money.format(pt.lost)}</strong>
-                            </div>
-                            <div className="tooltipRow recoveryText">
-                              <span>Recovered:</span>
-                              <strong>{money.format(pt.recovered)}</strong>
-                            </div>
-                          </div>
-                        )}
-                        <div className="barsStack">
-                          <div className="barAttempted" style={{ height: `${hAttempted}px` }}>
-                            <div className="barLost" style={{ height: `${hLost}px` }} />
-                            <div className="barRecovered" style={{ height: `${hRecovered}px` }} />
-                          </div>
-                        </div>
-                        <span className="barLabel">{pt.date.split(" ")[0]}</span>
-                      </div>
-                    );
-                  })}
+                <div className="lineChartWrap">
+                  <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="lineChart" role="img" aria-label="Revenue and recovery trend line chart">
+                    {[0, 0.25, 0.5, 0.75, 1].map((ratio) => <line key={ratio} x1={chartPadding.left} x2={chartWidth - chartPadding.right} y1={chartPadding.top + plotHeight * ratio} y2={chartPadding.top + plotHeight * ratio} className="lineChartGrid" />)}
+                    <path d={linePath(recoveryTrends.map((point) => point.attempted))} className="lineAttempted" />
+                    <path d={linePath(recoveryTrends.map((point) => point.lost))} className="lineLost" />
+                    <path d={linePath(recoveryTrends.map((point) => point.recovered))} className="lineRecovered" />
+                    {recoveryTrends.map((point, index) => (
+                      <g key={point.date} onMouseEnter={() => setHoveredPoint(index)} onMouseLeave={() => setHoveredPoint(null)} className="lineChartPoint">
+                        <line x1={pointX(index)} x2={pointX(index)} y1={chartPadding.top} y2={chartPadding.top + plotHeight} className={hoveredPoint === index ? "lineChartGuide active" : "lineChartGuide"} />
+                        <circle cx={pointX(index)} cy={pointY(point.attempted)} r="4" className="pointAttempted" />
+                        <circle cx={pointX(index)} cy={pointY(point.lost)} r="4" className="pointLost" />
+                        <circle cx={pointX(index)} cy={pointY(point.recovered)} r="4" className="pointRecovered" />
+                        <rect x={pointX(index) - 18} y={chartPadding.top} width="36" height={plotHeight} fill="transparent" />
+                        <text x={pointX(index)} y={chartHeight - 8} textAnchor="middle" className="lineChartLabel">{point.date.slice(5)}</text>
+                      </g>
+                    ))}
+                  </svg>
+                  {hoveredPoint !== null && recoveryTrends[hoveredPoint] && <div className="lineTooltip"><strong>{recoveryTrends[hoveredPoint].date}</strong><span>Attempted <b>{money.format(recoveryTrends[hoveredPoint].attempted)}</b></span><span className="riskText">Lost <b>{money.format(recoveryTrends[hoveredPoint].lost)}</b></span><span className="recoveryText">Recovered <b>{money.format(recoveryTrends[hoveredPoint].recovered)}</b></span></div>}
                 </div>
               </div>
             </div>

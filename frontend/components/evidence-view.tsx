@@ -120,9 +120,7 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
             <span className="kpiLabel">VERIFIED TEST RECOVERY</span>
             <HelpTooltip topic="verified_recovery" />
           </div>
-          <strong className="kpiValue recoveryText">
-            {money.format(totalVerifiedAmount || score.actual_test_recovery || 18450)}
-          </strong>
+          <strong className="kpiValue recoveryText">{money.format(totalVerifiedAmount || score.actual_test_recovery)}</strong>
           <div className="kpiFooter">
             <span className="recoveryText">From signed paid webhooks ({verifiedRecoveriesCount} confirmed)</span>
           </div>
@@ -134,9 +132,9 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
             <span className="kpiLabel">POLICY COMPLIANCE</span>
             <HelpTooltip topic="policy_engine" />
           </div>
-          <strong className="kpiValue">{score.policy_compliance_pct || 100}%</strong>
+          <strong className="kpiValue">{score.total_cases ? `${score.policy_compliance_pct}%` : "—"}</strong>
           <div className="kpiFooter">
-            <span>0 policy threshold violations</span>
+            <span>{score.total_cases ? "Calculated from evaluated cases" : "No evaluated live cases yet"}</span>
           </div>
         </div>
 
@@ -146,9 +144,9 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
             <span className="kpiLabel">TRUST GATE BLOCKS</span>
             <HelpTooltip topic="trust_gate" />
           </div>
-          <strong className="kpiValue riskText">{score.suspicious_refusals || 6}</strong>
+          <strong className="kpiValue riskText">{score.suspicious_refusals}</strong>
           <div className="kpiFooter">
-            <span className="riskText">Card-testing &amp; velocity attacks stopped</span>
+            <span className="riskText">Actions safely blocked by Trust Gate</span>
           </div>
         </div>
 
@@ -158,9 +156,9 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
             <span className="kpiLabel">DIAGNOSIS ACCURACY</span>
             <HelpTooltip topic="diagnosis_confidence" />
           </div>
-          <strong className="kpiValue">{score.diagnosis_accuracy_pct || 94}%</strong>
+          <strong className="kpiValue">{score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"}</strong>
           <div className="kpiFooter">
-            <span>Evaluated against {score.labeled_cases || 50} labeled ground truths</span>
+            <span>{score.labeled_cases ? `Evaluated against ${score.labeled_cases} human-labelled cases` : "No human-labelled cases yet"}</span>
           </div>
         </div>
       </section>

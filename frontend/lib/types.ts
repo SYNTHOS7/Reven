@@ -80,6 +80,28 @@ export interface PipelineResult {
 export interface CaseDetailResponse {
   event: PaymentEventDetails;
   pipeline_result: PipelineResult;
+  similar_cases: SimilarCases;
+}
+
+export interface SimilarCase {
+  event_id: string;
+  amount: number;
+  occurred_at: string;
+  failure_code: string;
+  payment_method: string | null;
+  diagnosed_cause: string;
+  decision_action: Action;
+  verified_recovered_amount: number;
+  match_reasons: string[];
+}
+
+export interface SimilarCases {
+  scope: string;
+  cases: SimilarCase[];
+  comparable_case_count: number;
+  verified_recovery_count: number;
+  verified_recovered_amount: number;
+  disclaimer: string;
 }
 
 export interface PolicyReplayRequest {
@@ -267,5 +289,4 @@ export interface RecoveryTrendPoint {
   lost: number;
   recovered: number;
 }
-
 

@@ -135,6 +135,36 @@ export function RulesSafetyView({
         </div>
       )}
 
+      <section className="policyBoundaryGuide" aria-labelledby="policy-boundary-guide-title">
+        <div className="policyBoundaryGuideIntro">
+          <span className="utilityLabel">DECISION BOUNDARIES</span>
+          <h2 id="policy-boundary-guide-title">What each rule protects — and the exact boundary</h2>
+          <p>
+            These rules are deterministic and tested at their edge values. AI can provide a diagnosis, but it cannot override a boundary or execute a money action.
+          </p>
+        </div>
+        <div className="policyBoundaryTable" role="table" aria-label="Policy decision boundaries">
+          <div className="policyBoundaryRow policyBoundaryHead" role="row">
+            <span role="columnheader">Rule</span><span role="columnheader">Boundary</span><span role="columnheader">When it triggers</span>
+          </div>
+          <div className="policyBoundaryRow" role="row">
+            <strong role="cell">Confidence floor</strong><span role="cell">Below {formatConfidence(policy.diagnosis_confidence_escalation_threshold)}</span><span role="cell">Escalate to human review</span>
+          </div>
+          <div className="policyBoundaryRow" role="row">
+            <strong role="cell">High-value approval</strong><span role="cell">At or above {money.format(policy.human_approval_amount_threshold)}</span><span role="cell">Escalate before any recovery link</span>
+          </div>
+          <div className="policyBoundaryRow" role="row">
+            <strong role="cell">Retry cap</strong><span role="cell">At {policy.max_retries_per_payment} recorded retries</span><span role="cell">Stop further recovery attempts</span>
+          </div>
+          <div className="policyBoundaryRow" role="row">
+            <strong role="cell">Contact cap</strong><span role="cell">At {policy.max_messages_per_customer_per_day} contact/day</span><span role="cell">Stop customer outreach</span>
+          </div>
+          <div className="policyBoundaryRow" role="row">
+            <strong role="cell">Trust Gate</strong><span role="cell">More than {policy.trust_gate_max_attempts_in_window} attempts / {policy.trust_gate_attempts_window_hours}h</span><span role="cell">Refuse suspicious activity upstream</span>
+          </div>
+        </div>
+      </section>
+
       {/* Five Clear Rule Cards */}
       <section className="ruleCardsSection" aria-label="Safety Rules">
         <div className="ruleCardsGrid">

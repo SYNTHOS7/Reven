@@ -10,6 +10,7 @@ import { RecoveryVerificationAction } from "@/components/recovery-verification-a
 import { OperatorFeedback } from "@/components/operator-feedback";
 import { PolicyReplay } from "@/components/policy-replay";
 import { FiveStageFlow } from "@/components/five-stage-flow";
+import { SimilarCases } from "@/components/similar-cases";
 import { loadCaseDetails, loadPolicy } from "@/lib/api";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
@@ -20,7 +21,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
   const activePolicy = await loadPolicy();
   if (!caseData) notFound();
 
-  const { event, pipeline_result: result } = caseData;
+  const { event, pipeline_result: result, similar_cases } = caseData;
   const stopped = result.trust_gate.status === "suspicious";
 
   // Determine current active stage number (1 to 5) and plain sentence summary
@@ -223,6 +224,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             </article>
           ))}
         </section>
+
+        <SimilarCases data={similar_cases} />
 
         {/* Operator Feedback / Human Review Side by Side */}
         <OperatorFeedback event={event} pipelineResult={result} />

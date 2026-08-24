@@ -26,6 +26,7 @@ from app.pipeline.engine import run_event
 from app.razorpay_client import RazorpayClient
 from app.recovery_intelligence import compute_recovery_intelligence
 from app.repository import repository
+from app.similar_cases import find_similar_cases
 
 config = get_config()
 razorpay = RazorpayClient(config)
@@ -74,7 +75,11 @@ def get_event(event_id: str):
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     result = latest_result(event_id)
-    return {"event": event, "pipeline_result": result}
+    return {
+        "event": event,
+        "pipeline_result": result,
+        "similar_cases": find_similar_cases(event, result, repository.events, repository.results),
+    }
 
 
 @app.post("/pipeline/run/{event_id}")

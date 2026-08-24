@@ -2602,6 +2602,84 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
   margin: 0 auto;
 }
 
+.policyBoundaryGuide,
+.similarCases {
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface);
+  margin: 22px 0;
+  overflow: hidden;
+}
+
+.policyBoundaryGuideIntro,
+.similarCasesHeader {
+  padding: 22px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.policyBoundaryGuideIntro h2,
+.similarCasesHeader h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0;
+  font-size: 19px;
+}
+
+.policyBoundaryGuideIntro p,
+.similarCasesHeader p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 780px;
+  line-height: 1.55;
+}
+
+.policyBoundaryTable {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.policyBoundaryRow {
+  display: grid;
+  grid-template-columns: 1.05fr 1.25fr 1.5fr;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.policyBoundaryRow:last-child { border-bottom: 0; }
+.policyBoundaryRow strong { color: var(--text-primary); }
+.policyBoundaryHead { color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; background: color-mix(in srgb, var(--surface) 72%, var(--primary) 4%); }
+
+.similarCasesSummary {
+  min-width: 112px;
+  text-align: right;
+  padding: 6px 0;
+}
+.similarCasesSummary strong { display: block; color: var(--primary); font-size: 28px; line-height: 1; }
+.similarCasesSummary span, .similarCasesSummary small { display: block; color: var(--text-muted); font-size: 11px; margin-top: 3px; }
+.similarCasesList { border-top: 1px solid var(--border-subtle); }
+.similarCaseRow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 18px; padding: 15px 24px; border-bottom: 1px solid var(--border-subtle); }
+.similarCaseRow:last-child { border-bottom: 0; }
+.similarCaseCode { display: block; text-transform: capitalize; font-weight: 700; color: var(--text-primary); }
+.similarCaseRow p { margin: 4px 0 0; color: var(--text-muted); font-size: 12px; }
+.similarCaseOutcome { display: grid; gap: 5px; justify-items: end; color: var(--text-muted); font-size: 11px; }
+.similarCasesEmpty { border-top: 1px solid var(--border-subtle); padding: 20px 24px; color: var(--text-muted); display: flex; align-items: center; gap: 9px; }
+.similarCasesDisclaimer { border-top: 1px solid var(--border-subtle); padding: 11px 24px; color: var(--text-muted); font-size: 12px; display: flex; align-items: center; gap: 7px; background: color-mix(in srgb, var(--surface) 80%, var(--primary) 3%); }
+
+@media (max-width: 720px) {
+  .policyBoundaryGuideIntro, .similarCasesHeader { padding: 18px; display: block; }
+  .policyBoundaryRow { grid-template-columns: 1fr; gap: 5px; padding: 14px 18px; }
+  .policyBoundaryHead { display: none; }
+  .similarCasesSummary { text-align: left; margin-top: 16px; }
+  .similarCaseRow { grid-template-columns: 1fr; align-items: start; padding: 16px 18px; gap: 10px; }
+  .similarCaseOutcome { justify-items: start; }
+}
+
 .ruleCardsGrid {
   display: grid;
   grid-template-columns: 1fr;

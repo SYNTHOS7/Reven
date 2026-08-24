@@ -62,6 +62,14 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
     return initialData.results[0];
   }, [activeDataSource, transactions, initialData.results]);
 
+  const opportunityExplanation = useMemo(() => {
+    if (!topOpportunity) return "No recovery opportunity is available yet.";
+    if ("transaction_id" in topOpportunity) {
+      return `${topOpportunity.failure_reason || "Payment failure"}. ${topOpportunity.recommended_action || "Review this case before taking action."}`;
+    }
+    return `${topOpportunity.failure_code || "Payment failure"}. ${topOpportunity.decision.reason}`;
+  }, [topOpportunity]);
+
   return (
     <main className="dashboardPage">
       {/* Calm Top Welcome Section */}
@@ -224,9 +232,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
               <div className="featuredOppRationale">
                 <span className="oppRationaleTitle">Diagnosed Failure &amp; Safe Action:</span>
                 <p className="oppRationaleText">
-                  {"failure_reason" in topOpportunity
-                    ? `Card limit reached. Recommend 1-Click UPI payment link because customer has not been contacted today.`
-                    : topOpportunity.decision.reason}
+                  {opportunityExplanation}
                 </p>
               </div>
 

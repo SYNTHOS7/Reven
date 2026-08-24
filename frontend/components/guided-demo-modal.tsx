@@ -21,9 +21,15 @@ interface GuidedDemoModalProps {
   onClose: () => void;
 }
 
+const money = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
+
 export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const { loadDemoDataset, transactions } = useTransactions();
+  const { loadDemoDataset, transactions, metrics, setActiveDataSource } = useTransactions();
   const [loadedNotice, setLoadedNotice] = useState(false);
 
   if (!isOpen) return null;
@@ -32,6 +38,7 @@ export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
 
   function handleLoadData() {
     loadDemoDataset();
+    setActiveDataSource("demo");
     setLoadedNotice(true);
     setTimeout(() => setLoadedNotice(false), 3000);
   }
@@ -69,13 +76,13 @@ export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
               </div>
               <h3>Step 1: Load Simulated Merchant Data</h3>
               <p>
-                Reven comes with a realistic 500-transaction dataset of an online course business (~₹1.40L lost to checkout drop-offs, ~₹46K recoverable).
+                Reven comes with a clearly labelled 500-transaction fictional online-course merchant scenario. Its numbers are calculated from the currently loaded demo data.
               </p>
               <div className="demoActionBox">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <strong>Fictional Merchant Dataset</strong>
-                    <small>500 realistic payments across Cards, UPI, Netbanking &amp; EMI.</small>
+                    <small>{transactions.length} simulated payments across multiple payment methods.</small>
                   </div>
                   <button
                     type="button"
@@ -94,7 +101,7 @@ export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
                 )}
               </div>
               <div className="demoCallout">
-                <strong>Why this matters:</strong> Merchants and judges can explore complete business-scale failure intelligence immediately without configuring complex database credentials.
+                <strong>Current demo totals:</strong> {money.format(metrics.revenueLost)} at risk and {money.format(metrics.potentiallyRecoverableRevenue)} potentially recoverable. No customer is contacted.
               </div>
             </div>
           )}
@@ -109,30 +116,18 @@ export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
                 Reven categorises every failed checkout into root causes and calculates the financial leakage across payment rails.
               </p>
               <div className="demoVisualInsight">
-                <div className="insightRow">
-                  <span className="insightLabel">Card Limits &amp; Declines</span>
-                  <div className="insightBarWrap">
-                    <div className="insightBar" style={{ width: "65%", background: "var(--status-amber)" }} />
+                {metrics.failureReasonStats.slice(0, 3).map((stat, index) => (
+                  <div className="insightRow" key={stat.reason}>
+                    <span className="insightLabel">{stat.label}</span>
+                    <div className="insightBarWrap">
+                      <div className="insightBar" style={{ width: `${stat.percentage}%`, background: index === 0 ? "var(--status-amber)" : index === 1 ? "var(--status-blue)" : "var(--text-muted)" }} />
+                    </div>
+                    <span className="insightVal">{stat.percentage}% of loss ({money.format(stat.lostAmount)})</span>
                   </div>
-                  <span className="insightVal">65% of loss (₹91,000)</span>
-                </div>
-                <div className="insightRow">
-                  <span className="insightLabel">Insufficient Balance</span>
-                  <div className="insightBarWrap">
-                    <div className="insightBar" style={{ width: "22%", background: "var(--status-blue)" }} />
-                  </div>
-                  <span className="insightVal">22% of loss (₹30,800)</span>
-                </div>
-                <div className="insightRow">
-                  <span className="insightLabel">OTP / 3DS Abandonment</span>
-                  <div className="insightBarWrap">
-                    <div className="insightBar" style={{ width: "13%", background: "var(--text-muted)" }} />
-                  </div>
-                  <span className="insightVal">13% of loss (₹18,200)</span>
-                </div>
+                ))}
               </div>
               <div className="demoCallout">
-                <strong>Key Insight:</strong> 78% of card failure drop-offs can be instantly recovered by offering an automated 1-click UPI Intent link.
+                <strong>Key Insight:</strong> The bars above are calculated from the loaded simulated dataset. Open Analyse to see the full cause breakdown and recommended alternatives.
               </div>
             </div>
           )}
@@ -181,21 +176,21 @@ export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
               <div className="demoRationaleCard">
                 <div className="rationaleTop">
                   <span className="utilityLabel">SAFETY RULES IN ACTION</span>
-                  <span className="rulePill">CONFIDENCE: 92%</span>
+                  <span className="rulePill">CASE-SPECIFIC CONFIDENCE</span>
                 </div>
-                <h4>&quot;Recommend UPI Intent because the card payment was declined and customer has 0 prior retries.&quot;</h4>
+                <h4>&quot;Recommendations are evaluated from the failure reason, retry history, recovery probability, and safety rules for that specific case.&quot;</h4>
                 <div className="rationaleChecks">
                   <div className="checkItem">
                     <CheckCircle2 size={15} className="text-primary" />
-                    <span>Amount is below human approval threshold (&lt; ₹5,000)</span>
+                    <span>Amount is checked against the human-approval threshold.</span>
                   </div>
                   <div className="checkItem">
                     <CheckCircle2 size={15} className="text-primary" />
-                    <span>Confidence exceeds 60% safety floor (92%)</span>
+                    <span>Diagnosis confidence is checked against the safety floor.</span>
                   </div>
                   <div className="checkItem">
                     <CheckCircle2 size={15} className="text-primary" />
-                    <span>Customer has not received any reminders today (0/1)</span>
+                    <span>Retry and contact limits are checked before any action is allowed.</span>
                   </div>
                 </div>
               </div>
@@ -221,21 +216,21 @@ export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
                 </div>
                 <div className="receiptBody">
                   <div className="receiptRow">
-                    <span>Event:</span>
-                    <code>payment.captured</code>
+                  <span>Verified event:</span>
+                    <code>payment_link.paid</code>
                   </div>
                   <div className="receiptRow">
-                    <span>Payment Link ID:</span>
-                    <code>plink_test_M99zX4821</code>
+                    <span>Recovery evidence:</span>
+                    <code>Signed Razorpay Test Mode webhook</code>
                   </div>
                   <div className="receiptRow">
-                    <span>Verified Attributed Revenue:</span>
-                    <strong className="text-primary fontMedium">₹4,999.00</strong>
+                    <span>Verified Test Mode recovery:</span>
+                    <strong className="text-primary fontMedium">₹100.00</strong>
                   </div>
                 </div>
               </div>
               <div className="demoCallout">
-                <strong>Zero fake numbers:</strong> Generating a payment link is never counted as revenue until a signed webhook confirms the funds.
+                <strong>Important:</strong> Generating a payment link is never counted as revenue until a signed Razorpay webhook confirms payment.
               </div>
             </div>
           )}

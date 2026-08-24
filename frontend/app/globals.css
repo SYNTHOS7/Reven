@@ -1733,3 +1733,1443 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
     grid-template-columns: 1fr;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   REVEN REDESIGN: GUIDED FINTECH EXPERIENCE STYLES
+   ───────────────────────────────────────────────────────────── */
+
+/* Welcome Hero */
+.welcomeHero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 768px) {
+  .welcomeHero {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.welcomeCopy h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.welcomeSubtitle {
+  font-size: 15px;
+  color: var(--text-technical);
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.guidedDemoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 0 20px rgba(0, 229, 153, 0.2);
+}
+
+/* Guided Three-Step Strip */
+.guidedStepStrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+@media (min-width: 768px) {
+  .guidedStepStrip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.guidedStepItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border-subtle);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.guidedStepItem:hover {
+  background: var(--surface-container-high);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.stepNum {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-container-highest);
+  border: 1px solid var(--border-subtle);
+  color: var(--primary);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stepContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepContent strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stepContent small {
+  font-size: 12px;
+  color: var(--text-technical);
+  line-height: 1.3;
+}
+
+.stepArrow {
+  color: var(--text-muted);
+  transition: transform 0.2s, color 0.2s;
+}
+
+.guidedStepItem:hover .stepArrow {
+  color: var(--primary);
+  transform: translateX(3px);
+}
+
+/* Home Summary Cards Grid */
+.homeSummaryGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+@media (min-width: 640px) {
+  .homeSummaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .homeSummaryGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.kpiExplainer {
+  font-size: 12px;
+  color: var(--text-technical);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.kpiCardAction {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.kpiDetailsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.kpiDetailsLink:hover {
+  opacity: 0.8;
+  transform: translateX(2px);
+}
+
+/* Featured Opportunity Section */
+.featuredOpportunitySection {
+  margin: 28px 0;
+}
+
+.featuredOppCard {
+  background: linear-gradient(135deg, rgba(0, 229, 153, 0.05) 0%, rgba(20, 20, 20, 0.8) 100%);
+  border: 1px solid rgba(0, 229, 153, 0.25);
+  padding: 24px;
+}
+
+.featuredOppHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.featuredOppBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .featuredOppBody {
+    grid-template-columns: 180px 1fr auto;
+  }
+}
+
+.featuredOppAmount {
+  display: flex;
+  flex-direction: column;
+}
+
+.oppAmtLabel {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-technical);
+  text-transform: uppercase;
+}
+
+.oppAmtValue {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 2px 0;
+}
+
+.oppCustomer {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.featuredOppRationale {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oppRationaleTitle {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-technical);
+  text-transform: uppercase;
+}
+
+.oppRationaleText {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* Guided Next Step Card */
+.guidedNextStepCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 24px;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border-subtle);
+  margin: 28px 0;
+}
+
+@media (min-width: 768px) {
+  .guidedNextStepCard {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.nextStepContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nextStepIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(0, 229, 153, 0.1);
+  border: 1px solid rgba(0, 229, 153, 0.3);
+  flex-shrink: 0;
+}
+
+.nextStepContent h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.nextStepContent p {
+  font-size: 13px;
+  color: var(--text-technical);
+  max-width: 550px;
+  line-height: 1.4;
+}
+
+.nextStepActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FIVE-STAGE FLOW COMPONENT
+   ───────────────────────────────────────────────────────────── */
+
+.fiveStageFlowCard {
+  background: var(--surface-container-low);
+  border: 1px solid var(--border-subtle);
+  padding: 24px;
+  margin: 28px 0;
+}
+
+.flowHeader {
+  margin-bottom: 20px;
+}
+
+.flowHeader h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.flowSubtitle {
+  font-size: 13px;
+  color: var(--text-technical);
+  margin-top: 2px;
+}
+
+.fiveStageTrack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (min-width: 900px) {
+  .fiveStageTrack {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.stageCard {
+  background: var(--surface-container);
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.stageCard:hover {
+  background: var(--surface-container-high);
+  border-color: var(--border-strong);
+}
+
+.stageCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.stageIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--surface-container-highest);
+  color: var(--text-technical);
+  border: 1px solid var(--border-subtle);
+}
+
+.stageStepNumber {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.stageName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stageShortDesc {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.stagePlainDesc {
+  font-size: 11px;
+  color: var(--text-technical);
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+.stageArrow {
+  display: none;
+}
+
+/* Stage Status States */
+.stageCurrent {
+  border-color: var(--primary);
+  background: rgba(0, 229, 153, 0.06);
+  box-shadow: 0 0 16px rgba(0, 229, 153, 0.12);
+}
+
+.stageCurrent .stageIconWrap {
+  color: var(--primary);
+  background: rgba(0, 229, 153, 0.15);
+  border-color: var(--primary);
+}
+
+.stageActiveTag {
+  display: inline-block;
+  font-size: 9px;
+  font-family: var(--mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: rgba(0, 229, 153, 0.12);
+  padding: 2px 6px;
+  border-radius: 2px;
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.stageStopped {
+  border-color: var(--status-red);
+  background: rgba(255, 98, 98, 0.08);
+}
+
+.stageStopped .stageIconWrap {
+  color: var(--status-red);
+  background: rgba(255, 98, 98, 0.15);
+  border-color: var(--status-red);
+}
+
+.stageBlocked {
+  opacity: 0.45;
+}
+
+.compactFlow {
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.compactFlow .stagePlainDesc {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HELP TOOLTIP & EXPLANATION POPOVER
+   ───────────────────────────────────────────────────────────── */
+
+.helpTooltipWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.helpTooltipTrigger {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.helpTooltipTrigger:hover {
+  color: var(--primary);
+}
+
+.helpTooltipPopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: var(--surface-container-highest);
+  border: 1px solid var(--border-strong);
+  padding: 14px 16px;
+  z-index: 1000;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+.helpTooltipHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.helpHeaderIcon {
+  color: var(--primary);
+}
+
+.helpTooltipTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.helpTooltipDesc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.helpTooltipDetail {
+  font-size: 11px;
+  color: var(--text-technical);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+  line-height: 1.3;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GUIDED DEMO MODAL
+   ───────────────────────────────────────────────────────────── */
+
+.guidedDemoModal {
+  background: var(--surface-container);
+  border: 1px solid var(--border-strong);
+  width: 90%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.guidedDemoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.demoStepBadge {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(0, 229, 153, 0.1);
+  padding: 3px 8px;
+  border: 1px solid rgba(0, 229, 153, 0.3);
+}
+
+.demoCategoryTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-technical);
+  letter-spacing: 0.05em;
+}
+
+.demoProgressTrack {
+  height: 3px;
+  background: var(--surface-container-highest);
+  width: 100%;
+}
+
+.demoProgressBarFill {
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.guidedDemoBody {
+  padding: 24px;
+  flex: 1;
+}
+
+.demoStepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.demoStepIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--border-subtle);
+}
+
+.iconEmerald {
+  background: rgba(0, 229, 153, 0.1);
+  color: var(--primary);
+  border-color: rgba(0, 229, 153, 0.3);
+}
+
+.iconAmber {
+  background: rgba(255, 184, 0, 0.1);
+  color: var(--status-amber);
+  border-color: rgba(255, 184, 0, 0.3);
+}
+
+.iconBlue {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.iconViolet {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.iconRed {
+  background: rgba(255, 98, 98, 0.1);
+  color: var(--status-red);
+  border-color: rgba(255, 98, 98, 0.3);
+}
+
+.demoStepContent h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.demoStepContent p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.demoActionBox {
+  background: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demoActionBox strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.demoActionBox small {
+  font-size: 12px;
+  color: var(--text-technical);
+}
+
+.demoSuccessNotice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.demoCallout {
+  background: rgba(0, 229, 153, 0.05);
+  border-left: 3px solid var(--primary);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.demoCallout strong {
+  color: var(--primary);
+}
+
+.demoVisualInsight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface-container-high);
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+}
+
+.insightRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.insightLabel {
+  font-size: 12px;
+  color: var(--text-primary);
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.insightBarWrap {
+  flex: 1;
+  height: 8px;
+  background: var(--surface-container-highest);
+  overflow: hidden;
+}
+
+.insightBar {
+  height: 100%;
+}
+
+.insightVal {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-technical);
+  width: 140px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.demoMockTable {
+  background: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
+}
+
+.mockTableHeader {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 80px;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-container-highest);
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text-technical);
+}
+
+.mockTableRow {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 80px;
+  gap: 8px;
+  padding: 12px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.highlightMock {
+  background: rgba(0, 229, 153, 0.05);
+}
+
+.mockAmt {
+  font-weight: 700;
+  color: var(--status-red);
+}
+
+.demoRationaleCard {
+  background: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rationaleTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rulePill {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--primary);
+  background: rgba(0, 229, 153, 0.1);
+  padding: 2px 6px;
+}
+
+.demoRationaleCard h4 {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+.rationaleChecks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.demoProofReceipt {
+  background: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
+}
+
+.receiptHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface-container-highest);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.receiptBody {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.receiptRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.receiptRow code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surface-container-highest);
+  padding: 2px 6px;
+  color: var(--primary);
+}
+
+.guidedDemoFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-container-low);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RULES & SAFETY VIEW
+   ───────────────────────────────────────────────────────────── */
+
+.rulesSafetyPage {
+  padding: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.ruleCardsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 28px 0;
+}
+
+@media (min-width: 640px) {
+  .ruleCardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ruleCardsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.ruleCard {
+  background: var(--surface-container-low);
+  border: 1px solid var(--border-subtle);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.ruleCard:hover {
+  background: var(--surface-container);
+  border-color: var(--border-strong);
+}
+
+.ruleCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ruleIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-subtle);
+}
+
+.ruleNumber {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-technical);
+  font-weight: 700;
+}
+
+.ruleTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ruleSettingPill {
+  background: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ruleSettingLabel {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text-technical);
+  text-transform: uppercase;
+}
+
+.ruleSettingPill strong {
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.ruleMeaning {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.ruleMeaning strong {
+  color: var(--text-primary);
+}
+
+.ruleImpactBox {
+  background: var(--surface-container);
+  border-left: 2px solid var(--text-muted);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-technical);
+  line-height: 1.35;
+}
+
+.impactTitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.ruleCardFooter {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* Dry Run Simulator */
+.dryRunSimulatorSection {
+  background: var(--surface-container-low);
+  border: 1px solid var(--border-subtle);
+  padding: 24px;
+  margin: 32px 0;
+}
+
+.simulatorHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .simulatorHeader {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.simulatorHeader h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.simulatorDesc {
+  font-size: 13px;
+  color: var(--text-technical);
+  max-width: 680px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.simulatorGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 860px) {
+  .simulatorGrid {
+    grid-template-columns: 340px 1fr;
+  }
+}
+
+.simulatorControlsCard {
+  background: var(--surface-container);
+  border: 1px solid var(--border-subtle);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.simulatorForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.simField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.simField strong {
+  color: var(--primary);
+  font-family: var(--mono);
+}
+
+.simField small {
+  font-size: 11px;
+  color: var(--text-technical);
+}
+
+.simulatorActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.simulatorResultsCard {
+  background: var(--surface-container);
+  border: 1px solid var(--border-subtle);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.comparisonGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 600px) {
+  .comparisonGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.comparisonCol {
+  background: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activePolicyCol {
+  border-top: 2px solid var(--primary);
+}
+
+.proposedPolicyCol {
+  border-top: 2px solid var(--status-amber);
+}
+
+.colHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.colTitle {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-technical);
+}
+
+.policyParamSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.outcomeResultBox {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.outcomeLabel {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-technical);
+}
+
+.outcomeRationale {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.dryRunDisclaimer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-technical);
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Advanced Settings Drawer */
+.advancedSettingsDrawer {
+  background: var(--surface-container);
+  border-left: 1px solid var(--border-strong);
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 36px rgba(0, 0, 0, 0.7);
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drawerHeader h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.drawerBody {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.drawerFieldsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.drawerField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.drawerField input {
+  background: var(--surface-container-highest);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: var(--mono);
+}
+
+.drawerField input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.drawerField small {
+  font-size: 11px;
+  color: var(--text-technical);
+}
+
+.drawerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ANALYSE & TAB STYLES
+   ───────────────────────────────────────────────────────────── */
+
+.tabButtonGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-container-highest);
+  padding: 3px;
+  border: 1px solid var(--border-subtle);
+}
+
+.tabButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-technical);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tabButton.activeTab {
+  background: var(--surface-container-low);
+  color: var(--primary);
+}
+
+.workbenchTabSection {
+  margin: 24px 0;
+}
+
+.workbenchActionsBar {
+  margin-bottom: 16px;
+}
+
+.csvDropzone {
+  background: var(--surface-container-low);
+  border: 2px dashed var(--border-subtle);
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.csvDropzone:hover, .dropzoneActive {
+  border-color: var(--primary);
+  background: rgba(0, 229, 153, 0.03);
+}
+
+.dropzoneIconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-container-highest);
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+.dropzoneContent h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.dropzoneContent p {
+  font-size: 12px;
+  color: var(--text-technical);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.validationErrorBox {
+  background: rgba(255, 98, 98, 0.08);
+  border: 1px solid var(--status-red);
+  padding: 14px 18px;
+  margin: 16px 0;
+}
+
+.errorBoxHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--status-red);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.errorList {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding-left: 18px;
+  line-height: 1.4;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   QUEUE ACTIONS & RATIONALE STYLES
+   ───────────────────────────────────────────────────────────── */
+
+.queueActionBtnGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.recommendationRationale {
+  font-size: 11px;
+  color: var(--text-technical);
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.recoveryConfirmedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(0, 229, 153, 0.1);
+  padding: 4px 8px;
+  border: 1px solid rgba(0, 229, 153, 0.25);
+}
+
+.normalPriorityTag {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-technical);
+  background: var(--surface-container-highest);
+  padding: 2px 6px;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Case Detail Page Specifics */
+.caseFlowHighlightCard {
+  background: var(--surface-container-low);
+  border: 1px solid var(--border-subtle);
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.caseFlowTop {
+  margin-bottom: 14px;
+}
+
+.currentStageBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.stageNumberPill {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(0, 229, 153, 0.12);
+  padding: 3px 8px;
+  border: 1px solid rgba(0, 229, 153, 0.3);
+}
+
+.evidenceKpiGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+@media (min-width: 640px) {
+  .evidenceKpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .evidenceKpiGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+

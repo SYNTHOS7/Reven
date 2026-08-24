@@ -11,7 +11,10 @@ import {
   Menu,
   Sparkles,
   X,
+  FileCheck2,
+  ShieldCheck,
 } from "lucide-react";
+import { HelpTooltip } from "./help-tooltip";
 
 export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -22,11 +25,17 @@ export function Shell({ children }: { children: ReactNode }) {
     setActiveDataSource(activeDataSource === "live" ? "demo" : "live");
   }
 
-  const isOverview = pathname === "/";
-  const isIntelligence = pathname === "/intelligence" || pathname === "/revenue";
+  const isHome = pathname === "/";
+  const isAnalyse =
+    pathname === "/analyse" ||
+    pathname === "/intelligence" ||
+    pathname === "/revenue" ||
+    pathname === "/data" ||
+    pathname === "/transactions" ||
+    pathname === "/transaction-data";
   const isQueue = pathname === "/queue" || pathname === "/recovery-queue";
-  const isData = pathname === "/data" || pathname === "/transactions" || pathname === "/transaction-data";
-  const isPolicy = pathname === "/settings";
+  const isEvidence = pathname === "/evidence" || pathname.startsWith("/case");
+  const isRules = pathname === "/rules" || pathname === "/settings";
 
   return (
     <div className="siteShell">
@@ -41,22 +50,22 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </Link>
 
-        {/* Center: Desktop Navigation */}
+        {/* Center: Desktop Navigation (5 Sections) */}
         <nav aria-label="Primary navigation" className="desktopNav">
-          <Link href="/" className={isOverview ? "activeNavLink" : ""}>
-            Overview
+          <Link href="/" className={isHome ? "activeNavLink" : ""}>
+            Home
           </Link>
-          <Link href="/intelligence" className={isIntelligence ? "activeNavLink" : ""}>
-            Intelligence
+          <Link href="/analyse" className={isAnalyse ? "activeNavLink" : ""}>
+            Analyse
           </Link>
           <Link href="/queue" className={isQueue ? "activeNavLink" : ""}>
             Recovery Queue
           </Link>
-          <Link href="/data" className={isData ? "activeNavLink" : ""}>
-            Data
+          <Link href="/evidence" className={isEvidence ? "activeNavLink" : ""}>
+            Evidence
           </Link>
-          <Link href="/settings" className={isPolicy ? "activeNavLink" : ""}>
-            Policy & Rules
+          <Link href="/rules" className={isRules ? "activeNavLink" : ""}>
+            Rules
           </Link>
         </nav>
 
@@ -67,12 +76,16 @@ export function Shell({ children }: { children: ReactNode }) {
             <span className={`font-mono text-[11px] font-semibold uppercase ${activeDataSource === "live" ? "text-status-amber" : "text-primary"}`}>
               {activeDataSource === "live" ? "Live Test Mode" : "Demo Sandbox"}
             </span>
+            <HelpTooltip
+              topic={activeDataSource === "live" ? "live_test_mode" : "demo_scenario"}
+              className="ml-1"
+            />
           </div>
 
           <button
             type="button"
             onClick={toggleMode}
-            className="btnMidnightSecondary text-[10px] h-8 px-3"
+            className="button buttonSecondary buttonSmall text-[11px] h-8 px-3"
             title={`Click to switch to ${activeDataSource === "live" ? "Demo Sandbox" : "Live Test Mode"}`}
             aria-label={`Current mode: ${activeDataSource === "live" ? "Live Test Mode" : "Demo Sandbox"}. Click to toggle.`}
           >
@@ -121,18 +134,18 @@ export function Shell({ children }: { children: ReactNode }) {
             <nav className="mobileNavLinks" aria-label="Mobile navigation">
               <Link
                 href="/"
-                className={`mobileNavLink ${isOverview ? "activeMobileLink" : ""}`}
+                className={`mobileNavLink ${isHome ? "activeMobileLink" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Overview</span>
+                <span>Home</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
-                href="/intelligence"
-                className={`mobileNavLink ${isIntelligence ? "activeMobileLink" : ""}`}
+                href="/analyse"
+                className={`mobileNavLink ${isAnalyse ? "activeMobileLink" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Intelligence</span>
+                <span>Analyse</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
@@ -144,19 +157,19 @@ export function Shell({ children }: { children: ReactNode }) {
                 <ArrowRight size={14} />
               </Link>
               <Link
-                href="/data"
-                className={`mobileNavLink ${isData ? "activeMobileLink" : ""}`}
+                href="/evidence"
+                className={`mobileNavLink ${isEvidence ? "activeMobileLink" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Data</span>
+                <span>Evidence</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
-                href="/settings"
-                className={`mobileNavLink ${isPolicy ? "activeMobileLink" : ""}`}
+                href="/rules"
+                className={`mobileNavLink ${isRules ? "activeMobileLink" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Policy</span>
+                <span>Rules &amp; Safety</span>
                 <ArrowRight size={14} />
               </Link>
             </nav>
@@ -206,20 +219,26 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <footer className="footer">
         <div className="footerLeft">
-          <span>REVEN / RECOVERY CONTROL</span>
+          <span>REVEN / REVENUE RECOVERY</span>
           <span className="footerDivider">·</span>
           <span className="footerDisclaimer">
             {activeDataSource === "demo"
-              ? "DEMO DATA — simulated, no customer communication is sent."
-              : "RAZORPAY TEST MODE ONLY — Real signed webhook verification active."}
+              ? "DEMO DATA — 500 simulated transactions. No customer messages are dispatched."
+              : "RAZORPAY TEST MODE — Real cryptographic webhook verification active."}
           </span>
         </div>
         <div className="footerRight">
-          <Link href="/data" className="footerLink">
-            <Database size={12} /> Data
+          <Link href="/analyse" className="footerLink">
+            <Activity size={12} /> Analyse
           </Link>
           <Link href="/queue" className="footerLink">
-            <Activity size={12} /> Recovery Queue
+            <Database size={12} /> Recovery Queue
+          </Link>
+          <Link href="/evidence" className="footerLink">
+            <FileCheck2 size={12} /> Evidence
+          </Link>
+          <Link href="/rules" className="footerLink">
+            <ShieldCheck size={12} /> Rules
           </Link>
         </div>
       </footer>

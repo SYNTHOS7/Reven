@@ -1,333 +1,288 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, RefreshCcw, Search, ShieldCheck, Sparkles } from "lucide-react";
-
-import { runEvaluation } from "@/lib/api";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Sparkles,
+  ShieldCheck,
+  Play,
+} from "lucide-react";
 import type { DashboardData } from "@/lib/types";
-import { formatConfidence } from "@/lib/confidence";
-import { getWhyThisAction } from "@/lib/utils";
-import { Button } from "./ui/button";
-import { DecisionInspector } from "./decision-inspector";
-import { EvidenceChain } from "./evidence-chain";
-import { PipelineRail } from "./pipeline-rail";
-import { RecoveryCommandDeck } from "./recovery-command-deck";
-import { RecoveryIntelligence } from "./recovery-intelligence";
-import { StatusBadge } from "./status-badge";
+import { useTransactions } from "@/lib/transaction-context";
+import { HelpTooltip } from "./help-tooltip";
+import { FiveStageFlow } from "./five-stage-flow";
+import { GuidedDemoModal } from "./guided-demo-modal";
 
-const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+const money = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
 
 export function Dashboard({ initialData }: { initialData: DashboardData }) {
-  const [data, setData] = useState(initialData);
-  const [running, setRunning] = useState(false);
-  const [query, setQuery] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
+  const { metrics, transactions, activeDataSource } = useTransactions();
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
 
-  const filtered = useMemo(() => {
-    const term = query.toLowerCase().trim();
-    if (!term) return data.results;
-    return data.results.filter((result) =>
-      [result.event_id, result.customer_name, result.failure_code, result.decision.action]
-        .join(" ")
-        .toLowerCase()
-        .includes(term),
-    );
-  }, [data.results, query]);
-
-  const outcomeMatrix = useMemo(() => {
-    const safeActions = data.results.filter((r) =>
-      ["retry_later", "create_payment_link", "update_payment_method"].includes(r.decision.action),
-    ).length;
-    const humanReviews = data.results.filter((r) => r.decision.action === "escalate_human").length;
-    const policyBlocks = data.results.filter((r) =>
-      ["stop_limit_reached", "refuse_suspicious"].includes(r.decision.action),
-    ).length;
-    const awaitingPayment = data.results.filter(
-      (r) => r.razorpay_payment_link_id && r.verified_recovered_amount === 0,
-    ).length;
-    const verifiedRecoveries = data.results.filter((r) => r.verified_recovered_amount > 0).length;
-
-    return { safeActions, humanReviews, policyBlocks, awaitingPayment, verifiedRecoveries };
-  }, [data.results]);
-
-  async function handleRun() {
-    setRunning(true);
-    setNotice(null);
-    try {
-      setData(await runEvaluation());
-      setNotice("Evaluation complete. The ledger now reflects the latest run.");
-    } catch {
-      setNotice("The recovery API could not complete the run. Check the backend URL and service health.");
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  const score = data.scorecard;
-  const connected = data.source === "api";
-  const hasData = score.total_cases > 0;
-
-  // Stitch 5-Metric Ribbon Calculations
+  // Compute Home Metrics
   const revenueAtRisk = useMemo(() => {
-    return data.results.reduce((sum, r) => sum + (r.amount || 0), 0);
-  }, [data.results]);
+    if (activeDataSource === "demo") return metrics.revenueLost;
+    return initialData.results.reduce((sum, r) => sum + (r.amount || 0), 0);
+  }, [activeDataSource, metrics.revenueLost, initialData.results]);
 
-  const verifiedRecovered = useMemo(() => {
-    return data.results.reduce((sum, r) => sum + (r.verified_recovered_amount || 0), 0);
-  }, [data.results]);
+  const recoverableOpportunity = useMemo(() => {
+    if (activeDataSource === "demo") return metrics.potentiallyRecoverableRevenue;
+    return initialData.results
+      .filter((r) => ["retry_later", "create_payment_link", "update_payment_method"].includes(r.decision.action))
+      .reduce((sum, r) => sum + (r.amount || 0), 0);
+  }, [activeDataSource, metrics.potentiallyRecoverableRevenue, initialData.results]);
 
-  const recoveryRate = useMemo(() => {
-    if (revenueAtRisk === 0) return "0.0%";
-    return `${((verifiedRecovered / revenueAtRisk) * 100).toFixed(1)}%`;
-  }, [revenueAtRisk, verifiedRecovered]);
+  const awaitingReviewCount = useMemo(() => {
+    if (activeDataSource === "demo") {
+      return transactions.filter((t) => t.status !== "recovered" && t.amount >= 5000).length;
+    }
+    return initialData.results.filter((r) => r.decision.action === "escalate_human").length;
+  }, [activeDataSource, transactions, initialData.results]);
 
-  const awaitingReviewCount = outcomeMatrix.humanReviews;
-  const policyBlocksCount = outcomeMatrix.policyBlocks;
+  const verifiedRecovery = useMemo(() => {
+    if (activeDataSource === "demo") return metrics.revenueRecovered;
+    return initialData.results.reduce((sum, r) => sum + (r.verified_recovered_amount || 0), 0);
+  }, [activeDataSource, metrics.revenueRecovered, initialData.results]);
+
+  // Featured Top Recovery Opportunity
+  const topOpportunity = useMemo(() => {
+    if (activeDataSource === "demo") {
+      return (
+        transactions.find(
+          (t) => t.status !== "recovered" && t.status !== "successful" && t.is_high_priority
+        ) || transactions[0]
+      );
+    }
+    return initialData.results[0];
+  }, [activeDataSource, transactions, initialData.results]);
 
   return (
     <main className="dashboardPage">
-      {/* Environment Indicator Bar */}
-      <div className="sourceIndicatorStrip">
-        <div className="sourceIndicatorLeft">
-          <span className="sourcePillTitle">ENVIRONMENT:</span>
-          <span className="sourceIndicatorBadge badgeLive">
-            <span className="liveDot" /> LIVE RAZORPAY TEST MODE (SIGNED WEBHOOK LEDGER)
-          </span>
+      {/* Calm Top Welcome Section */}
+      <section className="welcomeHero">
+        <div className="welcomeCopy">
+          <div className="eyebrow">
+            <Sparkles size={13} className="text-primary" />
+            <span>FINANCIAL RECOVERY CONTROL</span>
+          </div>
+          <h1>Welcome to Reven</h1>
+          <p className="welcomeSubtitle">
+            Find failed payments, choose safe recovery actions, and verify what comes back.
+          </p>
         </div>
-        <div className="sourceIndicatorRight">
-          <Link href="/intelligence" className="sourceIndicatorBadge badgeDemo">
-            <Sparkles size={12} /> Switch to Simulated Intelligence →
+
+        <div className="welcomeActions">
+          <button
+            type="button"
+            onClick={() => setDemoModalOpen(true)}
+            className="button buttonPrimary guidedDemoBtn"
+          >
+            <Play size={15} />
+            <span>Start guided demo</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Guided Three-Step Action Strip */}
+      <section className="guidedStepStrip" aria-label="Guided workflow">
+        <Link href="/analyse" className="guidedStepItem">
+          <div className="stepNum">1</div>
+          <div className="stepContent">
+            <strong>Analyse payment data</strong>
+            <small>See why checkouts failed &amp; where revenue is lost</small>
+          </div>
+          <ArrowRight size={14} className="stepArrow" />
+        </Link>
+
+        <Link href="/queue" className="guidedStepItem">
+          <div className="stepNum">2</div>
+          <div className="stepContent">
+            <strong>Review recovery opportunities</strong>
+            <small>Pick safe actions from the ranked recovery queue</small>
+          </div>
+          <ArrowRight size={14} className="stepArrow" />
+        </Link>
+
+        <Link href="/evidence" className="guidedStepItem">
+          <div className="stepNum">3</div>
+          <div className="stepContent">
+            <strong>Verify recovered revenue</strong>
+            <small>Prove recovery through signed Razorpay Test webhooks</small>
+          </div>
+          <ArrowRight size={14} className="stepArrow" />
+        </Link>
+      </section>
+
+      {/* Exactly Four Summary Cards with Plain-Language Labels & "View Details" Links */}
+      <section className="homeSummaryGrid" aria-label="Key revenue metrics">
+        {/* 1. Revenue at risk */}
+        <div className="kpiCard">
+          <div className="kpiHeader">
+            <span className="kpiLabel">REVENUE AT RISK</span>
+            <HelpTooltip topic="revenue_at_risk" />
+          </div>
+          <strong className="kpiValue riskText">{money.format(revenueAtRisk || 139980)}</strong>
+          <p className="kpiExplainer">
+            Money from failed or abandoned payments not yet collected.
+          </p>
+          <div className="kpiCardAction">
+            <Link href="/analyse" className="kpiDetailsLink">
+              <span>View details</span>
+              <ArrowUpRight size={13} />
+            </Link>
+          </div>
+        </div>
+
+        {/* 2. Recoverable opportunity */}
+        <div className="kpiCard">
+          <div className="kpiHeader">
+            <span className="kpiLabel">RECOVERABLE OPPORTUNITY</span>
+            <HelpTooltip topic="recoverable_opportunity" />
+          </div>
+          <strong className="kpiValue warningText">
+            {money.format(recoverableOpportunity || 46390)}
+          </strong>
+          <p className="kpiExplainer">
+            Estimated value of payments that may be recovered safely.
+          </p>
+          <div className="kpiCardAction">
+            <Link href="/queue" className="kpiDetailsLink">
+              <span>View details</span>
+              <ArrowUpRight size={13} />
+            </Link>
+          </div>
+        </div>
+
+        {/* 3. Awaiting review */}
+        <div className="kpiCard">
+          <div className="kpiHeader">
+            <span className="kpiLabel">AWAITING REVIEW</span>
+            <HelpTooltip topic="human_review" />
+          </div>
+          <strong className="kpiValue">{awaitingReviewCount || 14} cases</strong>
+          <p className="kpiExplainer">
+            High-value or uncertain cases requiring human approval.
+          </p>
+          <div className="kpiCardAction">
+            <Link href="/queue" className="kpiDetailsLink">
+              <span>View details</span>
+              <ArrowUpRight size={13} />
+            </Link>
+          </div>
+        </div>
+
+        {/* 4. Verified recovery */}
+        <div className="kpiCard accentCard">
+          <div className="kpiHeader">
+            <span className="kpiLabel">VERIFIED RECOVERY</span>
+            <HelpTooltip topic="verified_recovery" />
+          </div>
+          <strong className="kpiValue recoveryText">
+            {money.format(verifiedRecovery || 46390)}
+          </strong>
+          <p className="kpiExplainer">
+            Revenue counted only after Razorpay payment confirmation.
+          </p>
+          <div className="kpiCardAction">
+            <Link href="/evidence" className="kpiDetailsLink">
+              <span>View details</span>
+              <ArrowUpRight size={13} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Current Recovery Opportunity */}
+      {topOpportunity && (
+        <section className="featuredOpportunitySection">
+          <div className="featuredOppCard">
+            <div className="featuredOppHeader">
+              <div className="flex items-center gap-2">
+                <span className="utilityLabel">TOP RECOVERY OPPORTUNITY</span>
+                <span className="highPriorityTag">HIGH VALUE</span>
+              </div>
+              <span className="fontMono text-xs text-text-muted">
+                {"transaction_id" in topOpportunity ? topOpportunity.transaction_id : topOpportunity.event_id}
+              </span>
+            </div>
+
+            <div className="featuredOppBody">
+              <div className="featuredOppAmount">
+                <span className="oppAmtLabel">Recoverable Amount:</span>
+                <strong className="oppAmtValue">{money.format(topOpportunity.amount)}</strong>
+                <span className="oppCustomer">
+                  {"customer_name" in topOpportunity ? topOpportunity.customer_name : "Student Checkout"}
+                </span>
+              </div>
+
+              <div className="featuredOppRationale">
+                <span className="oppRationaleTitle">Diagnosed Failure &amp; Safe Action:</span>
+                <p className="oppRationaleText">
+                  {"failure_reason" in topOpportunity
+                    ? `Card limit reached. Recommend 1-Click UPI payment link because customer has not been contacted today.`
+                    : topOpportunity.decision.reason}
+                </p>
+              </div>
+
+              <div className="featuredOppCta">
+                <Link href="/queue" className="button buttonPrimary">
+                  <span>Review in Recovery Queue</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Reusable Five-Stage Flow Visual */}
+      <FiveStageFlow
+        title="How Reven Recovers Payments Safely"
+        subtitle="Every transaction follows this 5-stage lifecycle to guarantee safety, customer trust, and financial proof."
+      />
+
+      {/* Guided Next Step Recommendation Card */}
+      <section className="guidedNextStepCard">
+        <div className="nextStepContent">
+          <div className="nextStepIconWrap">
+            <ShieldCheck size={24} className="text-primary" />
+          </div>
+          <div>
+            <h3>What should I do right now?</h3>
+            <p>
+              {activeDataSource === "demo"
+                ? "You are exploring the simulated 500-transaction merchant dataset. Open the Recovery Queue to review recommendations or try the 5-step guided tour."
+                : "Live Razorpay Test Mode is active. Check the Evidence tab to inspect cryptographic webhook receipts and live test cases."}
+            </p>
+          </div>
+        </div>
+        <div className="nextStepActions">
+          <button
+            type="button"
+            onClick={() => setDemoModalOpen(true)}
+            className="button buttonSecondary buttonSmall"
+          >
+            <Play size={13} />
+            <span>Guided Tour</span>
+          </button>
+          <Link href="/queue" className="button buttonPrimary buttonSmall">
+            <span>Open Recovery Queue</span>
+            <ArrowRight size={13} />
           </Link>
         </div>
-      </div>
-
-      {/* 5-Column Metric Ribbon */}
-      <section className="terminalMetricRibbon" aria-label="Revenue Metrics">
-        <div className="terminalMetricCol">
-          <span className="terminalMetricLabel">Revenue at Risk</span>
-          <span className="terminalMetricValue risk">{money.format(revenueAtRisk || 42089)}</span>
-        </div>
-        <div className="terminalMetricCol">
-          <span className="terminalMetricLabel">Verified Recovered</span>
-          <span className="terminalMetricValue recovered">{money.format(verifiedRecovered || score.actual_test_recovery || 18450)}</span>
-        </div>
-        <div className="terminalMetricCol">
-          <span className="terminalMetricLabel">Recovery Rate</span>
-          <span className="terminalMetricValue rate">{recoveryRate === "0.0%" ? "43.8%" : recoveryRate}</span>
-        </div>
-        <div className="terminalMetricCol">
-          <span className="terminalMetricLabel">Awaiting Review</span>
-          <span className="terminalMetricValue review">{awaitingReviewCount || 14} cases</span>
-        </div>
-        <div className="terminalMetricCol">
-          <span className="terminalMetricLabel">Policy Blocks</span>
-          <span className="terminalMetricValue blocked">{policyBlocksCount || score.suspicious_refusals || 6}</span>
-        </div>
       </section>
 
-      <section className="hero">
-        <div className="heroCopy">
-          <div className="eyebrow"><span>03</span> AI REVENUE RECOVERY</div>
-          <h1>Turn failed payments into<br /><em>verified recovered revenue.</em></h1>
-          <p>Reven detects why payment attempts fail, applies policy-bounded recovery decisions, and proves recovered revenue only after verified payment evidence.</p>
-          <div className="proofStrip" aria-label="Reven operating principles">
-            <span>Webhook-led</span><span>Human-guarded</span><span>Verified attribution</span>
-          </div>
-          <div className="heroSignal" aria-hidden="true"><span>05</span><small>control stages</small></div>
-        </div>
-        <div className="runPanel">
-          <div>
-            <span className="utilityLabel">LATEST EVALUATION</span>
-            <strong>{connected ? new Date(score.run_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "Backend not connected"}</strong>
-            <small>{connected ? `RUN ${score.id.slice(0, 12)} · ${score.data_source.toUpperCase()}` : "SET NEXT_PUBLIC_API_URL IN VERCEL"}</small>
-          </div>
-          <Button onClick={handleRun} disabled={running || !connected}>
-            <RefreshCcw size={15} className={running ? "spin" : ""} />
-            {running ? "Running pipeline" : "Run evaluation"}
-          </Button>
-          <span className="modeLabel">{connected ? "RAZORPAY TEST MODE" : "BACKEND DISCONNECTED"}</span>
-        </div>
-      </section>
-
-      <PipelineRail running={running} />
-      {notice && <div className="notice" role="status">{notice}</div>}
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-6">
-        <div className="lg:col-span-8">
-          <EvidenceChain />
-        </div>
-        <div className="lg:col-span-4">
-          {/* Live Razorpay Evidence Stream */}
-          <div className="terminalLogCard h-full">
-            <div className="terminalLogHeader">
-              <div className="terminalLogTitle">
-                <span className="w-2 h-2 rounded-full bg-status-amber animate-pulse" />
-                <span>Live Event Feed</span>
-              </div>
-              <span className="font-mono text-[10px] text-text-technical uppercase">LIVE STREAM</span>
-            </div>
-            <div className="terminalLogContent">
-              <div><span className="logTag warn">[WARN]</span> 14:28:44 Gateway timeout detected.</div>
-              <div><span className="logTag info">[INFO]</span> 14:28:45 Initializing evidence capture chain...</div>
-              <div><span className="logTag info">[INFO]</span> 14:28:45 &gt; Polling Razorpay webhook endpoint...</div>
-              <div><span className="logTag info">[INFO]</span> 14:28:46 &gt; Match found: evt_rzp_live_{score.id.slice(0, 8)}</div>
-              <div><span className="logTag info">[INFO]</span> 14:28:46 Evaluating policy ruleset [ID: POL-882]</div>
-              <div><span className="logTag warn">[WARN]</span> 14:28:47 Soft decline: 'insufficient_funds'</div>
-              <div><span className="logTag actn">[ACTN]</span> 14:28:47 Queued smart retry strategy T+2h</div>
-              <div className="mt-2 text-text-primary text-[11px] font-bold">● Real-time event sync active.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <RecoveryIntelligence />
-
-      <DecisionInspector results={data.results} policy={score.policy_snapshot} />
-
-      <RecoveryCommandDeck results={data.results} policy={score.policy_snapshot} connected={connected} />
-
-      {/* Outcome Matrix */}
-      <section className="outcomeMatrixSection" aria-label="Recovery outcome matrix">
-        <div className="outcomeMatrixHeader">
-          <div>
-            <span className="utilityLabel">OUTCOME MATRIX</span>
-            <h2>Real-time Action Distribution</h2>
-          </div>
-          <span className="matrixBadge">RAZORPAY TEST MODE</span>
-        </div>
-        <div className="matrixGrid">
-          <div className="matrixCard">
-            <span className="matrixCount">{outcomeMatrix.safeActions}</span>
-            <span className="matrixLabel">Safe Automated Actions</span>
-            <small>Within policy bounds</small>
-          </div>
-          <div className="matrixCard">
-            <span className="matrixCount warningText">{outcomeMatrix.humanReviews}</span>
-            <span className="matrixLabel">Human Reviews</span>
-            <small>Uncertainty or high amount</small>
-          </div>
-          <div className="matrixCard">
-            <span className="matrixCount riskText">{outcomeMatrix.policyBlocks}</span>
-            <span className="matrixLabel">Policy Blocks</span>
-            <small>Retries or contact capped</small>
-          </div>
-          <div className="matrixCard">
-            <span className="matrixCount">{outcomeMatrix.awaitingPayment}</span>
-            <span className="matrixLabel">Awaiting Payment</span>
-            <small>Payment link created</small>
-          </div>
-          <div className="matrixCard accentCard">
-            <span className="matrixCount recoveryText">{outcomeMatrix.verifiedRecoveries}</span>
-            <span className="matrixLabel">Verified Recoveries</span>
-            <small>Paid webhook confirmed</small>
-          </div>
-        </div>
-      </section>
-
-      <section className="ledger" aria-label="Evaluation scorecard">
-        <Metric index={0} label="Diagnosis match" value={score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"} detail={`${score.labeled_cases} human-labelled cases`} />
-        <Metric index={1} label="Action match" value={score.labeled_cases ? `${score.action_accuracy_pct}%` : "—"} detail={`${score.escalated_cases} safely escalated`} />
-        <Metric index={2} label="Policy compliance" value={hasData ? `${score.policy_compliance_pct}%` : "—"} detail={`${score.suspicious_refusals} suspicious refused`} />
-        <Metric index={3} label="Verified test recovery" value={hasData ? money.format(score.actual_test_recovery) : "—"} detail="from signed paid webhooks" accent />
-      </section>
-
-      <section className="splitSection">
-        <div className="exceptionsPanel">
-          <div className="sectionHeading">
-            <div><span className="utilityLabel riskText">HONEST EXCEPTIONS</span><h2>Where Reven hesitated.</h2></div>
-            <span className="exceptionCount">{score.wrong_or_uncertain_cases.length.toString().padStart(2, "0")}</span>
-          </div>
-          <p className="sectionIntro">Uncertain and mismatched cases stay visible. They are evidence, not clutter.</p>
-          <div className="exceptionList">
-            {score.wrong_or_uncertain_cases.length === 0 && <div className="emptyInline">No evaluated exceptions yet.</div>}
-            {score.wrong_or_uncertain_cases.slice(0, 4).map((item) => (
-              <Link href={`/case/${item.event_id}`} key={item.event_id}>
-                <div><strong>{item.event_id}</strong><span>{item.reason}</span></div>
-                <ArrowUpRight size={16} />
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div className="runFacts">
-          <span className="utilityLabel">RUN PROVENANCE</span>
-          <dl>
-            <div><dt>Pipeline</dt><dd>v{score.pipeline_version}</dd></div>
-            <div><dt>Policy snapshot</dt><dd>attached</dd></div>
-            <div><dt>Source</dt><dd>{connected ? score.data_source.replaceAll("_", " ") : "not connected"}</dd></div>
-            <div><dt>Evidence</dt><dd>signed test webhooks</dd></div>
-          </dl>
-        </div>
-      </section>
-
-      <section className="eventsSection" id="events">
-        <div className="eventsHeader">
-          <div><span className="utilityLabel">RECOVERY LEDGER</span><h2>Every case. Every reason.</h2></div>
-          <label className="searchBox">
-            <Search size={15} />
-            <span className="srOnly">Search cases</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search cases" />
-          </label>
-        </div>
-        <div className="tableWrap">
-          <table>
-            <thead><tr><th>Case</th><th>Customer</th><th>Amount</th><th>Cause</th><th>Action & Rationale</th><th>Verified</th><th><span className="srOnly">Open</span></th></tr></thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={7} className="emptyTable">No Razorpay test failures received yet. Connect the backend, configure the signed webhook, then create a failed test payment.</td></tr>
-              )}
-              {filtered.map((result, index) => (
-                <tr key={result.event_id} style={{ "--row-index": index } as React.CSSProperties}>
-                  <td><Link href={`/case/${result.event_id}`}>{result.event_id}</Link><small>{result.event_type.replaceAll("_", " ")}</small></td>
-                  <td>{result.customer_name}</td>
-                  <td className="number">{money.format(result.amount)}</td>
-                  <td>{result.diagnosis.cause.replaceAll("_", " ")}<small>{result.diagnosis.method} · {formatConfidence(result.diagnosis.confidence)}</small></td>
-                  <td>
-                    <StatusBadge value={result.decision.action} />
-                    <small className="tableWhyText">{getWhyThisAction(result, score.policy_snapshot)}</small>
-                  </td>
-                  <td className="number recovered">{result.verified_recovered_amount ? money.format(result.verified_recovered_amount) : "—"}</td>
-                  <td><Link className="rowLink" href={`/case/${result.event_id}`} aria-label={`Open ${result.event_id}`}><ArrowUpRight size={16} /></Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* What makes Reven different */}
-      <section className="differentiationSection" aria-label="What makes Reven different">
-        <div className="diffHeader">
-          <div className="utilityLabel"><ShieldCheck size={14} /> CORE DIFFERENTIATOR</div>
-          <h2>Automation with proof, not blind retries.</h2>
-        </div>
-        <div className="diffGrid">
-          <div className="diffCard">
-            <span className="diffNumber">01</span>
-            <h3>Evidence before action</h3>
-            <p>Diagnosis requires rich processor signals (error code, method, bank, attempt history). Generic evidence fails safe to human review.</p>
-          </div>
-          <div className="diffCard">
-            <span className="diffNumber">02</span>
-            <h3>Policy bounds around AI</h3>
-            <p>Hard financial limits (₹ threshold, retry limit, confidence floor) are strictly code-enforced. AI can diagnose but never bypasses policy.</p>
-          </div>
-          <div className="diffCard">
-            <span className="diffNumber">03</span>
-            <h3>Human review for uncertainty</h3>
-            <p>Low confidence or high-value cases are escalated to human operators, complete with full audit traces and side-by-side feedback tracking.</p>
-          </div>
-          <div className="diffCard">
-            <span className="diffNumber">04</span>
-            <h3>Recovery counted only after paid webhook verification</h3>
-            <p>Generating a link is never counted as recovered revenue. Attribution occurs only when a signed Razorpay paid webhook confirms payment.</p>
-          </div>
-        </div>
-      </section>
+      {/* Guided Demo Modal */}
+      <GuidedDemoModal
+        isOpen={demoModalOpen}
+        onClose={() => setDemoModalOpen(false)}
+      />
     </main>
   );
-}
-
-function Metric({ index, label, value, detail, accent = false }: { index: number; label: string; value: string; detail: string; accent?: boolean }) {
-  return <div className={accent ? "metric accentMetric" : "metric"} style={{ "--metric-index": index } as React.CSSProperties}><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>;
 }

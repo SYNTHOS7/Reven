@@ -9,6 +9,7 @@ import { OperatorApprovalAction } from "@/components/operator-approval-action";
 import { RecoveryVerificationAction } from "@/components/recovery-verification-action";
 import { OperatorFeedback } from "@/components/operator-feedback";
 import { PolicyReplay } from "@/components/policy-replay";
+import { FiveStageFlow } from "@/components/five-stage-flow";
 import { loadCaseDetails, loadPolicy } from "@/lib/api";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
@@ -22,9 +23,28 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
   const { event, pipeline_result: result } = caseData;
   const stopped = result.trust_gate.status === "suspicious";
 
-  const recoveryState = result.verified_recovered_amount > 0
-    ? `₹${result.verified_recovered_amount.toLocaleString("en-IN")} verified recovered`
-    : result.razorpay_payment_link_id
+  // Determine current active stage number (1 to 5) and plain sentence summary
+  let currentStageNumber = 4;
+  let stageSentence = "Reven evaluated safety rules and selected a bounded recovery action.";
+
+  if (stopped) {
+    currentStageNumber = 2;
+    stageSentence = "Trust Gate stopped recovery because this payment attempt matched suspicious velocity patterns.";
+  } else if (result.verified_recovered_amount > 0) {
+    currentStageNumber = 5;
+    stageSentence = `Recovery confirmed! ₹${result.verified_recovered_amount.toLocaleString("en-IN")} was verified via signed Razorpay webhook.`;
+  } else if (result.razorpay_payment_link_id) {
+    currentStageNumber = 5;
+    stageSentence = "Payment link created in Razorpay Test Mode; awaiting webhook payment confirmation.";
+  } else if (result.decision.action === "escalate_human") {
+    currentStageNumber = 4;
+    stageSentence = "Human review required because the case amount or uncertainty exceeds safety policy bounds.";
+  }
+
+  const recoveryState =
+    result.verified_recovered_amount > 0
+      ? `₹${result.verified_recovered_amount.toLocaleString("en-IN")} verified recovered`
+      : result.razorpay_payment_link_id
       ? "Recovery link awaiting payment confirmation"
       : "No recovery money action has run";
 
@@ -84,32 +104,101 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
   return (
     <Shell>
       <main className="innerPage casePage">
-        <Link href="/" className="backLink">
-          <ArrowLeft size={15} /> Back to recovery ledger
+        <Link href="/evidence" className="backLink">
+          <ArrowLeft size={15} /> Back to evidence ledger
         </Link>
+
+        {/* Case Header */}
         <section className="caseHeader">
           <div>
-            <span className="utilityLabel">CASE {result.event_id}</span>
+            <div className="flex items-center gap-2">
+              <span className="utilityLabel">CASE {result.event_id}</span>
+              <span className="badgeLive"><span className="liveDot" /> RAZORPAY TEST MODE</span>
+            </div>
             <h1>{result.customer_name}</h1>
             <p>
               {result.event_type.replaceAll("_", " ")} ·{" "}
-              <span className="number">₹{result.amount.toLocaleString("en-IN")}</span> ·{" "}
-              <span className="badgeMono">Razorpay Test Mode</span>
+              <span className="number fontBold text-primary">₹{result.amount.toLocaleString("en-IN")}</span>
             </p>
           </div>
           <div className="caseDecision">
-            <span>FINAL DECISION</span>
+            <span>RECOMMENDED ACTION</span>
             <StatusBadge value={result.decision.action} />
           </div>
         </section>
 
+        {/* 5-Stage Flow Highlight with 1-Sentence Plain Explanation */}
+        <section className="caseFlowHighlightCard">
+          <div className="caseFlowTop">
+            <span className="utilityLabel">CURRENT STAGE IN 5-STAGE PIPELINE</span>
+            <div className="currentStageBanner">
+              <span className="stageNumberPill">STAGE 0{currentStageNumber}</span>
+              <strong>{stageSentence}</strong>
+            </div>
+          </div>
+          <FiveStageFlow
+            activeStage={currentStageNumber}
+            isStopped={stopped}
+            stopStage={2}
+            compact
+            title=""
+            subtitle=""
+          />
+        </section>
+
+        {/* Action Bars */}
+        {!stopped && result.decision.action === "create_payment_link" && (
+          <div className="actionBar">
+            <div>
+              <span className="utilityLabel">OPERATOR ACTION</span>
+              <strong>Create a Razorpay test Payment Link</strong>
+              <small className="block text-text-muted text-xs">Generates a test mode checkout link for this transaction.</small>
+            </div>
+            <PaymentLinkAction eventId={result.event_id} />
+          </div>
+        )}
+
+        {!stopped && result.decision.action === "escalate_human" && !result.razorpay_payment_link_id && (
+          <div className="actionBar approvalBar">
+            <div>
+              <span className="utilityLabel">HUMAN REVIEW REQUIRED</span>
+              <strong>Review the evidence, then authorize one Razorpay test Payment Link</strong>
+              <small className="block text-text-muted text-xs">The operator token is used once and is never stored in the browser.</small>
+            </div>
+            <OperatorApprovalAction eventId={result.event_id} />
+          </div>
+        )}
+
+        {!stopped && result.razorpay_payment_link_id && result.verified_recovered_amount === 0 && (
+          <div className="actionBar">
+            <div>
+              <span className="utilityLabel">PAYMENT LINK PREPARED</span>
+              <strong>Verify the current paid status directly with Razorpay</strong>
+              <small className="block text-text-muted text-xs">Use this if webhook delivery was delayed or interrupted.</small>
+            </div>
+            <RecoveryVerificationAction eventId={result.event_id} />
+          </div>
+        )}
+
+        {result.verified_recovered_amount > 0 && (
+          <div className="actionBar">
+            <div>
+              <span className="utilityLabel">VERIFIED RECOVERY</span>
+              <strong className="text-primary">
+                ₹{result.verified_recovered_amount.toLocaleString("en-IN")} received through attributed Razorpay Payment Link
+              </strong>
+            </div>
+          </div>
+        )}
+
+        {/* Detailed Decision Trace */}
         <section className="decisionTraceIntro" aria-labelledby="decision-trace-title">
           <div>
-            <span className="utilityLabel">DECISION TRACE</span>
-            <h2 id="decision-trace-title">Evidence before action.</h2>
+            <span className="utilityLabel">AUDITABLE DECISION TRACE</span>
+            <h2 id="decision-trace-title">Evidence behind the decision</h2>
           </div>
           <p>
-            <strong>AI diagnoses ambiguity.</strong> Trust and policy rules decide whether an action is permitted.
+            AI diagnoses ambiguity. Trust checks and policy rules decide whether an action is permitted.
             No customer contact or revenue claim is made without an auditable record.
           </p>
         </section>
@@ -128,55 +217,17 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
               <div className="stepEvidence">
                 <strong>{step.body}</strong>
                 <p>{step.reason}</p>
-                {step.number === "03" && <span className="decisionBoundary">AI signal · never executes a money action</span>}
-                {step.number === "04" && <span className="decisionBoundary policyBoundary">Policy control · bounded action only</span>}
+                {step.number === "03" && <span className="decisionBoundary">AI signal · never executes money action</span>}
+                {step.number === "04" && <span className="decisionBoundary policyBoundary">Policy control · bounded action</span>}
               </div>
             </article>
           ))}
         </section>
 
-        {!stopped && result.decision.action === "create_payment_link" && (
-          <div className="actionBar">
-            <div>
-              <span className="utilityLabel">OPERATOR ACTION</span>
-              <strong>Create a Razorpay test Payment Link</strong>
-            </div>
-            <PaymentLinkAction eventId={result.event_id} />
-          </div>
-        )}
-        {!stopped && result.decision.action === "escalate_human" && !result.razorpay_payment_link_id && (
-          <div className="actionBar approvalBar">
-            <div>
-              <span className="utilityLabel">HUMAN REVIEW REQUIRED</span>
-              <strong>Review the evidence, then authorize one Razorpay test Payment Link</strong>
-              <small>The operator token is used once and is never stored in the browser.</small>
-            </div>
-            <OperatorApprovalAction eventId={result.event_id} />
-          </div>
-        )}
-        {!stopped && result.razorpay_payment_link_id && result.verified_recovered_amount === 0 && (
-          <div className="actionBar">
-            <div>
-              <span className="utilityLabel">PAYMENT LINK PREPARED</span>
-              <strong>Verify the current paid status directly with Razorpay</strong>
-              <small>Use this if webhook delivery was delayed or interrupted.</small>
-            </div>
-            <RecoveryVerificationAction eventId={result.event_id} />
-          </div>
-        )}
-        {result.verified_recovered_amount > 0 && (
-          <div className="actionBar">
-            <div>
-              <span className="utilityLabel">VERIFIED RECOVERY</span>
-              <strong>₹{result.verified_recovered_amount.toLocaleString("en-IN")} received through the attributed Razorpay Payment Link</strong>
-            </div>
-          </div>
-        )}
-
         {/* Operator Feedback / Human Review Side by Side */}
         <OperatorFeedback event={event} pipelineResult={result} />
 
-        {/* Policy Replay / Dry Run */}
+        {/* Policy Replay / Test a Rule Safely */}
         <PolicyReplay eventId={result.event_id} initialPolicy={activePolicy} pipelineResult={result} />
       </main>
     </Shell>

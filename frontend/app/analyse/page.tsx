@@ -2,11 +2,11 @@ import { Shell } from "@/components/shell";
 import { RevenueIntelligenceView } from "@/components/revenue-intelligence-view";
 
 export const metadata = {
-  title: "Data & Analysis — Reven",
-  description: "CSV upload, demo data ingestion, and transaction analysis.",
+  title: "Analyse — Reven",
+  description: "Where revenue is being lost: financial impact, failure patterns, and recovery opportunities.",
 };
 
-export default function DataPage() {
+export default function AnalysePage() {
   return (
     <Shell>
       <RevenueIntelligenceView />

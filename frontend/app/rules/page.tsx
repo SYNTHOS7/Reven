@@ -7,7 +7,7 @@ export const metadata = {
   description: "Safety bounds, human review thresholds, retry limits, and policy simulation.",
 };
 
-export default async function SettingsPage() {
+export default async function RulesPage() {
   const [policy, dashboardData] = await Promise.all([
     loadPolicy(),
     loadDashboard(),

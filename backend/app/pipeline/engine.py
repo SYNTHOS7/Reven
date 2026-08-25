@@ -14,7 +14,12 @@ from app.pipeline.diagnosis import diagnose
 from app.pipeline.trust_gate import check_trust
 
 
-def run_event(event: PaymentEvent, policy: PolicySettings, run_id: str | None = None) -> PipelineResult:
+def run_event(
+    event: PaymentEvent,
+    policy: PolicySettings,
+    run_id: str | None = None,
+    historical_examples: list[dict] | None = None,
+) -> PipelineResult:
     current_run_id = run_id or str(uuid4())
     detection = detect(event)
 
@@ -37,7 +42,7 @@ def run_event(event: PaymentEvent, policy: PolicySettings, run_id: str | None = 
 
             decision = DecisionResult(action=Action.REFUSE_SUSPICIOUS, reason="Trust gate stopped recovery")
         else:
-            diagnosis = diagnose(event)
+            diagnosis = diagnose(event, historical_examples)
             decision = decide(event, diagnosis, policy)
 
     return PipelineResult(

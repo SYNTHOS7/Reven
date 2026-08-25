@@ -83,3 +83,56 @@ def find_similar_cases(
         "verified_recovered_amount": sum(item["verified_recovered_amount"] for item in verified),
         "disclaimer": "Supporting evidence only. The current case is evaluated independently by Trust Gate and policy rules.",
     }
+
+
+def retrieve_historical_diagnosis_examples(
+    event: PaymentEvent,
+    events: list[PaymentEvent],
+    limit: int = 3,
+) -> list[dict[str, str | float | list[str]]]:
+    """Retrieve labelled, comparable cases for the diagnosis prompt.
+
+    The retrieval layer intentionally excludes unreviewed model outputs. For
+    Razorpay Test Mode, an example only becomes eligible after a human has
+    recorded a cause and action. This prevents a model from reinforcing its
+    own previous guesses.
+    """
+
+    matches: list[tuple[int, PaymentEvent, str, str, list[str]]] = []
+    for candidate in events:
+        if candidate.id == event.id or candidate.source != event.source:
+            continue
+        cause = candidate.human_reviewed_cause or candidate.expected_cause
+        action = candidate.human_reviewed_action or candidate.expected_action
+        if not cause or not action:
+            continue
+
+        score = 0
+        reasons: list[str] = []
+        if candidate.failure_code == event.failure_code:
+            score += 5
+            reasons.append("same failure code")
+        if candidate.payment_method and candidate.payment_method == event.payment_method:
+            score += 2
+            reasons.append("same payment method")
+        lower, upper = event.amount * 0.8, event.amount * 1.2
+        if lower <= candidate.amount <= upper:
+            score += 1
+            reasons.append("similar amount")
+        if not score:
+            continue
+        action_value = action.value if hasattr(action, "value") else str(action)
+        matches.append((score, candidate, cause, action_value, reasons))
+
+    matches.sort(key=lambda item: (item[0], item[1].occurred_at), reverse=True)
+    return [
+        {
+            "failure_code": candidate.failure_code,
+            "payment_method": candidate.payment_method or "not supplied",
+            "amount_inr": candidate.amount,
+            "confirmed_cause": cause,
+            "confirmed_action": action,
+            "matched_on": reasons,
+        }
+        for _, candidate, cause, action, reasons in matches[:limit]
+    ]

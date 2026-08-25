@@ -3,11 +3,15 @@ from uuid import uuid4
 from app.models import Action, RunResponse, ScorecardRun, WrongCase
 from app.pipeline.engine import run_event
 from app.repository import Repository
+from app.similar_cases import retrieve_historical_diagnosis_examples
 
 
 def run_evaluation(repo: Repository) -> RunResponse:
     run_id = str(uuid4())
-    results = [run_event(event, repo.policy, run_id) for event in repo.events]
+    results = [
+        run_event(event, repo.policy, run_id, retrieve_historical_diagnosis_examples(event, repo.events))
+        for event in repo.events
+    ]
     diagnosis_correct = 0
     action_correct = 0
     wrong: list[WrongCase] = []

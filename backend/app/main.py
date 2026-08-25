@@ -26,7 +26,7 @@ from app.pipeline.engine import run_event
 from app.razorpay_client import RazorpayClient
 from app.recovery_intelligence import compute_recovery_intelligence
 from app.repository import repository
-from app.similar_cases import find_similar_cases
+from app.similar_cases import find_similar_cases, retrieve_historical_diagnosis_examples
 
 config = get_config()
 razorpay = RazorpayClient(config)
@@ -87,7 +87,8 @@ def run_single_event(event_id: str):
     event = next((item for item in repository.events if item.id == event_id), None)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
-    result = run_event(event, repository.policy)
+    examples = retrieve_historical_diagnosis_examples(event, repository.events)
+    result = run_event(event, repository.policy, historical_examples=examples)
     repository.save_results([result])
     return result
 
@@ -191,7 +192,8 @@ async def sync_razorpay_payments(
             new_events += 1
         event.attempts_in_window = sum(item.customer_id == event.customer_id for item in repository.events) + 1
         repository.save_event(event)
-        run_results.append(run_event(event, repository.policy))
+        examples = retrieve_historical_diagnosis_examples(event, repository.events)
+        run_results.append(run_event(event, repository.policy, historical_examples=examples))
     repository.save_results(run_results)
     return {"fetched_failed_payments": len(payments), "new_events": new_events, "evaluated": len(run_results)}
 
@@ -311,7 +313,8 @@ async def receive_razorpay_webhook(
         event = payment_event_from_razorpay(payment)
         event.attempts_in_window = sum(item.customer_id == event.customer_id for item in repository.events) + 1
         repository.save_event(event)
-        result = run_event(event, repository.policy)
+        examples = retrieve_historical_diagnosis_examples(event, repository.events)
+        result = run_event(event, repository.policy, historical_examples=examples)
         repository.save_results([result])
         return WebhookResponse(status="failure_evaluated", event_id=event.id)
     if event_type == "payment_link.paid":

@@ -16,6 +16,10 @@ RULES: dict[str, tuple[str, str]] = {
     "bank_not_available": ("temporary_bank_failure", "The selected bank was temporarily unavailable"),
     "gateway_technical_error": ("temporary_bank_failure", "The payment gateway reported a technical failure"),
     "server_error": ("temporary_bank_failure", "The processor reported a transient server failure"),
+    "card_not_supported": ("unsupported_payment_method", "Processor reported the card or payment method is unsupported"),
+    "payment_method_not_supported": ("unsupported_payment_method", "Processor reported the payment method is unsupported"),
+    "do_not_honor": ("issuer_decline", "Issuer declined the payment without a recoverable reason"),
+    "payment_failed": ("technical_error", "Processor reported a technical payment failure"),
 }
 
 
@@ -42,7 +46,7 @@ def build_evidence_list(event: PaymentEvent) -> list[str]:
     return evidence
 
 
-def diagnose(event: PaymentEvent) -> DiagnosisResult:
+def diagnose(event: PaymentEvent, historical_examples: list[dict] | None = None) -> DiagnosisResult:
     evidence = build_evidence_list(event)
 
     if event.failure_code in RULES:
@@ -55,7 +59,7 @@ def diagnose(event: PaymentEvent) -> DiagnosisResult:
             evidence_used=evidence,
         )
 
-    gemini_result = diagnose_ambiguous_with_gemini(event, get_config())
+    gemini_result = diagnose_ambiguous_with_gemini(event, get_config(), historical_examples)
     if gemini_result:
         gemini_result.evidence_used = evidence
         return gemini_result

@@ -51,7 +51,7 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
       setData(res);
       setNotice({
         type: "success",
-        text: "Evaluation completed successfully! Evidence ledger is now synchronized with latest webhook events.",
+        text: "Evaluation completed. Stored Test Mode cases were re-evaluated with the current diagnosis and policy safeguards.",
       });
     } catch {
       setNotice({

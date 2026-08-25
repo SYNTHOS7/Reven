@@ -41,7 +41,7 @@ Razorpay payment.failed
    Trust Gate ─── suspicious / over limit? ───► stop safely
         │
         ▼
-AI + deterministic diagnosis
+AI diagnosis + labelled-case retrieval
         │
         ▼
 Policy decision ─── uncertain / high value? ───► human review
@@ -140,7 +140,7 @@ Reven includes a clearly labelled 500-transaction online-course merchant scenari
 | Recovery API | FastAPI, Python, Render |
 | Payments | Razorpay Test Mode APIs and signed webhooks |
 | Persistence | Supabase |
-| AI diagnosis | Gemini structured diagnosis with deterministic fallback |
+| AI diagnosis | Gemini structured diagnosis, human-labelled similar-case retrieval, deterministic fallback |
 | Quality | Next.js production build, ESLint, Pytest |
 
 ## Run locally
@@ -185,6 +185,14 @@ Open http://localhost:3000.
 - High-risk and uncertain recoveries require human approval.
 - A Payment Link is never counted as recovered revenue.
 - A signed Razorpay paid webhook is required for verified recovery.
+- An unresolved `unknown` diagnosis is hard-capped at 35% confidence and escalated; it cannot become a high-confidence action.
+- Retrieval uses only same-source, human-labelled comparable cases as support for diagnosis. It never overrides policy or reuses unreviewed model guesses.
+
+## AI and evaluation design
+
+For ambiguous failures, Gemini receives structured processor evidence plus up to three comparable, **human-labelled** same-source cases. This is a narrow retrieval pattern: it helps interpret evidence but does not make a financial decision. Trust Gate and deterministic policy still decide the action.
+
+Reven intentionally does not use an autonomous multi-tool agent. A payment link is created only after policy permits it and, where required, an operator approves it. See [the evaluation protocol](docs/EVALUATION.md) for the labelling methodology and limits of reported accuracy.
 
 ## Demo path for judges
 

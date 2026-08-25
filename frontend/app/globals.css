@@ -2670,6 +2670,7 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .similarCaseOutcome { display: grid; gap: 5px; justify-items: end; color: var(--text-muted); font-size: 11px; }
 .similarCasesEmpty { border-top: 1px solid var(--border-subtle); padding: 20px 24px; color: var(--text-muted); display: flex; align-items: center; gap: 9px; }
 .similarCasesDisclaimer { border-top: 1px solid var(--border-subtle); padding: 11px 24px; color: var(--text-muted); font-size: 12px; display: flex; align-items: center; gap: 7px; background: color-mix(in srgb, var(--surface) 80%, var(--primary) 3%); }
+.toolTrace { color: var(--primary) !important; font-size: 12px; }
 
 @media (max-width: 720px) {
   .policyBoundaryGuideIntro, .similarCasesHeader { padding: 18px; display: block; }

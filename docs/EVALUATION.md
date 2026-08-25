@@ -25,6 +25,7 @@ It reports diagnosis accuracy, action accuracy, policy compliance, uncertainty/e
 - Razorpay Test Mode cases are only labelled when an operator can explain the processor evidence.
 - An unresolved cause is `unknown`, capped at 35% confidence, and escalated for human review.
 - Similar-case retrieval uses only human-labelled, same-source cases. It is supporting evidence for diagnosis; policy makes the decision independently.
+- The diagnosis model may call only three server-executed, read-only tools: current processor context, retry/Trust Gate context, and labelled comparable cases. Tool calls are redacted and recorded on the case; they cannot create links, contact customers, or mutate data.
 
 ## Current status
 

@@ -87,6 +87,7 @@ class DiagnosisResult(BaseModel):
     confidence: float = Field(ge=0, le=1)
     reason: str
     evidence_used: list[str] = Field(default_factory=list)
+    tool_calls: list[str] = Field(default_factory=list)
 
 
 class DecisionResult(BaseModel):
@@ -242,5 +243,4 @@ class RecoveryIntelligenceResponse(BaseModel):
 class WebhookResponse(BaseModel):
     status: str
     event_id: str | None = None
-
 

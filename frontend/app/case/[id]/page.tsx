@@ -218,6 +218,9 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
               <div className="stepEvidence">
                 <strong>{step.body}</strong>
                 <p>{step.reason}</p>
+                {step.number === "03" && result.diagnosis.tool_calls && result.diagnosis.tool_calls.length > 0 && (
+                  <p className="toolTrace">Read-only AI tools: {result.diagnosis.tool_calls.join(" · ")}</p>
+                )}
                 {step.number === "03" && <span className="decisionBoundary">AI signal · never executes money action</span>}
                 {step.number === "04" && <span className="decisionBoundary policyBoundary">Policy control · bounded action</span>}
               </div>

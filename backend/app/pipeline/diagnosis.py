@@ -1,6 +1,6 @@
 from app.config import get_config
 from app.gemini_diagnosis import diagnose_ambiguous_with_gemini
-from app.models import DiagnosisResult, PaymentEvent
+from app.models import DiagnosisResult, PaymentEvent, PolicySettings
 
 RULES: dict[str, tuple[str, str]] = {
     "insufficient_funds": ("temporary_funds_shortage", "Issuer reported insufficient funds"),
@@ -46,7 +46,11 @@ def build_evidence_list(event: PaymentEvent) -> list[str]:
     return evidence
 
 
-def diagnose(event: PaymentEvent, historical_examples: list[dict] | None = None) -> DiagnosisResult:
+def diagnose(
+    event: PaymentEvent,
+    historical_examples: list[dict] | None = None,
+    policy: PolicySettings | None = None,
+) -> DiagnosisResult:
     evidence = build_evidence_list(event)
 
     if event.failure_code in RULES:
@@ -59,7 +63,7 @@ def diagnose(event: PaymentEvent, historical_examples: list[dict] | None = None)
             evidence_used=evidence,
         )
 
-    gemini_result = diagnose_ambiguous_with_gemini(event, get_config(), historical_examples)
+    gemini_result = diagnose_ambiguous_with_gemini(event, get_config(), historical_examples, policy)
     if gemini_result:
         gemini_result.evidence_used = evidence
         return gemini_result

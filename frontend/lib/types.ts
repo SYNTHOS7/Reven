@@ -70,6 +70,7 @@ export interface PipelineResult {
     confidence: number;
     reason: string;
     evidence_used?: string[];
+    tool_calls?: string[];
   };
   decision: { action: Action; reason: string; requires_customer_contact: boolean };
   generated_message: string | null;
@@ -289,4 +290,3 @@ export interface RecoveryTrendPoint {
   lost: number;
   recovered: number;
 }
-

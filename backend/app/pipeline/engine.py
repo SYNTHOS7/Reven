@@ -42,7 +42,7 @@ def run_event(
 
             decision = DecisionResult(action=Action.REFUSE_SUSPICIOUS, reason="Trust gate stopped recovery")
         else:
-            diagnosis = diagnose(event, historical_examples)
+            diagnosis = diagnose(event, historical_examples, policy)
             decision = decide(event, diagnosis, policy)
 
     return PipelineResult(

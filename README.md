@@ -41,7 +41,7 @@ Razorpay payment.failed
    Trust Gate ─── suspicious / over limit? ───► stop safely
         │
         ▼
-AI diagnosis + labelled-case retrieval
+AI diagnosis + bounded read-only tools
         │
         ▼
 Policy decision ─── uncertain / high value? ───► human review
@@ -140,7 +140,7 @@ Reven includes a clearly labelled 500-transaction online-course merchant scenari
 | Recovery API | FastAPI, Python, Render |
 | Payments | Razorpay Test Mode APIs and signed webhooks |
 | Persistence | Supabase |
-| AI diagnosis | Gemini structured diagnosis, human-labelled similar-case retrieval, deterministic fallback |
+| AI diagnosis | Gemini structured diagnosis with three bounded, read-only diagnostic tools and deterministic fallback |
 | Quality | Next.js production build, ESLint, Pytest |
 
 ## Run locally
@@ -190,7 +190,15 @@ Open http://localhost:3000.
 
 ## AI and evaluation design
 
-For ambiguous failures, Gemini receives structured processor evidence plus up to three comparable, **human-labelled** same-source cases. This is a narrow retrieval pattern: it helps interpret evidence but does not make a financial decision. Trust Gate and deterministic policy still decide the action.
+For ambiguous failures, Gemini must request a permitted, read-only evidence tool before it returns a structured diagnosis. The server executes the tool locally and records a redacted trace on the case.
+
+| AI tool | What it can read | What it cannot do |
+|---|---|---|
+| `get_processor_context` | Current failure code, error context, payment method, bank/network and amount | Access another payment, card credentials, or customer identity |
+| `get_retry_and_trust_context` | Current retry count, attempt velocity and Trust Gate thresholds | Change policy or bypass Trust Gate |
+| `get_labelled_similar_cases` | Up to three same-source, human-labelled comparable cases | Reuse unreviewed model guesses or treat history as a decision |
+
+This is a narrow retrieval and tool-calling pattern: it helps interpret evidence but does not make a financial decision. Trust Gate and deterministic policy still decide the action. No AI tool can create a Payment Link, message a customer, mutate data, or count revenue.
 
 Reven intentionally does not use an autonomous multi-tool agent. A payment link is created only after policy permits it and, where required, an operator approves it. See [the evaluation protocol](docs/EVALUATION.md) for the labelling methodology and limits of reported accuracy.
 

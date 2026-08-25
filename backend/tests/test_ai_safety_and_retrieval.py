@@ -1,5 +1,6 @@
 from app.gemini_diagnosis import GeminiDiagnosis, build_diagnosis_prompt, normalize_gemini_diagnosis
-from app.models import Action, EventType, PaymentEvent
+from app.diagnostic_tools import execute_diagnostic_tool, tool_declarations
+from app.models import Action, EventType, PaymentEvent, PolicySettings
 from app.similar_cases import retrieve_historical_diagnosis_examples
 
 
@@ -53,3 +54,16 @@ def test_retrieval_prompt_marks_examples_as_supporting_evidence() -> None:
     assert "supporting evidence" in prompt
     assert "human-labelled" in prompt
     assert "capped at 0.35" in prompt
+
+
+def test_diagnostic_tools_are_read_only_allowlisted_and_redacted() -> None:
+    sample = event("current", error_description="Bank declined", retry_count=2)
+    names = {tool["name"] for tool in tool_declarations()}
+    assert names == {"get_processor_context", "get_retry_and_trust_context", "get_labelled_similar_cases"}
+
+    payload, summary = execute_diagnostic_tool(
+        "get_processor_context", sample, PolicySettings(), []
+    )
+    assert payload["failure_code"] == "ambiguous_failure"
+    assert "customer" not in payload
+    assert "processor" in summary.lower()

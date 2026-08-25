@@ -45,6 +45,7 @@ export function RulesSafetyView({
   // Advanced Drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<PolicySettings>({ ...initialPolicy });
+  const [operatorToken, setOperatorToken] = useState("");
 
   // Test a Rule Safely (Dry Run) State
   const [testPolicy, setTestPolicy] = useState<PolicySettings>({ ...initialPolicy });
@@ -55,7 +56,7 @@ export function RulesSafetyView({
     setSaving(true);
     setSaveNotice(null);
     try {
-      const saved = await savePolicy(policyToSave);
+      const saved = await savePolicy(policyToSave, operatorToken || undefined);
       setPolicy(saved);
       setEditingPolicy(saved);
       setIsDrawerOpen(false);
@@ -134,6 +135,19 @@ export function RulesSafetyView({
           </div>
         </div>
       )}
+
+      <section className="threatModelCard" aria-labelledby="threat-model-title">
+        <div className="threatModelSignal"><Lock size={20} /></div>
+        <div>
+          <span className="utilityLabel">V1 SECURITY SCOPE</span>
+          <h2 id="threat-model-title">A controlled operator prototype, not merchant production onboarding</h2>
+          <p>Razorpay Test Mode only. Secrets stay server-side; signed webhooks prove payment outcomes; operator-token protected actions guard policy changes, labels, approvals, and reconciliation.</p>
+        </div>
+        <ul>
+          <li>Not yet: merchant accounts, RBAC, tenant isolation</li>
+          <li>Production next: Supabase Auth, roles, audit log, per-merchant data boundary</li>
+        </ul>
+      </section>
 
       <section className="policyBoundaryGuide" aria-labelledby="policy-boundary-guide-title">
         <div className="policyBoundaryGuideIntro">
@@ -560,6 +574,18 @@ export function RulesSafetyView({
               className="drawerBody"
             >
               <div className="drawerFieldsGrid">
+                <label className="drawerField">
+                  <span>Operator token</span>
+                  <input
+                    type="password"
+                    value={operatorToken}
+                    onChange={(e) => setOperatorToken(e.target.value)}
+                    placeholder="Required when configured on the API"
+                    autoComplete="off"
+                  />
+                  <small>Sent only with this save request and never stored in the browser.</small>
+                </label>
+
                 <label className="drawerField">
                   <span>Confidence escalation threshold ({formatConfidence(editingPolicy.diagnosis_confidence_escalation_threshold)})</span>
                   <input

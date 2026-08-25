@@ -177,6 +177,10 @@ Open http://localhost:3000.
 
 [Deployment guide](DEPLOYMENT.md) · [API contract](docs/api-contract.md) · [Evidence plan](docs/real-data-evidence.md)
 
+## Security scope
+
+Reven is a controlled Razorpay Test Mode operator prototype, not a multi-merchant production onboarding system. Policy edits, human labels, approvals, and reconciliation use an operator token when configured; secrets remain server-side. The deliberate v1 limits and production path are documented in [the threat model](docs/THREAT-MODEL.md).
+
 ## Safety commitments
 
 - Razorpay Test Mode only for live payment proof.

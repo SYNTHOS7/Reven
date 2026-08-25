@@ -45,6 +45,12 @@ def latest_result(event_id: str):
     return max(matches, key=lambda item: item.created_at, default=None)
 
 
+def require_operator_token(x_admin_token: str | None) -> None:
+    """Protect operator mutations when an admin token is configured."""
+    if config.admin_token and x_admin_token != config.admin_token:
+        raise HTTPException(status_code=401, detail="Invalid operator token")
+
+
 @app.get("/health")
 def health():
     return {
@@ -99,8 +105,7 @@ def label_event(
     update: GroundTruthUpdate,
     x_admin_token: Annotated[str | None, Header()] = None,
 ):
-    if config.admin_token and x_admin_token and x_admin_token != config.admin_token:
-        raise HTTPException(status_code=401, detail="Invalid admin token")
+    require_operator_token(x_admin_token)
     event = next((item for item in repository.events if item.id == event_id), None)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -164,7 +169,8 @@ def get_settings() -> PolicySettings:
 
 
 @app.patch("/settings")
-def update_settings(update: Annotated[dict, Body()]):
+def update_settings(update: Annotated[dict, Body()], x_admin_token: Annotated[str | None, Header()] = None):
+    require_operator_token(x_admin_token)
     current = repository.policy.model_dump()
     current.update(update)
     repository.policy = PolicySettings.model_validate(current)

@@ -47,6 +47,32 @@ def test_payment_link_requires_real_test_credentials() -> None:
         assert response.status_code in {409, 503}
 
 
+def test_operator_token_protects_policy_and_human_labels(monkeypatch) -> None:
+    repository.events.clear()
+    original_policy = repository.policy.model_copy(deep=True)
+    event = PaymentEvent(
+        id="rzp_operator_boundary",
+        customer_id="customer_operator_boundary",
+        customer_name="Test customer",
+        type=EventType.PAYMENT_FAILED,
+        amount=100,
+        failure_code="customer_cancelled",
+    )
+    repository.events.append(event)
+    monkeypatch.setattr(config, "admin_token", "operator-secret")
+
+    with TestClient(app) as client:
+        assert client.patch("/settings", json={"max_retries_per_payment": 2}).status_code == 401
+        assert client.patch(
+            "/settings", json={"max_retries_per_payment": 2}, headers={"X-Admin-Token": "operator-secret"}
+        ).status_code == 200
+        assert client.patch(
+            f"/events/{event.id}/ground-truth",
+            json={"correct_cause": "customer_abandoned_payment", "correct_action": "create_payment_link", "reviewer_notes": "Clear cancellation"},
+        ).status_code == 401
+    repository.policy = original_policy
+
+
 def test_human_escalation_requires_operator_token_and_creates_one_link(monkeypatch) -> None:
     repository.events.clear()
     repository.results.clear()

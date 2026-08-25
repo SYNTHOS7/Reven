@@ -46,11 +46,11 @@ export async function loadPolicy(): Promise<PolicySettings> {
   }
 }
 
-export async function savePolicy(policy: PolicySettings): Promise<PolicySettings> {
+export async function savePolicy(policy: PolicySettings, adminToken?: string): Promise<PolicySettings> {
   if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
   const response = await fetch(`${apiUrl}/settings`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(adminToken ? { "X-Admin-Token": adminToken } : {}) },
     body: JSON.stringify(policy),
   });
   if (!response.ok) throw new Error("Policy update failed");
@@ -183,4 +183,3 @@ export async function loadRecoveryIntelligence(): Promise<RecoveryIntelligenceRe
     return null;
   }
 }
-

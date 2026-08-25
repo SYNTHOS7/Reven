@@ -6,14 +6,13 @@ import {
   ArrowRight,
   ArrowUpRight,
   Sparkles,
-  ShieldCheck,
   Play,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/types";
 import { useTransactions } from "@/lib/transaction-context";
 import { HelpTooltip } from "./help-tooltip";
-import { FiveStageFlow } from "./five-stage-flow";
 import { GuidedDemoModal } from "./guided-demo-modal";
+import { StatusBadge } from "./status-badge";
 
 const money = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -70,6 +69,11 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
     return `${topOpportunity.failure_code || "Payment failure"}. ${topOpportunity.decision.reason}`;
   }, [topOpportunity]);
 
+  const recentCases = useMemo(() => {
+    if (activeDataSource === "demo") return transactions.slice(0, 5);
+    return initialData.results.slice(0, 5);
+  }, [activeDataSource, initialData.results, transactions]);
+
   return (
     <main className="dashboardPage">
       {/* Calm Top Welcome Section */}
@@ -97,37 +101,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
         </div>
       </section>
 
-      {/* Guided Three-Step Action Strip */}
-      <section className="guidedStepStrip" aria-label="Guided workflow">
-        <Link href="/analyse" className="guidedStepItem">
-          <div className="stepNum">1</div>
-          <div className="stepContent">
-            <strong>Analyse payment data</strong>
-            <small>See why checkouts failed &amp; where revenue is lost</small>
-          </div>
-          <ArrowRight size={14} className="stepArrow" />
-        </Link>
-
-        <Link href="/queue" className="guidedStepItem">
-          <div className="stepNum">2</div>
-          <div className="stepContent">
-            <strong>Review recovery opportunities</strong>
-            <small>Pick safe actions from the ranked recovery queue</small>
-          </div>
-          <ArrowRight size={14} className="stepArrow" />
-        </Link>
-
-        <Link href="/evidence" className="guidedStepItem">
-          <div className="stepNum">3</div>
-          <div className="stepContent">
-            <strong>Verify recovered revenue</strong>
-            <small>Prove recovery through signed Razorpay Test webhooks</small>
-          </div>
-          <ArrowRight size={14} className="stepArrow" />
-        </Link>
-      </section>
-
-      {/* Exactly Four Summary Cards with Plain-Language Labels & "View Details" Links */}
+      {/* Summary answers only: what is at risk, what is actionable, what needs review, what is verified. */}
       <section className="homeSummaryGrid" aria-label="Key revenue metrics">
         {/* 1. Revenue at risk */}
         <div className="kpiCard">
@@ -247,40 +221,30 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
         </section>
       )}
 
-      {/* Reusable Five-Stage Flow Visual */}
-      <FiveStageFlow
-        title="How Reven Recovers Payments Safely"
-        subtitle="Every transaction follows this 5-stage lifecycle to guarantee safety, customer trust, and financial proof."
-      />
-
-      {/* Guided Next Step Recommendation Card */}
-      <section className="guidedNextStepCard">
-        <div className="nextStepContent">
-          <div className="nextStepIconWrap">
-            <ShieldCheck size={24} className="text-primary" />
-          </div>
+      <section className="recentCasesPanel" aria-labelledby="recent-cases-title">
+        <div className="recentCasesHead">
           <div>
-            <h3>What should I do right now?</h3>
-            <p>
-              {activeDataSource === "demo"
-                ? "You are exploring the simulated 500-transaction merchant dataset. Open the Recovery Queue to review recommendations or try the 5-step guided tour."
-                : "Live Razorpay Test Mode is active. Check the Evidence tab to inspect cryptographic webhook receipts and live test cases."}
-            </p>
+            <span className="utilityLabel">RECENT ACTIVITY</span>
+            <h2 id="recent-cases-title">Latest recovery cases</h2>
           </div>
+          <Link href={activeDataSource === "demo" ? "/queue" : "/evidence"} className="kpiDetailsLink">View all <ArrowUpRight size={13} /></Link>
         </div>
-        <div className="nextStepActions">
-          <button
-            type="button"
-            onClick={() => setDemoModalOpen(true)}
-            className="button buttonSecondary buttonSmall"
-          >
-            <Play size={13} />
-            <span>Guided Tour</span>
-          </button>
-          <Link href="/queue" className="button buttonPrimary buttonSmall">
-            <span>Open Recovery Queue</span>
-            <ArrowRight size={13} />
-          </Link>
+        <div className="recentCasesList">
+          {recentCases.map((item) => {
+            const isDemo = "transaction_id" in item;
+            const caseId = isDemo ? item.transaction_id : item.event_id;
+            const action = isDemo ? item.recommended_action || "Needs review" : item.decision.action;
+            const reason = isDemo ? item.failure_reason : item.failure_code;
+            const href = isDemo ? "/queue" : `/case/${item.event_id}`;
+            return (
+              <Link className="recentCaseRow" href={href} key={caseId}>
+                <div><strong>{money.format(item.amount)}</strong><span>{reason.replaceAll("_", " ")}</span></div>
+                <div className="recentCaseAction"><StatusBadge value={action} /><small>{isDemo ? "Simulated scenario" : "Razorpay Test Mode"}</small></div>
+                <ArrowRight size={15} />
+              </Link>
+            );
+          })}
+          {recentCases.length === 0 && <p className="recentCasesEmpty">No cases yet. Send a Razorpay Test Mode failure to begin the evidence trail.</p>}
         </div>
       </section>
 

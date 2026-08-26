@@ -17,6 +17,7 @@ from app.models import (
     PaymentLinkRequest,
     PolicyReplayRequest,
     PolicyReplayResponse,
+    PolicyImpactResponse,
     RecoveryStrategiesResponse,
     RecoveryTimelineResponse,
     PolicySettings,
@@ -29,6 +30,7 @@ from app.razorpay_client import RazorpayClient
 from app.recovery_intelligence import compute_recovery_intelligence
 from app.recovery_strategies import build_recovery_strategies
 from app.recovery_timeline import build_recovery_timeline
+from app.policy_impact import simulate_policy_impact
 from app.repository import repository
 from app.similar_cases import find_similar_cases, retrieve_historical_diagnosis_examples
 
@@ -171,6 +173,12 @@ def policy_replay(
         is_dry_run=True,
         disclaimer="Dry run — no customer action, message, payment link, or revenue metric was changed.",
     )
+
+
+@app.post("/policy/impact", response_model=PolicyImpactResponse)
+def policy_impact_simulation(proposed_policy: PolicySettings):
+    """Dry-run candidate policy bounds across saved Test Mode evidence only."""
+    return simulate_policy_impact(repository.events, repository.results, proposed_policy)
 
 
 @app.post("/eval/run")

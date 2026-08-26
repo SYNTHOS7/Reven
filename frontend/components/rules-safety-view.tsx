@@ -15,8 +15,8 @@ import {
   X,
   Scale,
 } from "lucide-react";
-import { savePolicy, runPolicyReplay } from "@/lib/api";
-import type { PolicySettings, PolicyReplayResponse, PipelineResult } from "@/lib/types";
+import { savePolicy, runPolicyImpact, runPolicyReplay } from "@/lib/api";
+import type { PolicyImpactResponse, PolicySettings, PolicyReplayResponse, PipelineResult } from "@/lib/types";
 import { formatConfidence } from "@/lib/confidence";
 import { HelpTooltip } from "./help-tooltip";
 import { StatusBadge } from "./status-badge";
@@ -51,6 +51,7 @@ export function RulesSafetyView({
   const [testPolicy, setTestPolicy] = useState<PolicySettings>({ ...initialPolicy });
   const [testing, setTesting] = useState(false);
   const [replayResult, setReplayResult] = useState<PolicyReplayResponse | null>(null);
+  const [impactResult, setImpactResult] = useState<PolicyImpactResponse | null>(null);
 
   async function handleSaveActivePolicy(policyToSave: PolicySettings) {
     setSaving(true);
@@ -77,11 +78,16 @@ export function RulesSafetyView({
   async function handleRunDryRun() {
     setTesting(true);
     try {
-      const res = await runPolicyReplay(sampleEventId, testPolicy);
+      const [res, impact] = await Promise.all([
+        runPolicyReplay(sampleEventId, testPolicy),
+        runPolicyImpact(testPolicy),
+      ]);
       setReplayResult(res);
+      setImpactResult(impact);
     } catch {
       // If backend replay endpoint is unavailable or sample event doesn't exist, calculate local simulated dry run
       setReplayResult(generateSimulatedDryRun(sampleEventId, testPolicy, sampleResult));
+      setImpactResult(null);
     } finally {
       setTesting(false);
     }
@@ -90,6 +96,7 @@ export function RulesSafetyView({
   function handleResetTestPolicy() {
     setTestPolicy({ ...policy });
     setReplayResult(null);
+    setImpactResult(null);
   }
 
   return (
@@ -118,6 +125,37 @@ export function RulesSafetyView({
             <span>Advanced Settings</span>
           </button>
         </div>
+
+        {impactResult && (
+          <section className="policyImpactPanel" aria-live="polite" aria-label="Portfolio policy impact">
+            <div className="policyImpactHeader">
+              <div>
+                <span className="utilityLabel">PORTFOLIO IMPACT · SAFE DRY RUN</span>
+                <h3>What this candidate rule would change</h3>
+                <p>{impactResult.source_scope}. Saved diagnoses are reused; no AI call, policy update, or customer action occurs.</p>
+              </div>
+              <span>{impactResult.total_cases} cases checked</span>
+            </div>
+            <div className="policyImpactStats">
+              <div><strong>{impactResult.action_changed_cases}</strong><span>decisions change</span></div>
+              <div><strong>{impactResult.unchanged_cases}</strong><span>stay unchanged</span></div>
+              <div><strong>{impactResult.newly_human_review_cases}</strong><span>new human reviews</span></div>
+              <div><strong>{impactResult.newly_blocked_cases}</strong><span>new policy blocks</span></div>
+            </div>
+            {impactResult.changes.length > 0 ? (
+              <div className="policyImpactChanges">
+                {impactResult.changes.map((change) => (
+                  <article key={change.event_id}>
+                    <div><strong>₹{change.amount.toLocaleString("en-IN")}</strong><span>{change.failure_code.replaceAll("_", " ")}</span></div>
+                    <div className="policyImpactActionShift"><StatusBadge value={change.current_action} /><span>→</span><StatusBadge value={change.proposed_action} /></div>
+                    <p>{change.reason}</p>
+                  </article>
+                ))}
+              </div>
+            ) : <p className="policyImpactEmpty">This candidate leaves every saved Razorpay Test Mode decision unchanged.</p>}
+            <div className="dryRunDisclaimer"><ShieldCheck size={14} className="text-primary" /><span>{impactResult.disclaimer}</span></div>
+          </section>
+        )}
       </section>
 
       {/* Global Notification Banner */}

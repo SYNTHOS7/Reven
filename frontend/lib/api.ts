@@ -5,6 +5,7 @@ import type {
   DashboardData,
   PipelineResult,
   PolicyReplayResponse,
+  PolicyImpactResponse,
   PolicySettings,
   RecoveryIntelligenceResponse,
   RecoveryStrategiesResponse,
@@ -193,6 +194,20 @@ export async function runPolicyReplay(
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     throw new Error(data?.detail ?? "Policy replay failed");
+  }
+  return response.json();
+}
+
+export async function runPolicyImpact(policy: PolicySettings): Promise<PolicyImpactResponse> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/policy/impact`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(policy),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Policy impact simulation failed");
   }
   return response.json();
 }

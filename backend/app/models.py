@@ -221,6 +221,31 @@ class RecoveryTimelineResponse(BaseModel):
     )
 
 
+class PolicyImpactChange(BaseModel):
+    event_id: str
+    amount: float
+    failure_code: str
+    current_action: Action
+    proposed_action: Action
+    reason: str
+
+
+class PolicyImpactResponse(BaseModel):
+    total_cases: int
+    source_scope: str
+    unchanged_cases: int
+    action_changed_cases: int
+    newly_human_review_cases: int
+    newly_blocked_cases: int
+    current_action_breakdown: dict[str, int]
+    proposed_action_breakdown: dict[str, int]
+    changes: list[PolicyImpactChange]
+    disclaimer: str = (
+        "Portfolio simulation only. It re-evaluates saved evidence with candidate policy bounds; "
+        "it does not change policy, re-run AI, retry payments, contact customers, or create links."
+    )
+
+
 class CauseMetrics(BaseModel):
     cause: str
     total_cases: int

@@ -157,6 +157,28 @@ export interface PolicyReplayResponse {
   disclaimer: string;
 }
 
+export interface PolicyImpactChange {
+  event_id: string;
+  amount: number;
+  failure_code: string;
+  current_action: Action;
+  proposed_action: Action;
+  reason: string;
+}
+
+export interface PolicyImpactResponse {
+  total_cases: number;
+  source_scope: string;
+  unchanged_cases: number;
+  action_changed_cases: number;
+  newly_human_review_cases: number;
+  newly_blocked_cases: number;
+  current_action_breakdown: Record<string, number>;
+  proposed_action_breakdown: Record<string, number>;
+  changes: PolicyImpactChange[];
+  disclaimer: string;
+}
+
 export interface Scorecard {
   id: string;
   run_at: string;

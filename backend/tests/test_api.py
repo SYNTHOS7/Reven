@@ -98,6 +98,29 @@ def test_strategy_endpoint_is_read_only_and_returns_policy_bounded_options() -> 
     assert "cannot send a message" in payload["disclaimer"]
 
 
+def test_policy_impact_endpoint_is_a_non_mutating_dry_run() -> None:
+    repository.events.clear()
+    repository.results.clear()
+    event = PaymentEvent(
+        id="rzp_policy_impact_endpoint",
+        customer_id="customer_policy_impact_endpoint",
+        customer_name="Policy impact endpoint test",
+        type=EventType.PAYMENT_FAILED,
+        amount=100,
+        failure_code="customer_cancelled",
+    )
+    result = run_event(event, repository.policy)
+    repository.events.append(event)
+    repository.results.append(result)
+
+    with TestClient(app) as client:
+        response = client.post("/policy/impact", json={**repository.policy.model_dump(), "human_approval_amount_threshold": 50})
+
+    assert response.status_code == 200
+    assert response.json()["action_changed_cases"] == 1
+    assert repository.results[0].decision.action.value == "create_payment_link"
+
+
 def test_human_escalation_requires_operator_token_and_creates_one_link(monkeypatch) -> None:
     repository.events.clear()
     repository.results.clear()

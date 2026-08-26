@@ -17,6 +17,7 @@ from app.models import (
     PaymentLinkRequest,
     PolicyReplayRequest,
     PolicyReplayResponse,
+    RecoveryStrategiesResponse,
     PolicySettings,
     RecoveryIntelligenceResponse,
     WebhookResponse,
@@ -25,6 +26,7 @@ from app.models import (
 from app.pipeline.engine import run_event
 from app.razorpay_client import RazorpayClient
 from app.recovery_intelligence import compute_recovery_intelligence
+from app.recovery_strategies import build_recovery_strategies
 from app.repository import repository
 from app.similar_cases import find_similar_cases, retrieve_historical_diagnosis_examples
 
@@ -86,6 +88,16 @@ def get_event(event_id: str):
         "pipeline_result": result,
         "similar_cases": find_similar_cases(event, result, repository.events, repository.results),
     }
+
+
+@app.get("/events/{event_id}/strategies", response_model=RecoveryStrategiesResponse)
+def get_recovery_strategies(event_id: str):
+    """Expose recovery options without performing any recovery action."""
+    event = next((item for item in repository.events if item.id == event_id), None)
+    result = latest_result(event_id)
+    if not event or not result:
+        raise HTTPException(status_code=404, detail="Evaluated event not found")
+    return build_recovery_strategies(result, repository.policy)
 
 
 @app.post("/pipeline/run/{event_id}")

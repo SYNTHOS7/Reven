@@ -73,6 +73,31 @@ def test_operator_token_protects_policy_and_human_labels(monkeypatch) -> None:
     repository.policy = original_policy
 
 
+def test_strategy_endpoint_is_read_only_and_returns_policy_bounded_options() -> None:
+    repository.events.clear()
+    repository.results.clear()
+    event = PaymentEvent(
+        id="rzp_strategy_endpoint",
+        customer_id="customer_strategy_endpoint",
+        customer_name="Strategy endpoint test",
+        type=EventType.PAYMENT_FAILED,
+        amount=100,
+        failure_code="customer_cancelled",
+    )
+    result = run_event(event, repository.policy)
+    repository.events.append(event)
+    repository.results.append(result)
+
+    with TestClient(app) as client:
+        response = client.get(f"/events/{event.id}/strategies")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["strategies"][0]["id"] == "operator-payment-link"
+    assert payload["strategies"][0]["status"] == "allowed"
+    assert "cannot send a message" in payload["disclaimer"]
+
+
 def test_human_escalation_requires_operator_token_and_creates_one_link(monkeypatch) -> None:
     repository.events.clear()
     repository.results.clear()

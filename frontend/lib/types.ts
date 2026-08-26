@@ -84,6 +84,23 @@ export interface CaseDetailResponse {
   similar_cases: SimilarCases;
 }
 
+export type RecoveryStrategyStatus = "allowed" | "requires_human_review" | "blocked";
+
+export interface RecoveryStrategy {
+  id: string;
+  title: string;
+  description: string;
+  status: RecoveryStrategyStatus;
+  rationale: string;
+  next_step: string;
+}
+
+export interface RecoveryStrategiesResponse {
+  event_id: string;
+  strategies: RecoveryStrategy[];
+  disclaimer: string;
+}
+
 export interface SimilarCase {
   event_id: string;
   amount: number;

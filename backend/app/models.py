@@ -182,6 +182,26 @@ class PolicyReplayResponse(BaseModel):
     disclaimer: str = "Dry run — no customer action, message, payment link, or revenue metric was changed."
 
 
+class RecoveryStrategy(BaseModel):
+    """An explainable recovery option. This object never performs an action."""
+
+    id: str
+    title: str
+    description: str
+    status: str  # allowed | requires_human_review | blocked
+    rationale: str
+    next_step: str
+
+
+class RecoveryStrategiesResponse(BaseModel):
+    event_id: str
+    strategies: list[RecoveryStrategy]
+    disclaimer: str = (
+        "Strategies are recommendations only. Trust Gate and policy control what can run; "
+        "this endpoint cannot send a message, create a link, retry a payment, or claim revenue."
+    )
+
+
 class CauseMetrics(BaseModel):
     cause: str
     total_cases: int
@@ -243,4 +263,3 @@ class RecoveryIntelligenceResponse(BaseModel):
 class WebhookResponse(BaseModel):
     status: str
     event_id: str | None = None
-

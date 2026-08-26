@@ -11,14 +11,18 @@ import { OperatorFeedback } from "@/components/operator-feedback";
 import { PolicyReplay } from "@/components/policy-replay";
 import { FiveStageFlow } from "@/components/five-stage-flow";
 import { SimilarCases } from "@/components/similar-cases";
-import { loadCaseDetails, loadPolicy } from "@/lib/api";
+import { RecoveryStrategyPanel } from "@/components/recovery-strategy-panel";
+import { loadCaseDetails, loadPolicy, loadRecoveryStrategies } from "@/lib/api";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
 
 export default async function CasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const caseData = await loadCaseDetails(id);
-  const activePolicy = await loadPolicy();
+  const [caseData, activePolicy, recoveryStrategies] = await Promise.all([
+    loadCaseDetails(id),
+    loadPolicy(),
+    loadRecoveryStrategies(id),
+  ]);
   if (!caseData) notFound();
 
   const { event, pipeline_result: result, similar_cases } = caseData;
@@ -244,6 +248,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
           </div>
           <div className="aiInvestigationBoundary">Decision boundary: the model may investigate and explain. Trust Gate, policy, and human approval control every recovery action.</div>
         </section>
+
+        {recoveryStrategies && <RecoveryStrategyPanel data={recoveryStrategies} />}
 
         <SimilarCases data={similar_cases} />
 

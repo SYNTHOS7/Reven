@@ -228,6 +228,23 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
           ))}
         </section>
 
+        <section className="aiInvestigationPanel" aria-labelledby="ai-investigation-title">
+          <div className="aiInvestigationHeader">
+            <div>
+              <span className="utilityLabel">AI INVESTIGATION</span>
+              <h2 id="ai-investigation-title">What AI examined before policy decided</h2>
+              <p>AI interprets bounded evidence. It cannot create a link, contact a customer, or override the decision rules.</p>
+            </div>
+            <span className="aiMethodPill">{result.diagnosis.method === "llm" ? "Gemini structured diagnosis" : "Deterministic diagnosis"}</span>
+          </div>
+          <div className="aiInvestigationGrid">
+            <article><span>TOOLS / EVIDENCE READ</span><strong>{result.diagnosis.tool_calls?.length ? result.diagnosis.tool_calls.join(" · ") : "Processor evidence mapped by deterministic rules"}</strong></article>
+            <article><span>STRUCTURED DIAGNOSIS</span><strong>{result.diagnosis.cause.replaceAll("_", " ")}</strong><small>{formatConfidence(result.diagnosis.confidence)} confidence</small></article>
+            <article><span>POLICY RESULT</span><StatusBadge value={result.decision.action} /><small>{result.decision.reason}</small></article>
+          </div>
+          <div className="aiInvestigationBoundary">Decision boundary: the model may investigate and explain. Trust Gate, policy, and human approval control every recovery action.</div>
+        </section>
+
         <SimilarCases data={similar_cases} />
 
         {/* Operator Feedback / Human Review Side by Side */}

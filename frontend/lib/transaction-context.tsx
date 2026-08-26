@@ -37,32 +37,10 @@ const STORAGE_KEY = "reven_demo_transactions_v2";
 const SOURCE_KEY = "reven_data_source_mode";
 
 export function TransactionProvider({ children }: { children: React.ReactNode }) {
-  const [activeDataSource, setActiveDataSourceState] = useState<"demo" | "live">(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSource = localStorage.getItem(SOURCE_KEY) as "demo" | "live" | null;
-        if (savedSource === "live" || savedSource === "demo") return savedSource;
-      } catch {
-        // ignore
-      }
-    }
-    return "demo";
-  });
-
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-          const parsed = JSON.parse(savedData);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return generateSeededDemoTransactions();
-  });
+  // Keep the first client render identical to the server render. Saved browser
+  // state is restored only after mount, preventing a hydration mismatch.
+  const [activeDataSource, setActiveDataSourceState] = useState<"demo" | "live">("demo");
+  const [transactions, setTransactions] = useState<Transaction[]>(generateSeededDemoTransactions);
 
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "info";
@@ -73,17 +51,37 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     amount: number;
     timestamp: number;
   } | null>(null);
-  const [isInitialized] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    const restoreId = window.setTimeout(() => {
+      try {
+        const savedSource = localStorage.getItem(SOURCE_KEY) as "demo" | "live" | null;
+        if (savedSource === "live" || savedSource === "demo") setActiveDataSourceState(savedSource);
+
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (Array.isArray(parsed) && parsed.length > 0) setTransactions(parsed);
+        }
+      } catch {
+        // Browser storage is optional for the simulated workspace.
+      } finally {
+        setIsHydrated(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(restoreId);
+  }, []);
 
   // Save to LocalStorage whenever transactions change
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isHydrated) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
     } catch {
       // ignore
     }
-  }, [transactions, isInitialized]);
+  }, [transactions, isHydrated]);
 
   function setActiveDataSource(source: "demo" | "live") {
     setActiveDataSourceState(source);

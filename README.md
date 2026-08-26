@@ -14,6 +14,8 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-111111?style=flat-square&logo=fastapi)
 ![Razorpay](https://img.shields.io/badge/Razorpay-Test_Mode-111111?style=flat-square)
 ![Supabase](https://img.shields.io/badge/Supabase-111111?style=flat-square&logo=supabase)
+![Tests](https://img.shields.io/badge/Backend_tests-52_passing-26E38A?style=flat-square)
+![Safety](https://img.shields.io/badge/Recovery-Policy--bounded-26E38A?style=flat-square)
 
 </div>
 
@@ -118,8 +120,8 @@ Reven includes a clearly labelled 500-transaction online-course merchant scenari
 | [Analyse](/analyse) | Shows revenue at risk, recoverable opportunity, failure patterns, and trends. |
 | [Recovery Queue](/queue) | Ranks cases and explains the recommended action for each one. |
 | [Evidence](/evidence) | Shows live Razorpay Test Mode cases, policy reasoning, and verified proof. |
-| [Rules](/rules) | Explains and controls the safety rules around automation. |
-| [Case detail](/case/rzp_pay_TSx3NFbrKdjDCr) | Shows one payment’s evidence, decision, and outcome. |
+| [Rules](/rules) | Explains safety boundaries and runs a portfolio-wide no-mutation policy simulation. |
+| [Case detail](/case/rzp_pay_TSx3NFbrKdjDCr) | Shows one payment’s evidence quality, AI investigation, policy decision, strategy, timeline, and fingerprint. |
 
 ## The differentiator
 
@@ -142,6 +144,18 @@ Reven includes a clearly labelled 500-transaction online-course merchant scenari
 | Persistence | Supabase |
 | AI diagnosis | Gemini structured diagnosis with three bounded, read-only diagnostic tools and deterministic fallback |
 | Quality | Next.js production build, ESLint, Pytest |
+
+## Backend capability matrix
+
+| Capability | What is working | Safety boundary |
+|---|---|---|
+| Failure intake | Signed Razorpay Test Mode `payment.failed` webhooks and batch sync | Signature verification + idempotency key |
+| Diagnosis | Rule-first diagnosis; Gemini may call three read-only evidence tools for ambiguous cases | Low confidence fails closed to human review |
+| Decision | Trust Gate plus deterministic confidence, amount, retry, and contact rules | AI cannot execute a payment or override policy |
+| Recovery | Operator-approved Razorpay Test Mode Payment Links | A link is not recovery; a paid webhook or reconciliation is required |
+| Evidence | Readiness checklist, similar-case support, and redacted SHA-256 case fingerprint | No card, OTP, bank, or raw contact data is stored |
+| Learning | Human labels and agreement / override health | Simulated data and unreviewed model outcomes are excluded |
+| Operations | Operator queue, policy impact simulator, readiness endpoint, request-size limits | Simulations are read-only and never mutate the active policy |
 
 ## Run locally
 

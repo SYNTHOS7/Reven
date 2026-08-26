@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, GitBranch, ShieldCheck, Sparkles } from "lucide-react";
+import { Activity, ArrowRight, BrainCircuit, CheckCircle2, FileKey2, GitBranch, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
 
 const stages = [
   ["01", "Detect", "Receives a failed Razorpay payment event."],
@@ -44,6 +44,7 @@ export function LandingPage() {
           <div className="caseLine"><b>1</b><div><strong>Trust Gate clear</strong><span>No suspicious retry pattern detected</span></div></div>
           <div className="caseLine"><b>2</b><div><strong>Evidence assessed</strong><span>Unsupported-card signal, low confidence</span></div></div>
           <div className="caseLine amber"><b>3</b><div><strong>Human review required</strong><span>Reven does not automate uncertain recovery</span></div></div>
+          <div className="caseReceipt"><FileKey2 size={14} /><span>Redacted decision receipt <code>SHA-256</code></span></div>
           <div className="caseVerified"><CheckCircle2 size={16} /><div><small>SEPARATE VERIFIED TEST RECOVERY</small><strong>₹100 confirmed by paid webhook</strong></div></div>
         </div>
       </section>
@@ -83,14 +84,29 @@ export function LandingPage() {
         </article>
       </section>
 
+      <section className="landingControlLayer" aria-labelledby="control-layer-title">
+        <div className="landingSectionIntro">
+          <p className="landingEyebrow">RECOVERY CONTROL LAYER</p>
+          <h2 id="control-layer-title">Built to explain, challenge, and prove each decision.</h2>
+          <p>Beyond the core flow, Reven gives an operator the controls to question a recommendation before a recovery workflow is allowed.</p>
+        </div>
+        <div className="controlLayerGrid">
+          <article><BrainCircuit size={18} /><span>AI investigation</span><p>Gemini can inspect bounded, read-only payment evidence. It never handles money actions.</p></article>
+          <article><FileKey2 size={18} /><span>Evidence assurance</span><p>Shows missing context and a redacted SHA-256 fingerprint of each decision record.</p></article>
+          <article><ListChecks size={18} /><span>Policy simulation</span><p>Tests a candidate rule across saved Test Mode cases without changing policy or rerunning AI.</p></article>
+          <article><Activity size={18} /><span>Learning health</span><p>Tracks only human-reviewed Test Mode labels—never simulated rows or unreviewed guesses.</p></article>
+        </div>
+        <div className="controlLayerFootnote"><ShieldCheck size={15} /> Every layer is read-only or policy-bounded. Creating a Payment Link still requires an allowed decision, and recovery still needs Razorpay confirmation.</div>
+      </section>
+
       <section id="difference" className="landingDifference">
         <p className="landingEyebrow">WHY REVEN</p>
         <h2>Recovery with proof, not blind automation.</h2>
         <div>
-          <article><span>01</span><h3>Evidence before action</h3><p>Every recommendation starts with payment context, not a generic reminder.</p></article>
-          <article><span>02</span><h3>Policy bounds AI</h3><p>Confidence, retry, amount, and contact limits are enforced by rules.</p></article>
-          <article><span>03</span><h3>Humans handle uncertainty</h3><p>High-value and low-confidence cases pause for review.</p></article>
-          <article><span>04</span><h3>Recovery is verified</h3><p>A link is not revenue. A paid Razorpay webhook is proof.</p></article>
+          <article><span>01</span><h3>Evidence before action</h3><p>Every recommendation starts with payment context, evidence quality, and a visible audit trail.</p></article>
+          <article><span>02</span><h3>Policy bounds AI</h3><p>Confidence, retry, amount, contact, and Trust Gate limits are deterministic controls.</p></article>
+          <article><span>03</span><h3>Humans handle uncertainty</h3><p>High-value, low-confidence, and suspicious cases pause or stop instead of being automated.</p></article>
+          <article><span>04</span><h3>Recovery is verified</h3><p>A link is not revenue. A signed paid Razorpay webhook is proof.</p></article>
         </div>
       </section>
 

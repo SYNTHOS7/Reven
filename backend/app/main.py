@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 import httpx
 from fastapi import Body, FastAPI, Header, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_config
@@ -18,6 +19,11 @@ from app.models import (
     PolicyReplayRequest,
     PolicyReplayResponse,
     PolicyImpactResponse,
+    EvidenceQualityResponse,
+    EvidenceReceiptResponse,
+    LearningHealthResponse,
+    RecoveryQueueResponse,
+    ReadinessResponse,
     RecoveryStrategiesResponse,
     RecoveryTimelineResponse,
     PolicySettings,
@@ -31,6 +37,10 @@ from app.recovery_intelligence import compute_recovery_intelligence
 from app.recovery_strategies import build_recovery_strategies
 from app.recovery_timeline import build_recovery_timeline
 from app.policy_impact import simulate_policy_impact
+from app.evidence_quality import assess_evidence_quality, create_evidence_receipt
+from app.learning_health import build_learning_health
+from app.operator_queue import build_operator_queue
+from app.readiness import build_readiness
 from app.repository import repository
 from app.similar_cases import find_similar_cases, retrieve_historical_diagnosis_examples
 
@@ -44,6 +54,23 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def apply_request_safety(request: Request, call_next):
+    """Reject oversized payloads early and add browser-safe response headers."""
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > 1_000_000:
+                return JSONResponse(status_code=413, content={"detail": "Request body exceeds the 1 MB safety limit"})
+        except ValueError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header"})
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    return response
 
 
 def latest_result(event_id: str):
@@ -112,6 +139,39 @@ def get_recovery_timeline(event_id: str):
     if not event or not result:
         raise HTTPException(status_code=404, detail="Evaluated event not found")
     return build_recovery_timeline(event, result)
+
+
+@app.get("/events/{event_id}/evidence-quality", response_model=EvidenceQualityResponse)
+def get_evidence_quality(event_id: str):
+    event = next((item for item in repository.events if item.id == event_id), None)
+    result = latest_result(event_id)
+    if not event or not result:
+        raise HTTPException(status_code=404, detail="Evaluated event not found")
+    return assess_evidence_quality(event, result)
+
+
+@app.get("/events/{event_id}/evidence-receipt", response_model=EvidenceReceiptResponse)
+def get_evidence_receipt(event_id: str):
+    event = next((item for item in repository.events if item.id == event_id), None)
+    result = latest_result(event_id)
+    if not event or not result:
+        raise HTTPException(status_code=404, detail="Evaluated event not found")
+    return create_evidence_receipt(event, result)
+
+
+@app.get("/learning/health", response_model=LearningHealthResponse)
+def learning_health():
+    return build_learning_health(repository.events, repository.results)
+
+
+@app.get("/queue/operator", response_model=RecoveryQueueResponse)
+def operator_queue():
+    return build_operator_queue(repository.events, repository.results)
+
+
+@app.get("/health/readiness", response_model=ReadinessResponse)
+def readiness():
+    return build_readiness(config, repository.storage_mode)
 
 
 @app.post("/pipeline/run/{event_id}")

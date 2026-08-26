@@ -119,6 +119,40 @@ export interface RecoveryTimelineResponse {
   disclaimer: string;
 }
 
+export interface EvidenceQualityResponse {
+  event_id: string;
+  status: "ready" | "needs_review" | "insufficient_evidence";
+  score: number;
+  captured_signals: string[];
+  missing_signals: string[];
+  assessment: string;
+  recommended_boundary: string;
+  disclaimer: string;
+}
+
+export interface EvidenceReceiptResponse {
+  event_id: string;
+  pipeline_result_id: string;
+  run_id: string;
+  fingerprint_sha256: string;
+  generated_at: string;
+  scope: string;
+  disclaimer: string;
+}
+
+export interface LearningHealthResponse {
+  test_mode_cases: number;
+  human_labelled_cases: number;
+  label_coverage_pct: number | null;
+  cause_agreement_pct: number | null;
+  action_agreement_pct: number | null;
+  operator_overrides: number;
+  diagnoses_by_method: Record<string, number>;
+  learning_status: string;
+  next_evidence_goal: string;
+  disclaimer: string;
+}
+
 export interface SimilarCase {
   event_id: string;
   amount: number;

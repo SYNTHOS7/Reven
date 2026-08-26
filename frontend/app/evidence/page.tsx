@@ -1,6 +1,7 @@
 import { Shell } from "@/components/shell";
 import { EvidenceView } from "@/components/evidence-view";
-import { loadDashboard } from "@/lib/api";
+import { LearningHealth } from "@/components/learning-health";
+import { loadDashboard, loadLearningHealth } from "@/lib/api";
 
 export const metadata = {
   title: "Evidence & Proof — Reven",
@@ -8,10 +9,11 @@ export const metadata = {
 };
 
 export default async function EvidencePage() {
-  const data = await loadDashboard();
+  const [data, learningHealth] = await Promise.all([loadDashboard(), loadLearningHealth()]);
   return (
     <Shell>
       <EvidenceView initialData={data} />
+      {learningHealth && <div className="innerPage evidenceLearningWrap"><LearningHealth data={learningHealth} /></div>}
     </Shell>
   );
 }

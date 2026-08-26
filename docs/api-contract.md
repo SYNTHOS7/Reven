@@ -84,8 +84,45 @@ Response: `{ id, short_url, mode: "test"|"demo" }`
 ### POST /webhooks/razorpay
 Validates `x-razorpay-signature`, deduplicates using `x-razorpay-event-id`, and records completed test recovery. Duplicate delivery returns `{ status: "duplicate" }` without changing totals.
 
+## Case intelligence (read-only)
+
+### GET /events/:id/strategies
+Returns policy-bounded recovery options for the latest evaluated case. Each option is
+explicitly `allowed`, `requires_human_review`, or `blocked`; this endpoint cannot
+dispatch a message, retry a payment, or create a link.
+
+### GET /events/:id/timeline
+Returns the recorded case lifecycle and, for a transient failure, a future
+retry-eligibility time. It is a plan only—there is no background payment retry.
+
+### GET /events/:id/evidence-quality
+Returns the configured evidence checklist, missing processor context, a 0–100
+completeness score, and the policy boundary appropriate for the evidence.
+
+### GET /events/:id/evidence-receipt
+Returns a SHA-256 fingerprint of a redacted event and its stored pipeline decision
+record. The fingerprint is a comparison aid, not a payment confirmation.
+
+### GET /learning/health
+Reports label coverage, operator agreement, overrides, and diagnosis methods for
+saved Razorpay Test Mode cases only. Simulated merchant data is excluded.
+
+### GET /queue/operator
+Returns a deterministic, prioritized operator queue from saved Razorpay Test Mode
+evidence. Suspicious, completed, and already-prepared cases are excluded.
+
+### POST /policy/impact
+Accepts a complete candidate `PolicySettings` object and reports its portfolio-wide
+decision impact using stored diagnoses. It changes neither the active policy nor any
+case record, and it does not call AI.
+
+### GET /health/readiness
+Reports the presence (never the value) of Razorpay Test Mode credentials, webhook
+verification, persistence, Gemini, and operator-token configuration.
+
 ## Conventions
 - Errors: `{ error: string, detail?: string }` with appropriate 4xx/5xx status.
 - Internal money fields are numeric rupees. Razorpay API boundaries convert rupees to integer paise and back explicitly.
 - Recovered money is recorded only after a verified Razorpay test-mode paid-link webhook.
 - No pagination cursor complexity — simple `limit`/`offset` is enough at 150-300 rows.
+- Requests declaring a body over 1 MB are rejected before processing. API responses include `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` headers.

@@ -246,6 +246,80 @@ class PolicyImpactResponse(BaseModel):
     )
 
 
+class EvidenceQualityResponse(BaseModel):
+    event_id: str
+    status: str  # ready | needs_review | insufficient_evidence
+    score: int = Field(ge=0, le=100)
+    captured_signals: list[str]
+    missing_signals: list[str]
+    assessment: str
+    recommended_boundary: str
+    disclaimer: str = "Evidence quality is an operator aid, not a fraud score or a recovery guarantee."
+
+
+class EvidenceReceiptResponse(BaseModel):
+    event_id: str
+    pipeline_result_id: str
+    run_id: str
+    fingerprint_sha256: str
+    generated_at: datetime = Field(default_factory=utc_now)
+    scope: str
+    disclaimer: str = (
+        "This fingerprint is computed from the stored event and pipeline decision record. "
+        "It is a tamper-evident comparison aid, not a payment confirmation."
+    )
+
+
+class LearningHealthResponse(BaseModel):
+    test_mode_cases: int
+    human_labelled_cases: int
+    label_coverage_pct: float | None = None
+    cause_agreement_pct: float | None = None
+    action_agreement_pct: float | None = None
+    operator_overrides: int
+    diagnoses_by_method: dict[str, int]
+    learning_status: str
+    next_evidence_goal: str
+    disclaimer: str = (
+        "Only explicit human-reviewed Razorpay Test Mode labels count as learning evidence. "
+        "Simulated merchant data and unreviewed outcomes are excluded."
+    )
+
+
+class RecoveryQueueItem(BaseModel):
+    event_id: str
+    amount: float
+    failure_code: str
+    decision_action: Action
+    priority_score: int = Field(ge=0, le=100)
+    priority: str
+    reason: str
+    requires_human_review: bool
+
+
+class RecoveryQueueResponse(BaseModel):
+    source_scope: str
+    items: list[RecoveryQueueItem]
+    total_open_cases: int
+    excluded_suspicious_cases: int
+    disclaimer: str = (
+        "Queue ranking is deterministic and based on stored Test Mode evidence, policy result, and amount. "
+        "It does not predict payment success or execute recovery."
+    )
+
+
+class ReadinessCheck(BaseModel):
+    name: str
+    status: str  # ready | missing | optional
+    detail: str
+
+
+class ReadinessResponse(BaseModel):
+    status: str  # ready_for_test_mode | limited
+    checks: list[ReadinessCheck]
+    disclaimer: str = "Readiness reports configuration presence only; it never exposes secret values."
+
+
 class CauseMetrics(BaseModel):
     cause: str
     total_cases: int

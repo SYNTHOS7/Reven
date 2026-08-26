@@ -13,17 +13,20 @@ import { FiveStageFlow } from "@/components/five-stage-flow";
 import { SimilarCases } from "@/components/similar-cases";
 import { RecoveryStrategyPanel } from "@/components/recovery-strategy-panel";
 import { RecoveryTimeline } from "@/components/recovery-timeline";
-import { loadCaseDetails, loadPolicy, loadRecoveryStrategies, loadRecoveryTimeline } from "@/lib/api";
+import { EvidenceAssurance } from "@/components/evidence-assurance";
+import { loadCaseDetails, loadPolicy, loadRecoveryStrategies, loadRecoveryTimeline, loadEvidenceQuality, loadEvidenceReceipt } from "@/lib/api";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
 
 export default async function CasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [caseData, activePolicy, recoveryStrategies, recoveryTimeline] = await Promise.all([
+  const [caseData, activePolicy, recoveryStrategies, recoveryTimeline, evidenceQuality, evidenceReceipt] = await Promise.all([
     loadCaseDetails(id),
     loadPolicy(),
     loadRecoveryStrategies(id),
     loadRecoveryTimeline(id),
+    loadEvidenceQuality(id),
+    loadEvidenceReceipt(id),
   ]);
   if (!caseData) notFound();
 
@@ -254,6 +257,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         {recoveryStrategies && <RecoveryStrategyPanel data={recoveryStrategies} />}
 
         {recoveryTimeline && <RecoveryTimeline data={recoveryTimeline} />}
+
+        {evidenceQuality && <EvidenceAssurance quality={evidenceQuality} receipt={evidenceReceipt} />}
 
         <SimilarCases data={similar_cases} />
 

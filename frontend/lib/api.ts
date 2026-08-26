@@ -10,6 +10,9 @@ import type {
   RecoveryIntelligenceResponse,
   RecoveryStrategiesResponse,
   RecoveryTimelineResponse,
+  EvidenceQualityResponse,
+  EvidenceReceiptResponse,
+  LearningHealthResponse,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -150,6 +153,36 @@ export async function loadRecoveryTimeline(eventId: string): Promise<RecoveryTim
     const response = await fetch(`${apiUrl}/events/${eventId}/timeline`, { cache: "no-store" });
     if (!response.ok) return null;
     return response.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function loadEvidenceQuality(eventId: string): Promise<EvidenceQualityResponse | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/events/${eventId}/evidence-quality`, { cache: "no-store" });
+    return response.ok ? response.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function loadEvidenceReceipt(eventId: string): Promise<EvidenceReceiptResponse | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/events/${eventId}/evidence-receipt`, { cache: "no-store" });
+    return response.ok ? response.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function loadLearningHealth(): Promise<LearningHealthResponse | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/learning/health`, { cache: "no-store" });
+    return response.ok ? response.json() : null;
   } catch {
     return null;
   }

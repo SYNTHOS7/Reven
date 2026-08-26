@@ -204,6 +204,15 @@ For ambiguous failures, Gemini must request a permitted, read-only evidence tool
 
 This is a narrow retrieval and tool-calling pattern: it helps interpret evidence but does not make a financial decision. Trust Gate and deterministic policy still decide the action. No AI tool can create a Payment Link, message a customer, mutate data, or count revenue.
 
+## What the hardened backend adds
+
+- **Policy-bounded strategy:** each case exposes the next option as `allowed`, `human review`, or `blocked`; the read-only endpoint cannot execute it.
+- **Recovery timeline:** shows recorded evidence and retry eligibility, never an automatic payment retry.
+- **Portfolio policy simulation:** tests a candidate rule against saved Razorpay Test Mode cases using stored diagnoses, with no model call or mutation.
+- **Evidence assurance:** highlights missing processor context and generates a redacted SHA-256 decision-record fingerprint for comparison.
+- **Learning health:** counts only explicit human-reviewed Razorpay Test Mode labels; it excludes simulated merchant data.
+- **Operator queue and readiness:** ranks open real-evidence cases deterministically and reports environment readiness without revealing secrets.
+
 Reven intentionally does not use an autonomous multi-tool agent. A payment link is created only after policy permits it and, where required, an operator approves it. See [the evaluation protocol](docs/EVALUATION.md) for the labelling methodology and limits of reported accuracy.
 
 ## Demo path for judges

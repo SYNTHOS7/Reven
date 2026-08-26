@@ -12,6 +12,7 @@ Reven is a controlled operator prototype for Razorpay **Test Mode**. It is not a
 | Unauthorized policy or label change | Operator token required when `ADMIN_TOKEN` is configured |
 | Unsafe AI action | AI tools are read-only; deterministic policy and optional operator approval control money actions |
 | Secret exposure | Razorpay, Gemini, Supabase and operator secrets are server environment variables only |
+| Oversized or browser-embedded request | Backend rejects declared bodies larger than 1 MB and returns protective browser headers |
 | Inflated recovery claims | Recovery is recorded only from a Razorpay paid event or reconciliation result |
 
 ## Deliberate v1 limits

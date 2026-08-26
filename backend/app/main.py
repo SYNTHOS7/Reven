@@ -24,6 +24,8 @@ from app.models import (
     LearningHealthResponse,
     RecoveryQueueResponse,
     ReadinessResponse,
+    MerchantBriefingRequest,
+    MerchantBriefingResponse,
     RecoveryStrategiesResponse,
     RecoveryTimelineResponse,
     PolicySettings,
@@ -41,6 +43,7 @@ from app.evidence_quality import assess_evidence_quality, create_evidence_receip
 from app.learning_health import build_learning_health
 from app.operator_queue import build_operator_queue
 from app.readiness import build_readiness
+from app.merchant_intelligence import build_merchant_briefing
 from app.repository import repository
 from app.similar_cases import find_similar_cases, retrieve_historical_diagnosis_examples
 
@@ -172,6 +175,12 @@ def operator_queue():
 @app.get("/health/readiness", response_model=ReadinessResponse)
 def readiness():
     return build_readiness(config, repository.storage_mode)
+
+
+@app.post("/agents/merchant-intelligence/brief", response_model=MerchantBriefingResponse)
+def merchant_intelligence_brief(request: MerchantBriefingRequest):
+    """Summarize aggregate merchant metrics; never receives individual payment identities."""
+    return build_merchant_briefing(request, config)
 
 
 @app.post("/pipeline/run/{event_id}")

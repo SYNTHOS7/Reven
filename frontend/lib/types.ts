@@ -153,6 +153,24 @@ export interface LearningHealthResponse {
   disclaimer: string;
 }
 
+export interface MerchantBriefingRequest {
+  data_source: "simulated_merchant_scenario" | "razorpay_test";
+  revenue_lost: number;
+  potentially_recoverable_revenue: number;
+  verified_recovered_revenue: number;
+  priority_case_count: number;
+  patterns: Array<{ label: string; count: number; lost_amount: number; recommended_alternative: string }>;
+}
+
+export interface MerchantBriefingResponse {
+  headline: string;
+  narrative: string;
+  recommended_next_steps: string[];
+  method: "llm" | "deterministic";
+  data_source: "simulated_merchant_scenario" | "razorpay_test";
+  decision_boundary: string;
+}
+
 export interface SimilarCase {
   event_id: string;
   amount: number;

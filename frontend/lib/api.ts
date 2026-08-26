@@ -13,6 +13,8 @@ import type {
   EvidenceQualityResponse,
   EvidenceReceiptResponse,
   LearningHealthResponse,
+  MerchantBriefingRequest,
+  MerchantBriefingResponse,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -182,6 +184,20 @@ export async function loadLearningHealth(): Promise<LearningHealthResponse | nul
   if (!apiUrl) return null;
   try {
     const response = await fetch(`${apiUrl}/learning/health`, { cache: "no-store" });
+    return response.ok ? response.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMerchantBriefing(request: MerchantBriefingRequest): Promise<MerchantBriefingResponse | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/agents/merchant-intelligence/brief`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
     return response.ok ? response.json() : null;
   } catch {
     return null;

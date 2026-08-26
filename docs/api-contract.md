@@ -107,6 +107,15 @@ record. The fingerprint is a comparison aid, not a payment confirmation.
 Reports label coverage, operator agreement, overrides, and diagnosis methods for
 saved Razorpay Test Mode cases only. Simulated merchant data is excluded.
 
+### POST /agents/merchant-intelligence/brief
+Returns a concise merchant briefing from aggregate, labelled metrics only.
+The request contains a declared data source, aggregate revenue metrics, priority
+case count, and up to five aggregate failure patterns. It accepts no payment IDs,
+customer data, or policy updates. Gemini structured output is used when configured;
+a deterministic response is returned otherwise. The response includes `method` and
+a fixed decision boundary explaining that this endpoint cannot contact customers,
+change policy, or execute a recovery action.
+
 ### GET /queue/operator
 Returns a deterministic, prioritized operator queue from saved Razorpay Test Mode
 evidence. Suspicious, completed, and already-prepared cases are excluded.

@@ -86,17 +86,17 @@ export function LandingPage() {
 
       <section className="landingControlLayer" aria-labelledby="control-layer-title">
         <div className="landingSectionIntro">
-          <p className="landingEyebrow">RECOVERY CONTROL LAYER</p>
-          <h2 id="control-layer-title">Built to explain, challenge, and prove each decision.</h2>
-          <p>Beyond the core flow, Reven gives an operator the controls to question a recommendation before a recovery workflow is allowed.</p>
+          <p className="landingEyebrow">FOUR BOUNDED AI LAYERS</p>
+          <h2 id="control-layer-title">Each AI layer has one restricted job.</h2>
+          <p>They investigate, recommend, evaluate, and summarise. Deterministic policy and a human operator remain the only path to a recovery action.</p>
         </div>
         <div className="controlLayerGrid">
-          <article><BrainCircuit size={18} /><span>AI investigation</span><p>Gemini can inspect bounded, read-only payment evidence. It never handles money actions.</p></article>
-          <article><FileKey2 size={18} /><span>Evidence assurance</span><p>Shows missing context and a redacted SHA-256 fingerprint of each decision record.</p></article>
-          <article><ListChecks size={18} /><span>Policy simulation</span><p>Tests a candidate rule across saved Test Mode cases without changing policy or rerunning AI.</p></article>
-          <article><Activity size={18} /><span>Learning health</span><p>Tracks only human-reviewed Test Mode labels—never simulated rows or unreviewed guesses.</p></article>
+          <Link href="/case/rzp_pay_TSx3NFbrKdjDCr" className="agentLayerCard"><BrainCircuit size={18} /><small>AGENT 01</small><span>AI Investigation</span><p>Gemini may inspect bounded, read-only processor, retry, and labelled-case context to explain a failure.</p><b>Inspect a live case <ArrowRight size={13} /></b></Link>
+          <Link href="/case/rzp_pay_TSx3NFbrKdjDCr" className="agentLayerCard"><ShieldCheck size={18} /><small>AGENT 02</small><span>Recovery Strategy</span><p>Produces safe options such as retry later, method switch, or review—then policy filters every one.</p><b>See safe strategies <ArrowRight size={13} /></b></Link>
+          <Link href="/evidence" className="agentLayerCard"><ListChecks size={18} /><small>AGENT 03</small><span>Learning &amp; Evaluation</span><p>Measures reviewed Test Mode labels, agreement, and playbook outcomes without learning from guesses.</p><b>View learning health <ArrowRight size={13} /></b></Link>
+          <Link href="/analyse" className="agentLayerCard"><Activity size={18} /><small>AGENT 04</small><span>Merchant Intelligence</span><p>Turns aggregate, labelled metrics into one concise merchant briefing with supporting evidence.</p><b>Read the briefing <ArrowRight size={13} /></b></Link>
         </div>
-        <div className="controlLayerFootnote"><ShieldCheck size={15} /> Every layer is read-only or policy-bounded. Creating a Payment Link still requires an allowed decision, and recovery still needs Razorpay confirmation.</div>
+        <div className="controlLayerFootnote"><FileKey2 size={15} /> Every layer is read-only or policy-bounded. None can contact a customer, change policy, or create a Payment Link. Recovery still needs Razorpay confirmation.</div>
       </section>
 
       <section id="difference" className="landingDifference">

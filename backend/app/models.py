@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
+from typing import Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -318,6 +319,33 @@ class ReadinessResponse(BaseModel):
     status: str  # ready_for_test_mode | limited
     checks: list[ReadinessCheck]
     disclaimer: str = "Readiness reports configuration presence only; it never exposes secret values."
+
+
+class MerchantPattern(BaseModel):
+    label: str = Field(min_length=1, max_length=100)
+    count: int = Field(ge=0, le=1_000_000)
+    lost_amount: float = Field(ge=0)
+    recommended_alternative: str = Field(min_length=1, max_length=240)
+
+
+class MerchantBriefingRequest(BaseModel):
+    data_source: Literal["simulated_merchant_scenario", "razorpay_test"]
+    revenue_lost: float = Field(ge=0)
+    potentially_recoverable_revenue: float = Field(ge=0)
+    verified_recovered_revenue: float = Field(ge=0)
+    priority_case_count: int = Field(ge=0, le=1_000_000)
+    patterns: list[MerchantPattern] = Field(default_factory=list, max_length=5)
+
+
+class MerchantBriefingResponse(BaseModel):
+    headline: str = Field(min_length=5, max_length=160)
+    narrative: str = Field(min_length=20, max_length=500)
+    recommended_next_steps: list[str] = Field(min_length=1, max_length=3)
+    method: Literal["llm", "deterministic"]
+    data_source: Literal["simulated_merchant_scenario", "razorpay_test"]
+    decision_boundary: str = (
+        "This briefing uses aggregate metrics only. It cannot contact customers, change policy, or execute a recovery action."
+    )
 
 
 class CauseMetrics(BaseModel):

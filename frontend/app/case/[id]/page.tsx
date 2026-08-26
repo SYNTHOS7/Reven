@@ -240,7 +240,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         <section className="aiInvestigationPanel" aria-labelledby="ai-investigation-title">
           <div className="aiInvestigationHeader">
             <div>
-              <span className="utilityLabel">AI INVESTIGATION</span>
+              <span className="utilityLabel">AGENT 01 · AI INVESTIGATION</span>
               <h2 id="ai-investigation-title">What AI examined before policy decided</h2>
               <p>AI interprets bounded evidence. It cannot create a link, contact a customer, or override the decision rules.</p>
             </div>

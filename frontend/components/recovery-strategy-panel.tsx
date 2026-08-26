@@ -13,7 +13,7 @@ export function RecoveryStrategyPanel({ data }: { data: RecoveryStrategiesRespon
     <section className="recoveryStrategyPanel" aria-labelledby="recovery-strategies-title">
       <div className="recoveryStrategyHeader">
         <div>
-          <span className="utilityLabel">RECOVERY STRATEGY</span>
+          <span className="utilityLabel">AGENT 02 · RECOVERY STRATEGY</span>
           <h2 id="recovery-strategies-title">What can safely happen next</h2>
           <p>These are explainable next steps generated after the decision. They do not run a payment, message, or link by themselves.</p>
         </div>

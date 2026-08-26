@@ -155,6 +155,7 @@ Reven includes a clearly labelled 500-transaction online-course merchant scenari
 | Recovery | Operator-approved Razorpay Test Mode Payment Links | A link is not recovery; a paid webhook or reconciliation is required |
 | Evidence | Readiness checklist, similar-case support, and redacted SHA-256 case fingerprint | No card, OTP, bank, or raw contact data is stored |
 | Learning | Human labels and agreement / override health | Simulated data and unreviewed model outcomes are excluded |
+| Merchant intelligence | Gemini may write a structured briefing from aggregate, labelled metrics; deterministic fallback keeps the same narrative available | No individual payment IDs or customer data are sent; it cannot contact customers or take action |
 | Operations | Operator queue, policy impact simulator, readiness endpoint, request-size limits | Simulations are read-only and never mutate the active policy |
 
 ## Run locally
@@ -217,6 +218,19 @@ For ambiguous failures, Gemini must request a permitted, read-only evidence tool
 | `get_labelled_similar_cases` | Up to three same-source, human-labelled comparable cases | Reuse unreviewed model guesses or treat history as a decision |
 
 This is a narrow retrieval and tool-calling pattern: it helps interpret evidence but does not make a financial decision. Trust Gate and deterministic policy still decide the action. No AI tool can create a Payment Link, message a customer, mutate data, or count revenue.
+
+## Four bounded AI layers
+
+Reven uses four small, observable AI layers rather than one autonomous agent. Each one has a restricted input and cannot move money.
+
+| Layer | Job | Evidence it may use | What keeps it bounded |
+|---|---|---|---|
+| **AI Investigation Agent** | Interprets ambiguous individual payment failures | Current processor context, retry / Trust Gate signals, and up to three labelled comparable cases | Read-only tool calling; deterministic policy owns the decision |
+| **Recovery Strategy Agent** | Presents 2–3 conservative recovery options | Stored diagnosis, current policy, Trust Gate outcome | Policy labels each option `allowed`, `requires_human_review`, or `blocked` |
+| **Learning & Evaluation Agent** | Measures diagnosis and action agreement after review | Human-labelled Razorpay Test Mode outcomes | Simulated data, raw model guesses, and unreviewed cases are excluded |
+| **Merchant Intelligence Agent** | Writes one short merchant briefing | Aggregate, labelled metrics: loss, recoverable value, patterns, and priority count | No customer-level data; cannot change policy, dispatch communication, or create a Payment Link |
+
+The Merchant Intelligence endpoint is `POST /agents/merchant-intelligence/brief`. It uses Gemini structured output when configured and falls back to a deterministic briefing if the model is unavailable. The returned briefing includes its method and decision boundary so a judge can see exactly what generated it.
 
 ## What the hardened backend adds
 

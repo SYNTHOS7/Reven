@@ -10,7 +10,7 @@ export function LearningHealth({ data }: { data: LearningHealthResponse }) {
   return (
     <section className="learningHealth" aria-labelledby="learning-health-title">
       <div className="learningHealthHeader">
-        <div><span className="utilityLabel">LEARNING EVIDENCE</span><h2 id="learning-health-title">What the system has actually learned from</h2><p>{data.learning_status}. This separates reviewed Test Mode evidence from unreviewed cases and simulated merchant data.</p></div>
+        <div><span className="utilityLabel">AGENT 03 · LEARNING &amp; EVALUATION</span><h2 id="learning-health-title">What the system has actually learned from</h2><p>{data.learning_status}. This separates reviewed Test Mode evidence from unreviewed cases and simulated merchant data.</p></div>
         <BrainCircuit size={22} aria-hidden="true" />
       </div>
       <div className="learningHealthStats">

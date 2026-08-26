@@ -101,6 +101,24 @@ export interface RecoveryStrategiesResponse {
   disclaimer: string;
 }
 
+export type RecoveryTimelineStatus = "completed" | "ready_for_operator" | "waiting" | "blocked";
+
+export interface RecoveryTimelineItem {
+  stage: string;
+  title: string;
+  status: RecoveryTimelineStatus;
+  occurred_at: string | null;
+  detail: string;
+}
+
+export interface RecoveryTimelineResponse {
+  event_id: string;
+  items: RecoveryTimelineItem[];
+  next_eligible_at: string | null;
+  next_eligibility_note: string | null;
+  disclaimer: string;
+}
+
 export interface SimilarCase {
   event_id: string;
   amount: number;

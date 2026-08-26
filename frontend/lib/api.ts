@@ -8,6 +8,7 @@ import type {
   PolicySettings,
   RecoveryIntelligenceResponse,
   RecoveryStrategiesResponse,
+  RecoveryTimelineResponse,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -135,6 +136,17 @@ export async function loadRecoveryStrategies(eventId: string): Promise<RecoveryS
   if (!apiUrl) return null;
   try {
     const response = await fetch(`${apiUrl}/events/${eventId}/strategies`, { cache: "no-store" });
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function loadRecoveryTimeline(eventId: string): Promise<RecoveryTimelineResponse | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/events/${eventId}/timeline`, { cache: "no-store" });
     if (!response.ok) return null;
     return response.json();
   } catch {

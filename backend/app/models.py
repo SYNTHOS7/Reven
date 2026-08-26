@@ -202,6 +202,25 @@ class RecoveryStrategiesResponse(BaseModel):
     )
 
 
+class RecoveryTimelineItem(BaseModel):
+    stage: str
+    title: str
+    status: str  # completed | ready_for_operator | waiting | blocked
+    occurred_at: datetime | None = None
+    detail: str
+
+
+class RecoveryTimelineResponse(BaseModel):
+    event_id: str
+    items: list[RecoveryTimelineItem]
+    next_eligible_at: datetime | None = None
+    next_eligibility_note: str | None = None
+    disclaimer: str = (
+        "This is a planning timeline, not an automated scheduler. Reven does not retry a payment, "
+        "send a customer message, or create a link from this endpoint."
+    )
+
+
 class CauseMetrics(BaseModel):
     cause: str
     total_cases: int

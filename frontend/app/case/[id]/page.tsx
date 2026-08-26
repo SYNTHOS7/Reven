@@ -12,16 +12,18 @@ import { PolicyReplay } from "@/components/policy-replay";
 import { FiveStageFlow } from "@/components/five-stage-flow";
 import { SimilarCases } from "@/components/similar-cases";
 import { RecoveryStrategyPanel } from "@/components/recovery-strategy-panel";
-import { loadCaseDetails, loadPolicy, loadRecoveryStrategies } from "@/lib/api";
+import { RecoveryTimeline } from "@/components/recovery-timeline";
+import { loadCaseDetails, loadPolicy, loadRecoveryStrategies, loadRecoveryTimeline } from "@/lib/api";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
 
 export default async function CasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [caseData, activePolicy, recoveryStrategies] = await Promise.all([
+  const [caseData, activePolicy, recoveryStrategies, recoveryTimeline] = await Promise.all([
     loadCaseDetails(id),
     loadPolicy(),
     loadRecoveryStrategies(id),
+    loadRecoveryTimeline(id),
   ]);
   if (!caseData) notFound();
 
@@ -250,6 +252,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         </section>
 
         {recoveryStrategies && <RecoveryStrategyPanel data={recoveryStrategies} />}
+
+        {recoveryTimeline && <RecoveryTimeline data={recoveryTimeline} />}
 
         <SimilarCases data={similar_cases} />
 

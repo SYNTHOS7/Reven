@@ -18,6 +18,7 @@ from app.models import (
     PolicyReplayRequest,
     PolicyReplayResponse,
     RecoveryStrategiesResponse,
+    RecoveryTimelineResponse,
     PolicySettings,
     RecoveryIntelligenceResponse,
     WebhookResponse,
@@ -27,6 +28,7 @@ from app.pipeline.engine import run_event
 from app.razorpay_client import RazorpayClient
 from app.recovery_intelligence import compute_recovery_intelligence
 from app.recovery_strategies import build_recovery_strategies
+from app.recovery_timeline import build_recovery_timeline
 from app.repository import repository
 from app.similar_cases import find_similar_cases, retrieve_historical_diagnosis_examples
 
@@ -98,6 +100,16 @@ def get_recovery_strategies(event_id: str):
     if not event or not result:
         raise HTTPException(status_code=404, detail="Evaluated event not found")
     return build_recovery_strategies(result, repository.policy)
+
+
+@app.get("/events/{event_id}/timeline", response_model=RecoveryTimelineResponse)
+def get_recovery_timeline(event_id: str):
+    """Return a read-only, policy-aware plan for the case lifecycle."""
+    event = next((item for item in repository.events if item.id == event_id), None)
+    result = latest_result(event_id)
+    if not event or not result:
+        raise HTTPException(status_code=404, detail="Evaluated event not found")
+    return build_recovery_timeline(event, result)
 
 
 @app.post("/pipeline/run/{event_id}")

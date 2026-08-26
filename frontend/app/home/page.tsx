@@ -1,8 +1,7 @@
 import { Dashboard } from "@/components/dashboard";
 import { Shell } from "@/components/shell";
-import { loadDashboard } from "@/lib/api";
+import { disconnectedData } from "@/lib/empty-data";
 
-export default async function Home() {
-  const data = await loadDashboard();
-  return <Shell><Dashboard initialData={data} /></Shell>;
+export default function Home() {
+  return <Shell><Dashboard initialData={disconnectedData} /></Shell>;
 }

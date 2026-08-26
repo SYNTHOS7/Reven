@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -9,6 +9,7 @@ import {
   Play,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/types";
+import { loadDashboard } from "@/lib/api";
 import { useTransactions } from "@/lib/transaction-context";
 import { HelpTooltip } from "./help-tooltip";
 import { GuidedDemoModal } from "./guided-demo-modal";
@@ -23,31 +24,43 @@ const money = new Intl.NumberFormat("en-IN", {
 export function Dashboard({ initialData }: { initialData: DashboardData }) {
   const { metrics, transactions, activeDataSource } = useTransactions();
   const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState(initialData);
+  const [liveLoading, setLiveLoading] = useState(initialData.source !== "api");
+
+  useEffect(() => {
+    let active = true;
+    loadDashboard().then((data) => {
+      if (!active) return;
+      setDashboardData(data);
+      setLiveLoading(false);
+    });
+    return () => { active = false; };
+  }, []);
 
   // Compute Home Metrics
   const revenueAtRisk = useMemo(() => {
     if (activeDataSource === "demo") return metrics.revenueLost;
-    return initialData.results.reduce((sum, r) => sum + (r.amount || 0), 0);
-  }, [activeDataSource, metrics.revenueLost, initialData.results]);
+    return dashboardData.results.reduce((sum, r) => sum + (r.amount || 0), 0);
+  }, [activeDataSource, metrics.revenueLost, dashboardData.results]);
 
   const recoverableOpportunity = useMemo(() => {
     if (activeDataSource === "demo") return metrics.potentiallyRecoverableRevenue;
-    return initialData.results
+    return dashboardData.results
       .filter((r) => ["retry_later", "create_payment_link", "update_payment_method"].includes(r.decision.action))
       .reduce((sum, r) => sum + (r.amount || 0), 0);
-  }, [activeDataSource, metrics.potentiallyRecoverableRevenue, initialData.results]);
+  }, [activeDataSource, metrics.potentiallyRecoverableRevenue, dashboardData.results]);
 
   const awaitingReviewCount = useMemo(() => {
     if (activeDataSource === "demo") {
       return transactions.filter((t) => t.status !== "recovered" && t.amount >= 5000).length;
     }
-    return initialData.results.filter((r) => r.decision.action === "escalate_human").length;
-  }, [activeDataSource, transactions, initialData.results]);
+    return dashboardData.results.filter((r) => r.decision.action === "escalate_human").length;
+  }, [activeDataSource, transactions, dashboardData.results]);
 
   const verifiedRecovery = useMemo(() => {
     if (activeDataSource === "demo") return metrics.revenueRecovered;
-    return initialData.results.reduce((sum, r) => sum + (r.verified_recovered_amount || 0), 0);
-  }, [activeDataSource, metrics.revenueRecovered, initialData.results]);
+    return dashboardData.results.reduce((sum, r) => sum + (r.verified_recovered_amount || 0), 0);
+  }, [activeDataSource, metrics.revenueRecovered, dashboardData.results]);
 
   // Featured Top Recovery Opportunity
   const topOpportunity = useMemo(() => {
@@ -58,8 +71,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
         ) || transactions[0]
       );
     }
-    return initialData.results[0];
-  }, [activeDataSource, transactions, initialData.results]);
+    return dashboardData.results[0];
+  }, [activeDataSource, transactions, dashboardData.results]);
 
   const opportunityExplanation = useMemo(() => {
     if (!topOpportunity) return "No recovery opportunity is available yet.";
@@ -71,8 +84,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
 
   const recentCases = useMemo(() => {
     if (activeDataSource === "demo") return transactions.slice(0, 5);
-    return initialData.results.slice(0, 5);
-  }, [activeDataSource, initialData.results, transactions]);
+    return dashboardData.results.slice(0, 5);
+  }, [activeDataSource, dashboardData.results, transactions]);
 
   return (
     <main className="dashboardPage">
@@ -90,6 +103,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
         </div>
 
         <div className="welcomeActions">
+          {activeDataSource === "live" && liveLoading && <span className="dashboardSync">Syncing live Test Mode data…</span>}
           <button
             type="button"
             onClick={() => setDemoModalOpen(true)}

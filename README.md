@@ -1,5 +1,6 @@
 <div align="center">
 
+<img src="docs/assets/reven-live-landing.jpg" alt="Reven landing page showing the live verified recovery total" width="100%" />
 
 # REVEN
 

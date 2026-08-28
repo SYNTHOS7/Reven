@@ -7,8 +7,8 @@ import {
   RefreshCcw,
   Search,
 } from "lucide-react";
-import { runEvaluation } from "@/lib/api";
-import type { DashboardData } from "@/lib/types";
+import { loadVerifiedRecoverySummary, runEvaluation } from "@/lib/api";
+import type { DashboardData, VerifiedRecoverySummary } from "@/lib/types";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
 import { StatusBadge } from "./status-badge";
@@ -24,10 +24,12 @@ const money = new Intl.NumberFormat("en-IN", {
 
 interface EvidenceViewProps {
   initialData: DashboardData;
+  initialRecoverySummary: VerifiedRecoverySummary | null;
 }
 
-export function EvidenceView({ initialData }: EvidenceViewProps) {
+export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceViewProps) {
   const [data, setData] = useState<DashboardData>(initialData);
+  const [recoverySummary, setRecoverySummary] = useState<VerifiedRecoverySummary | null>(initialRecoverySummary);
   const [running, setRunning] = useState(false);
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -49,6 +51,7 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
     try {
       const res = await runEvaluation();
       setData(res);
+      setRecoverySummary(await loadVerifiedRecoverySummary());
       setNotice({
         type: "success",
         text: "Evaluation completed. Stored Test Mode cases were re-evaluated with the current diagnosis and policy safeguards.",
@@ -65,11 +68,6 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
 
   const score = data.scorecard;
   const connected = data.source === "api";
-  const verifiedRecoveriesCount = data.results.filter((r) => r.verified_recovered_amount > 0).length;
-  const totalVerifiedAmount = data.results.reduce(
-    (acc, r) => acc + (r.verified_recovered_amount || 0),
-    0
-  );
   const escalatedCases = data.results.filter((result) => result.decision.action === "escalate_human").length;
   const earlyAgreement = score.labeled_cases > 0 && score.labeled_cases < 10;
 
@@ -122,9 +120,9 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
             <span className="kpiLabel">VERIFIED TEST RECOVERY</span>
             <HelpTooltip topic="verified_recovery" />
           </div>
-          <strong className="kpiValue recoveryText">{money.format(totalVerifiedAmount || score.actual_test_recovery)}</strong>
+          <strong className="kpiValue recoveryText">{recoverySummary ? money.format(recoverySummary.verified_recovery_amount) : "—"}</strong>
           <div className="kpiFooter">
-            <span className="recoveryText">From signed paid webhooks ({verifiedRecoveriesCount} confirmed)</span>
+            <span className="recoveryText">{recoverySummary ? `${recoverySummary.verified_recovery_count} verified recovery record${recoverySummary.verified_recovery_count === 1 ? "" : "s"}` : "Live recovery total unavailable"}</span>
           </div>
         </div>
 
@@ -175,7 +173,7 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
           <div><dt>Cases received</dt><dd>{data.results.length}</dd></div>
           <div><dt>Human escalations</dt><dd>{escalatedCases}</dd></div>
           <div><dt>Trust Gate stops</dt><dd>{score.suspicious_refusals}</dd></div>
-          <div><dt>Verified recoveries</dt><dd>{verifiedRecoveriesCount}</dd></div>
+          <div><dt>Verified recoveries</dt><dd>{recoverySummary?.verified_recovery_count ?? "—"}</dd></div>
         </dl>
         <small>Known limitation: Test Mode evidence is intentionally small. Reven does not claim stable diagnosis performance until more human-reviewed cases are collected.</small>
       </section>

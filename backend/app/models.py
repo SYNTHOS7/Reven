@@ -406,6 +406,18 @@ class RecoveryIntelligenceResponse(BaseModel):
     data_source: str = "razorpay_test"
 
 
+class VerifiedRecoverySummary(BaseModel):
+    """Database-backed recovery evidence for public, aggregate UI surfaces."""
+
+    verified_recovery_amount: float = 0
+    verified_recovery_count: int = 0
+    source: str = "recovery_attempts"
+    disclaimer: str = (
+        "Counts only completed, attributed Razorpay Test Mode recovery records. "
+        "Creating a Payment Link is not recovered revenue."
+    )
+
+
 class WebhookResponse(BaseModel):
     status: str
     event_id: str | None = None

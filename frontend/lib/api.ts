@@ -15,6 +15,7 @@ import type {
   LearningHealthResponse,
   MerchantBriefingRequest,
   MerchantBriefingResponse,
+  VerifiedRecoverySummary,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -267,6 +268,16 @@ export async function loadRecoveryIntelligence(): Promise<RecoveryIntelligenceRe
     const response = await fetch(`${apiUrl}/metrics/recovery-intelligence`, { cache: "no-store" });
     if (!response.ok) return null;
     return response.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function loadVerifiedRecoverySummary(): Promise<VerifiedRecoverySummary | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/evidence/verified-recovery`, { cache: "no-store" });
+    return response.ok ? response.json() : null;
   } catch {
     return null;
   }

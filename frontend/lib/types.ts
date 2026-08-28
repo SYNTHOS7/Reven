@@ -319,6 +319,13 @@ export interface RecoveryIntelligenceResponse {
   data_source: string;
 }
 
+export interface VerifiedRecoverySummary {
+  verified_recovery_amount: number;
+  verified_recovery_count: number;
+  source: string;
+  disclaimer: string;
+}
+
 // ---------------- CSV & Demo Data Types ----------------
 export type TransactionStatus = "successful" | "failed" | "abandoned" | "recovered";
 

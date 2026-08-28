@@ -30,6 +30,7 @@ from app.models import (
     RecoveryTimelineResponse,
     PolicySettings,
     RecoveryIntelligenceResponse,
+    VerifiedRecoverySummary,
     WebhookResponse,
     utc_now,
 )
@@ -262,6 +263,16 @@ def latest_evaluation():
     scorecard = repository.scorecards[-1].model_copy(deep=True)
     scorecard.actual_test_recovery = repository.actual_test_recovery
     return scorecard
+
+
+@app.get("/evidence/verified-recovery", response_model=VerifiedRecoverySummary)
+def get_verified_recovery_summary():
+    """Return the one database-backed aggregate for all public recovery totals."""
+    amount, count = repository.verified_recovery_summary()
+    return VerifiedRecoverySummary(
+        verified_recovery_amount=amount,
+        verified_recovery_count=count,
+    )
 
 
 @app.get("/settings")

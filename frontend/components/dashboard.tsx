@@ -8,8 +8,8 @@ import {
   Sparkles,
   Play,
 } from "lucide-react";
-import type { DashboardData } from "@/lib/types";
-import { loadDashboard } from "@/lib/api";
+import type { DashboardData, VerifiedRecoverySummary } from "@/lib/types";
+import { loadDashboard, loadVerifiedRecoverySummary } from "@/lib/api";
 import { useTransactions } from "@/lib/transaction-context";
 import { HelpTooltip } from "./help-tooltip";
 import { GuidedDemoModal } from "./guided-demo-modal";
@@ -25,13 +25,15 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
   const { metrics, transactions, activeDataSource } = useTransactions();
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState(initialData);
+  const [recoverySummary, setRecoverySummary] = useState<VerifiedRecoverySummary | null>(null);
   const [liveLoading, setLiveLoading] = useState(initialData.source !== "api");
 
   useEffect(() => {
     let active = true;
-    loadDashboard().then((data) => {
+    Promise.all([loadDashboard(), loadVerifiedRecoverySummary()]).then(([data, summary]) => {
       if (!active) return;
       setDashboardData(data);
+      setRecoverySummary(summary);
       setLiveLoading(false);
     });
     return () => { active = false; };
@@ -57,10 +59,10 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
     return dashboardData.results.filter((r) => r.decision.action === "escalate_human").length;
   }, [activeDataSource, transactions, dashboardData.results]);
 
-  const verifiedRecovery = useMemo(() => {
+  const verifiedRecovery = useMemo((): number | null => {
     if (activeDataSource === "demo") return metrics.revenueRecovered;
-    return dashboardData.results.reduce((sum, r) => sum + (r.verified_recovered_amount || 0), 0);
-  }, [activeDataSource, metrics.revenueRecovered, dashboardData.results]);
+    return recoverySummary?.verified_recovery_amount ?? null;
+  }, [activeDataSource, metrics.revenueRecovered, recoverySummary]);
 
   // Featured Top Recovery Opportunity
   const topOpportunity = useMemo(() => {
@@ -180,7 +182,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
             <HelpTooltip topic="verified_recovery" />
           </div>
           <strong className="kpiValue recoveryText">
-            {money.format(verifiedRecovery)}
+            {verifiedRecovery === null ? "—" : money.format(verifiedRecovery)}
           </strong>
           <p className="kpiExplainer">
             Revenue counted only after Razorpay payment confirmation.

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Activity, ArrowRight, BrainCircuit, CheckCircle2, FileKey2, GitBranch, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
+import { loadVerifiedRecoverySummary } from "@/lib/api";
 
 const stages = [
   ["01", "Detect", "Receives a failed Razorpay payment event."],
@@ -9,7 +10,14 @@ const stages = [
   ["05", "Verify", "Counts recovery only after Razorpay confirms payment."],
 ];
 
-export function LandingPage() {
+const money = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
+
+export async function LandingPage() {
+  const recovery = await loadVerifiedRecoverySummary();
   return (
     <main className="landingPage">
       <header className="landingNav">
@@ -45,7 +53,7 @@ export function LandingPage() {
           <div className="caseLine"><b>2</b><div><strong>Evidence assessed</strong><span>Unsupported-card signal, low confidence</span></div></div>
           <div className="caseLine amber"><b>3</b><div><strong>Human review required</strong><span>Reven does not automate uncertain recovery</span></div></div>
           <div className="caseReceipt"><FileKey2 size={14} /><span>Redacted decision receipt <code>SHA-256</code></span></div>
-          <div className="caseVerified"><CheckCircle2 size={16} /><div><small>VERIFIED TEST MODE RECOVERY</small><strong>₹201 confirmed by two paid webhooks</strong></div></div>
+          <div className="caseVerified"><CheckCircle2 size={16} /><div><small>VERIFIED TEST MODE RECOVERY</small><strong>{recovery ? `${money.format(recovery.verified_recovery_amount)} across ${recovery.verified_recovery_count} verified ${recovery.verified_recovery_count === 1 ? "recovery" : "recoveries"}` : "Live evidence temporarily unavailable"}</strong></div></div>
         </div>
       </section>
 

@@ -21,6 +21,7 @@ class Repository:
         self.duplicate_webhooks_ignored = 0
         self.invalid_webhooks_rejected = 0
         self.actual_test_recovery = 0.0
+        self.completed_recoveries: dict[str, float] = {}
         self.storage_error: str | None = None
         self._lock = Lock()
         if self.persistent:
@@ -79,11 +80,14 @@ class Repository:
                 )
                 recovery_rows.raise_for_status()
                 recoveries = recovery_rows.json()
-                self.actual_test_recovery = sum(
-                    float(row["amount_recovered"])
-                    for row in recoveries
-                    if row.get("status") == "completed"
-                )
+                self.completed_recoveries = {}
+                for row in recoveries:
+                    if row.get("status") != "completed":
+                        continue
+                    recovery_key = str(row.get("event_id") or row.get("external_reference") or "")
+                    if recovery_key:
+                        self.completed_recoveries[recovery_key] = float(row.get("amount_recovered", 0))
+                self.actual_test_recovery = sum(self.completed_recoveries.values())
                 self._hydrate_recovery_state(recoveries)
         except (httpx.HTTPError, ValueError, KeyError) as exc:
             self.storage_error = str(exc)
@@ -203,15 +207,22 @@ class Repository:
             self.invalid_webhooks_rejected += 1
 
     def record_recovery(self, event_id: str | None, external_reference: str | None, amount: float) -> None:
-        self.actual_test_recovery += amount
-        if not self.persistent:
+        recovery_key = str(event_id or external_reference or "")
+        if not recovery_key or recovery_key in self.completed_recoveries:
             return
-        response = httpx.post(
-            self._url("recovery_attempts"), headers=self._headers("return=minimal"),
-            json={"event_id": event_id, "external_reference": external_reference, "action": "create_payment_link", "status": "completed", "amount_recovered": amount},
-            timeout=12,
-        )
-        response.raise_for_status()
+        if self.persistent:
+            response = httpx.post(
+                self._url("recovery_attempts"), headers=self._headers("return=minimal"),
+                json={"event_id": event_id, "external_reference": external_reference, "action": "create_payment_link", "status": "completed", "amount_recovered": amount},
+                timeout=12,
+            )
+            response.raise_for_status()
+        self.completed_recoveries[recovery_key] = amount
+        self.actual_test_recovery = sum(self.completed_recoveries.values())
+
+    def verified_recovery_summary(self) -> tuple[float, int]:
+        """Return the aggregate that public UI must use for verified recovery."""
+        return self.actual_test_recovery, len(self.completed_recoveries)
 
     def record_prepared_recovery(self, event_id: str, external_reference: str) -> None:
         if not self.persistent:

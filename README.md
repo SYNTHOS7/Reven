@@ -1,6 +1,5 @@
 <div align="center">
 
-<img src="docs/assets/reven-live-landing.png" alt="Reven live landing page" width="100%" />
 
 # REVEN
 
@@ -91,7 +90,7 @@ This project does not claim fabricated production revenue.
 | Failure intake | Razorpay Test Mode sent signed `payment.failed` events, including a ₹101 Netbanking decline. |
 | Safe decision | Reven routed the ₹101 case to human review and separately blocked a repeated-attempt case through Trust Gate. |
 | Recovery | An operator approved one Razorpay Test Mode Payment Link after reviewing the ₹101 case evidence. |
-| Verification | Razorpay sent signed `payment_link.paid` webhooks; Reven recorded **₹201 verified Test Mode recovery across two confirmations**. |
+| Verification | Razorpay sends signed `payment_link.paid` webhooks; Reven counts only attributed completed recovery records. See the current total in the [live Evidence page](https://reven-nine.vercel.app/evidence) or [recovery-summary API](https://reven-api.onrender.com/evidence/verified-recovery). |
 
 Test Mode is technical proof. It does not represent production merchant revenue or real-money movement.
 
@@ -252,8 +251,8 @@ Landing page
   → Analyse simulated revenue leakage
   → Inspect a Recovery Queue recommendation
   → Open Evidence
-  → Show live ₹101 Test Mode case: failure → human approval → ₹101 verified recovery
-  → Show ₹201 total verified recovery from two signed paid webhooks
+  → Show a live Test Mode case: failure → human approval → verified recovery
+  → Show the current database-backed total on the Evidence page
 </pre>
 
 ---

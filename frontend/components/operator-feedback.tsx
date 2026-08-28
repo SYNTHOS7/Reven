@@ -40,6 +40,7 @@ export function OperatorFeedback({ event, pipelineResult }: OperatorFeedbackProp
     event.human_reviewed_action || pipelineResult.decision.action || "escalate_human",
   );
   const [note, setNote] = useState<string>(event.human_reviewed_note || "");
+  const [operatorToken, setOperatorToken] = useState("");
   const [saving, setSaving] = useState(false);
   const [feedbackSaved, setFeedbackSaved] = useState<boolean>(Boolean(event.human_reviewed_cause));
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -53,10 +54,11 @@ export function OperatorFeedback({ event, pipelineResult }: OperatorFeedbackProp
     setSaving(true);
     setErrorMsg(null);
     try {
-      await submitOperatorFeedback(event.id, selectedCause, selectedAction, note.trim());
+      await submitOperatorFeedback(event.id, selectedCause, selectedAction, note.trim(), operatorToken.trim() || undefined);
       setFeedbackSaved(true);
-    } catch {
-      setErrorMsg("Could not save operator feedback. Check backend connection.");
+      setOperatorToken("");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Could not save operator feedback.");
     } finally {
       setSaving(false);
     }
@@ -145,6 +147,20 @@ export function OperatorFeedback({ event, pipelineResult }: OperatorFeedbackProp
                 placeholder="Add audit rationale (e.g. Verified customer confirmed card renewal over call)"
                 className="textAreaInput"
               />
+            </div>
+
+            <div className="formGroup">
+              <label htmlFor="operator-feedback-token" className="fieldLabel">Operator token</label>
+              <input
+                id="operator-feedback-token"
+                type="password"
+                value={operatorToken}
+                onChange={(e) => setOperatorToken(e.target.value)}
+                placeholder="Required when operator protection is enabled"
+                autoComplete="off"
+                className="textInput"
+              />
+              <small className="fieldHint">Used only for this protected save and never stored in the browser.</small>
             </div>
 
             <div className="formActions">

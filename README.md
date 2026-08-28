@@ -190,7 +190,7 @@ Open http://localhost:3000.
 | Vercel | frontend | NEXT_PUBLIC_API_URL=https://your-api.onrender.com |
 | Render | backend | Razorpay Test Mode keys, webhook secret, Supabase URL/service role, Gemini key, admin token |
 
-[Deployment guide](DEPLOYMENT.md) · [API contract](docs/api-contract.md) · [Evidence plan](docs/real-data-evidence.md)
+[Deployment guide](DEPLOYMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API contract](docs/api-contract.md) · [Evidence plan](docs/real-data-evidence.md)
 
 ## Security scope
 

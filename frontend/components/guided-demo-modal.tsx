@@ -225,7 +225,7 @@ export function GuidedDemoModal({ isOpen, onClose }: GuidedDemoModalProps) {
                   </div>
                   <div className="receiptRow">
                     <span>Verified Test Mode recovery:</span>
-                    <strong className="text-primary fontMedium">₹100.00</strong>
+                    <strong className="text-primary fontMedium">₹201.00 across 2 paid webhooks</strong>
                   </div>
                 </div>
               </div>

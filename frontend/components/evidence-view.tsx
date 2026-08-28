@@ -70,6 +70,8 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
     (acc, r) => acc + (r.verified_recovered_amount || 0),
     0
   );
+  const escalatedCases = data.results.filter((result) => result.decision.action === "escalate_human").length;
+  const earlyAgreement = score.labeled_cases > 0 && score.labeled_cases < 10;
 
   return (
     <main className="evidencePage">
@@ -150,17 +152,32 @@ export function EvidenceView({ initialData }: EvidenceViewProps) {
           </div>
         </div>
 
-        {/* Diagnosis Match */}
+        {/* Diagnosis agreement */}
         <div className="kpiCard">
           <div className="kpiHeader">
-            <span className="kpiLabel">DIAGNOSIS ACCURACY</span>
+            <span className="kpiLabel">{earlyAgreement ? "EARLY DIAGNOSIS AGREEMENT" : "DIAGNOSIS AGREEMENT"}</span>
             <HelpTooltip topic="diagnosis_confidence" />
           </div>
           <strong className="kpiValue">{score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"}</strong>
           <div className="kpiFooter">
-            <span>{score.labeled_cases ? `Evaluated against ${score.labeled_cases} human-labelled cases` : "No human-labelled cases yet"}</span>
+            <span>{score.labeled_cases ? `${earlyAgreement ? "Early evidence" : "Measured"} · n=${score.labeled_cases} human-reviewed cases` : "No human-reviewed cases yet"}</span>
           </div>
         </div>
+      </section>
+
+      <section className="evidenceBatchSummary" aria-label="Current Test Mode batch summary">
+        <div>
+          <span className="utilityLabel">CURRENT TEST MODE BATCH</span>
+          <h2>Evidence is earned case by case.</h2>
+          <p>This is an early Test Mode batch, not a production recovery-rate claim. Every total below comes from stored Razorpay events, operator decisions, and signed paid-webhook confirmation.</p>
+        </div>
+        <dl>
+          <div><dt>Cases received</dt><dd>{data.results.length}</dd></div>
+          <div><dt>Human escalations</dt><dd>{escalatedCases}</dd></div>
+          <div><dt>Trust Gate stops</dt><dd>{score.suspicious_refusals}</dd></div>
+          <div><dt>Verified recoveries</dt><dd>{verifiedRecoveriesCount}</dd></div>
+        </dl>
+        <small>Known limitation: Test Mode evidence is intentionally small. Reven does not claim stable diagnosis performance until more human-reviewed cases are collected.</small>
       </section>
 
       {/* Reusable Five Stage Flow */}

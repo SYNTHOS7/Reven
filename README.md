@@ -88,10 +88,10 @@ This project does not claim fabricated production revenue.
 
 | Evidence | Verified result |
 |---|---|
-| Failure intake | Razorpay Test Mode sent a signed payment.failed event for a ₹324 card payment. |
-| Safe decision | Reven captured the evidence and selected human review when confidence was too low. |
-| Recovery | An operator-approved Razorpay Test Mode Payment Link was created. |
-| Verification | Razorpay sent payment_link.paid; Reven recorded **₹100 verified Test Mode recovery**. |
+| Failure intake | Razorpay Test Mode sent signed `payment.failed` events, including a ₹101 Netbanking decline. |
+| Safe decision | Reven routed the ₹101 case to human review and separately blocked a repeated-attempt case through Trust Gate. |
+| Recovery | An operator approved one Razorpay Test Mode Payment Link after reviewing the ₹101 case evidence. |
+| Verification | Razorpay sent signed `payment_link.paid` webhooks; Reven recorded **₹201 verified Test Mode recovery across two confirmations**. |
 
 Test Mode is technical proof. It does not represent production merchant revenue or real-money movement.
 
@@ -252,7 +252,8 @@ Landing page
   → Analyse simulated revenue leakage
   → Inspect a Recovery Queue recommendation
   → Open Evidence
-  → Show real ₹324 Test Mode failure + ₹100 verified Test Mode recovery
+  → Show live ₹101 Test Mode case: failure → human approval → ₹101 verified recovery
+  → Show ₹201 total verified recovery from two signed paid webhooks
 </pre>
 
 ---

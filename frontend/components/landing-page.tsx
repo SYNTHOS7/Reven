@@ -45,7 +45,7 @@ export function LandingPage() {
           <div className="caseLine"><b>2</b><div><strong>Evidence assessed</strong><span>Unsupported-card signal, low confidence</span></div></div>
           <div className="caseLine amber"><b>3</b><div><strong>Human review required</strong><span>Reven does not automate uncertain recovery</span></div></div>
           <div className="caseReceipt"><FileKey2 size={14} /><span>Redacted decision receipt <code>SHA-256</code></span></div>
-          <div className="caseVerified"><CheckCircle2 size={16} /><div><small>SEPARATE VERIFIED TEST RECOVERY</small><strong>₹100 confirmed by paid webhook</strong></div></div>
+          <div className="caseVerified"><CheckCircle2 size={16} /><div><small>VERIFIED TEST MODE RECOVERY</small><strong>₹201 confirmed by two paid webhooks</strong></div></div>
         </div>
       </section>
 

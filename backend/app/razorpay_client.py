@@ -15,9 +15,18 @@ class RazorpayClient:
     def configured(self) -> bool:
         return bool(self.config.razorpay_key_id and self.config.razorpay_key_secret)
 
-    async def create_payment_link(self, event: PaymentEvent) -> dict[str, str]:
+    @property
+    def test_mode_configured(self) -> bool:
+        return bool(self.configured and (self.config.razorpay_key_id or "").startswith("rzp_test_"))
+
+    def _require_test_mode(self) -> None:
         if not self.configured:
-            raise RuntimeError("Razorpay test credentials are not configured")
+            raise RuntimeError("Razorpay Test Mode credentials are not configured")
+        if not self.test_mode_configured:
+            raise RuntimeError("Refusing Razorpay API call: Reven batch tooling requires an rzp_test_ key ID")
+
+    async def create_payment_link(self, event: PaymentEvent) -> dict[str, str]:
+        self._require_test_mode()
         payload = {
             "amount": int(round(event.amount * 100)),
             "currency": "INR",
@@ -39,8 +48,7 @@ class RazorpayClient:
             return {"id": data["id"], "short_url": data["short_url"], "mode": "test"}
 
     async def fetch_failed_payments(self, count: int = 100) -> list[dict]:
-        if not self.configured:
-            raise RuntimeError("Razorpay test credentials are not configured")
+        self._require_test_mode()
         async with httpx.AsyncClient(timeout=20) as client:
             response = await client.get(
                 "https://api.razorpay.com/v1/payments",
@@ -51,8 +59,7 @@ class RazorpayClient:
             return [item for item in response.json().get("items", []) if item.get("status") == "failed"]
 
     async def fetch_payment_link(self, payment_link_id: str) -> dict:
-        if not self.configured:
-            raise RuntimeError("Razorpay test credentials are not configured")
+        self._require_test_mode()
         async with httpx.AsyncClient(timeout=15) as client:
             response = await client.get(
                 f"https://api.razorpay.com/v1/payment_links/{payment_link_id}",

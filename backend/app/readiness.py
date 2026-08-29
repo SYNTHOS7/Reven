@@ -5,8 +5,9 @@ from app.models import ReadinessCheck, ReadinessResponse
 
 
 def build_readiness(config: AppConfig, storage_mode: str) -> ReadinessResponse:
+    using_test_key = bool(config.razorpay_key_id and config.razorpay_key_id.startswith("rzp_test_"))
     checks = [
-        ReadinessCheck(name="Razorpay Test Mode credentials", status="ready" if bool(config.razorpay_key_id and config.razorpay_key_secret) else "missing", detail="Required to create and reconcile Test Mode Payment Links."),
+        ReadinessCheck(name="Razorpay Test Mode credentials", status="ready" if using_test_key and bool(config.razorpay_key_secret) else "missing", detail="Requires a Razorpay Test Mode key ID (rzp_test_...) and secret; live keys are not accepted for Test Mode recovery."),
         ReadinessCheck(name="Razorpay webhook secret", status="ready" if bool(config.razorpay_webhook_secret) else "missing", detail="Required to verify signed payment and Payment Link webhooks."),
         ReadinessCheck(name="Supabase persistence", status="ready" if storage_mode == "supabase" else "optional", detail="Durable evidence storage is recommended; local memory is suitable only for a temporary demo."),
         ReadinessCheck(name="Gemini diagnosis key", status="ready" if bool(config.gemini_api_key) else "optional", detail="Without it, ambiguous cases fail closed to deterministic low-confidence review."),

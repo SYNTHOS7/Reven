@@ -40,7 +40,7 @@ def test_operator_queue_excludes_suspicious_and_orders_open_cases() -> None:
 
 
 def test_readiness_does_not_return_secret_values() -> None:
-    report = build_readiness(AppConfig(razorpay_key_id="id", razorpay_key_secret="SHOULD_NOT_LEAK_KEY", razorpay_webhook_secret="SHOULD_NOT_LEAK_WEBHOOK"), "memory")
+    report = build_readiness(AppConfig(razorpay_key_id="rzp_test_id", razorpay_key_secret="SHOULD_NOT_LEAK_KEY", razorpay_webhook_secret="SHOULD_NOT_LEAK_WEBHOOK"), "memory")
     assert report.status == "ready_for_test_mode"
     assert "SHOULD_NOT_LEAK_WEBHOOK" not in str(report.model_dump())
 

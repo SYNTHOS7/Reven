@@ -268,24 +268,21 @@ def write_recovery_board(path: Path, manifest: dict[str, Any]) -> None:
 
 
 def report(manifest: dict[str, Any], api_url: str) -> None:
-    totals = {"failed": 0, "escalated": 0, "trust_blocks": 0, "verified": 0, "verified_amount": 0.0, "awaiting_webhook": 0}
-    for case in manifest["cases"]:
-        actual = case.get("actual_payment")
-        if not actual:
-            totals["awaiting_webhook"] += 1
-            continue
-        totals["failed"] += 1
-        detail = fetch_case_result(api_url, actual["event_id"])
-        result = (detail or {}).get("pipeline_result") or {}
-        if result.get("trust_gate", {}).get("status") == "suspicious":
-            totals["trust_blocks"] += 1
-        if result.get("decision", {}).get("action") == "escalate_human":
-            totals["escalated"] += 1
-        recovered = float(result.get("verified_recovered_amount") or 0)
-        if recovered > 0:
-            totals["verified"] += 1
-            totals["verified_amount"] += recovered
-    print(json.dumps({"batch_id": manifest["batch_id"], "planned_cases": len(manifest["cases"]), **totals}, indent=2))
+    with httpx.Client(timeout=20) as client:
+        response = client.get(f"{api_url}/batches/{manifest['batch_id']}/summary")
+    response.raise_for_status()
+    summary = response.json()
+    print(json.dumps({
+        "batch_id": summary["batch_id"],
+        "planned_cases": len(manifest["cases"]),
+        "total_cases": summary["total_cases"],
+        "trust_gate_blocks": summary["trust_gate_blocks"],
+        "human_review_escalations": summary["human_review_escalations"],
+        "verified_recoveries": summary["verified_recovery_count"],
+        "total_verified_inr": summary["verified_recovery_amount"],
+        "diagnosis_labelled_cases": summary["diagnosis_labelled_cases"],
+        "diagnosis_accuracy_pct": summary["diagnosis_accuracy_pct"],
+    }, indent=2))
 
 
 def command_plan(args: argparse.Namespace) -> None:

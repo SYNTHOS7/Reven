@@ -6,12 +6,12 @@ import { Activity, ArrowRight, BrainCircuit, CircleAlert, ShieldCheck, Sparkles 
 
 import { useTransactions } from "@/lib/transaction-context";
 import { generateMerchantBriefing } from "@/lib/api";
-import type { MerchantBriefingResponse } from "@/lib/types";
+import type { BatchSummary, MerchantBriefingResponse } from "@/lib/types";
 import { HelpTooltip } from "./help-tooltip";
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
-export function RevenueIntelligenceView() {
+export function RevenueIntelligenceView({ batchSummary = null }: { batchSummary?: BatchSummary | null }) {
   const { metrics, activeDataSource, setActiveDataSource } = useTransactions();
   const { revenueLost, potentiallyRecoverableRevenue, revenueRecovered, failureReasonStats, highPriorityOpportunities } = metrics;
   const leadingPattern = failureReasonStats[0];
@@ -75,6 +75,20 @@ export function RevenueIntelligenceView() {
         <article className="analyseFocusCard"><span>REVENUE LEAKAGE</span><strong className="riskText">{money.format(revenueLost)}</strong><p>Failed or abandoned payment value not yet collected.</p></article>
         <article className="analyseFocusCard"><span>SAFE OPPORTUNITY</span><strong className="warningText">{money.format(potentiallyRecoverableRevenue)}</strong><p>Value that can enter the Recovery Queue under current rules.</p></article>
         <article className="analyseFocusCard accent"><span>VERIFIED RECOVERY</span><strong className="recoveryText">{money.format(revenueRecovered)}</strong><p>Only counted after an attributed, confirmed outcome.</p></article>
+      </section>
+
+      <section className="evidenceBatchSummary" aria-label="Live Razorpay Test Mode batch evidence">
+        <div>
+          <span className="utilityLabel">REAL TEST MODE BATCH · BUILDATHON-01</span>
+          <h2>{batchSummary?.total_cases ? "Batch evidence, separate from the simulation." : "Batch evidence will appear here after the first signed webhook."}</h2>
+          <p>{batchSummary?.total_cases ? "These are batch-scoped, signed Razorpay Test Mode results. They never include the simulated merchant scenario." : "Create the Test Mode batch, complete failure checkouts, and Reven will populate this view from stored webhook evidence."}</p>
+        </div>
+        <dl>
+          <div><dt>Cases received</dt><dd>{batchSummary?.total_cases ?? 0}</dd></div>
+          <div><dt>Trust Gate blocks</dt><dd>{batchSummary?.trust_gate_blocks ?? 0}</dd></div>
+          <div><dt>Human escalations</dt><dd>{batchSummary?.human_review_escalations ?? 0}</dd></div>
+          <div><dt>Verified ₹</dt><dd>{batchSummary ? money.format(batchSummary.verified_recovery_amount) : "—"}</dd></div>
+        </dl>
       </section>
 
       <section className="analyseDecisionGrid">

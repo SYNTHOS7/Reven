@@ -8,6 +8,11 @@ create table if not exists public.reven_events (
   created_at timestamptz not null default now()
 );
 
+-- Nullable for all pre-batch evidence. Existing rows remain valid and visible.
+alter table public.reven_events add column if not exists batch_id text;
+create index if not exists reven_events_batch_created_idx
+  on public.reven_events(batch_id, created_at desc);
+
 create table if not exists public.pipeline_results (
   id text primary key,
   run_id text not null,

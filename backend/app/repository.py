@@ -4,7 +4,7 @@ from threading import Lock
 import httpx
 
 from app.config import AppConfig, get_config
-from app.models import PaymentEvent, PipelineResult, PolicySettings, ScorecardRun
+from app.models import Action, BatchDiagnosisReviewItem, BatchSummary, PaymentEvent, PipelineResult, PolicySettings, ScorecardRun
 
 
 class Repository:
@@ -144,7 +144,7 @@ class Repository:
         response = httpx.post(
             self._url("reven_events?on_conflict=id"),
             headers=self._headers("resolution=merge-duplicates,return=minimal"),
-            json={"id": event.id, "source": event.source, "source_event_id": event.source_event_id, "payload": event.model_dump(mode="json")},
+            json={"id": event.id, "source": event.source, "source_event_id": event.source_event_id, "batch_id": event.batch_id, "payload": event.model_dump(mode="json")},
             timeout=12,
         )
         response.raise_for_status()
@@ -223,6 +223,55 @@ class Repository:
     def verified_recovery_summary(self) -> tuple[float, int]:
         """Return the aggregate that public UI must use for verified recovery."""
         return self.actual_test_recovery, len(self.completed_recoveries)
+
+    def _latest_results_by_event(self) -> dict[str, PipelineResult]:
+        latest: dict[str, PipelineResult] = {}
+        for result in self.results:
+            current = latest.get(result.event_id)
+            if current is None or result.created_at >= current.created_at:
+                latest[result.event_id] = result
+        return latest
+
+    def batch_summary(self, batch_id: str) -> BatchSummary:
+        events = [event for event in self.events if event.batch_id == batch_id]
+        latest = self._latest_results_by_event()
+        results = [latest[event.id] for event in events if event.id in latest]
+        labelled = [event for event in events if event.expected_cause is not None and event.id in latest]
+        correct = sum(latest[event.id].diagnosis.cause == event.expected_cause for event in labelled)
+        verified_event_ids = [event.id for event in events if event.id in self.completed_recoveries]
+        return BatchSummary(
+            batch_id=batch_id,
+            total_cases=len(events),
+            trust_gate_blocks=sum(result.trust_gate.status == "suspicious" for result in results),
+            human_review_escalations=sum(result.decision.action == Action.ESCALATE_HUMAN for result in results),
+            verified_recovery_count=len(verified_event_ids),
+            verified_recovery_amount=sum(self.completed_recoveries[event_id] for event_id in verified_event_ids),
+            diagnosis_labelled_cases=len(labelled),
+            diagnosis_accuracy_pct=round(correct / len(labelled) * 100, 1) if labelled else None,
+        )
+
+    def batch_diagnosis_review(self, batch_id: str) -> list[BatchDiagnosisReviewItem]:
+        latest = self._latest_results_by_event()
+        items: list[BatchDiagnosisReviewItem] = []
+        for event in self.events:
+            if event.batch_id != batch_id or event.id not in latest:
+                continue
+            result = latest[event.id]
+            items.append(BatchDiagnosisReviewItem(
+                event_id=event.id,
+                amount=event.amount,
+                failure_code=event.failure_code,
+                processor_description=event.error_description,
+                payment_method=event.payment_method,
+                ai_assigned_cause=result.diagnosis.cause,
+                diagnosis_method=result.diagnosis.method,
+                confidence=result.diagnosis.confidence,
+                decision_action=result.decision.action,
+                trust_gate_status=result.trust_gate.status,
+                human_label=event.expected_cause,
+                reviewer_note=event.human_reviewed_note,
+            ))
+        return sorted(items, key=lambda item: item.event_id)
 
     def record_prepared_recovery(self, event_id: str, external_reference: str) -> None:
         if not self.persistent:

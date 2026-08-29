@@ -37,6 +37,7 @@ def payment_event_from_razorpay(payment: dict) -> PaymentEvent:
         history=CustomerHistory(),
         source="razorpay_test",
         source_event_id=payment_id,
+        batch_id=str(notes["reven_batch_id"]) if notes.get("reven_batch_id") else None,
         payment_method=payment.get("method"),
         error_description=payment.get("error_description"),
         bank=payment.get("bank"),
@@ -47,4 +48,3 @@ def payment_event_from_razorpay(payment: dict) -> PaymentEvent:
         error_source=payment.get("error_source"),
         error_step=payment.get("error_step"),
     )
-

@@ -51,6 +51,7 @@ class PaymentEvent(BaseModel):
     expected_action: Action | None = None
     source: str = "razorpay_test"
     source_event_id: str | None = None
+    batch_id: str | None = None
     payment_method: str | None = None
     error_description: str | None = None
     bank: str | None = None
@@ -143,6 +144,8 @@ class ScorecardRun(BaseModel):
     pipeline_version: str = "0.1.0"
     random_seed: int = 2408
     labeled_cases: int = 0
+    diagnosis_labelled_cases: int = 0
+    action_labelled_cases: int = 0
     data_source: str = "razorpay_test"
 
 
@@ -163,6 +166,13 @@ class OperatorApprovalRequest(BaseModel):
 class GroundTruthUpdate(BaseModel):
     correct_cause: str
     correct_action: Action
+    reviewer_notes: str = Field(min_length=3, max_length=1000)
+
+
+class DiagnosisLabelUpdate(BaseModel):
+    """A cause-only human label used to evaluate diagnosis agreement."""
+
+    correct_cause: str = Field(min_length=2, max_length=120)
     reviewer_notes: str = Field(min_length=3, max_length=1000)
 
 
@@ -416,6 +426,39 @@ class VerifiedRecoverySummary(BaseModel):
         "Counts only completed, attributed Razorpay Test Mode recovery records. "
         "Creating a Payment Link is not recovered revenue."
     )
+
+
+class BatchSummary(BaseModel):
+    """Read-only evidence totals scoped to one real Razorpay Test Mode batch."""
+
+    batch_id: str
+    total_cases: int = 0
+    trust_gate_blocks: int = 0
+    human_review_escalations: int = 0
+    verified_recovery_count: int = 0
+    verified_recovery_amount: float = 0
+    diagnosis_labelled_cases: int = 0
+    diagnosis_accuracy_pct: float | None = None
+    source: str = "razorpay_test"
+    disclaimer: str = (
+        "Batch totals include only events that carried this batch ID in a signed Razorpay Test Mode webhook. "
+        "Verified recovery counts only completed, attributed recovery records."
+    )
+
+
+class BatchDiagnosisReviewItem(BaseModel):
+    event_id: str
+    amount: float
+    failure_code: str
+    processor_description: str | None = None
+    payment_method: str | None = None
+    ai_assigned_cause: str
+    diagnosis_method: str
+    confidence: float
+    decision_action: Action
+    trust_gate_status: str
+    human_label: str | None = None
+    reviewer_note: str | None = None
 
 
 class WebhookResponse(BaseModel):

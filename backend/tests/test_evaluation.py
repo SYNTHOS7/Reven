@@ -13,7 +13,7 @@ def test_empty_repository_does_not_fabricate_metrics() -> None:
     assert response.results == []
 
 
-def test_diagnosis_accuracy_uses_only_fully_labelled_cases() -> None:
+def test_diagnosis_accuracy_uses_cause_only_labels_without_requiring_action_labels() -> None:
     repo = Repository()
     first = PaymentEvent(
         id="labelled-correct",
@@ -33,7 +33,6 @@ def test_diagnosis_accuracy_uses_only_fully_labelled_cases() -> None:
     )
     expected = run_event(first, repo.policy)
     first.expected_cause = expected.diagnosis.cause
-    first.expected_action = expected.decision.action
     second.expected_cause = "intentionally_incorrect_label"
     second.expected_action = Action.ESCALATE_HUMAN
     repo.events = [first, second]
@@ -41,4 +40,6 @@ def test_diagnosis_accuracy_uses_only_fully_labelled_cases() -> None:
     response = run_evaluation(repo)
 
     assert response.scorecard.labeled_cases == 2
+    assert response.scorecard.diagnosis_labelled_cases == 2
+    assert response.scorecard.action_labelled_cases == 1
     assert response.scorecard.diagnosis_accuracy_pct == 50.0

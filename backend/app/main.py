@@ -13,6 +13,9 @@ from app.evaluation import run_evaluation
 from app.ingestion import payment_event_from_razorpay
 from app.models import (
     Action,
+    BatchDiagnosisReviewItem,
+    BatchSummary,
+    DiagnosisLabelUpdate,
     GroundTruthUpdate,
     OperatorApprovalRequest,
     PaymentLinkRequest,
@@ -216,6 +219,26 @@ def label_event(
     return event
 
 
+@app.patch("/events/{event_id}/diagnosis-label")
+def label_diagnosis(
+    event_id: str,
+    update: DiagnosisLabelUpdate,
+    x_admin_token: Annotated[str | None, Header()] = None,
+):
+    """Store a human-verified failure cause without requiring an action label."""
+    require_operator_token(x_admin_token)
+    event = next((item for item in repository.events if item.id == event_id), None)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    event.expected_cause = update.correct_cause
+    event.ground_truth_source = f"human_reviewed: {update.reviewer_notes}"
+    event.human_reviewed_cause = update.correct_cause
+    event.human_reviewed_note = update.reviewer_notes
+    event.human_reviewed_at = utc_now()
+    repository.save_event(event)
+    return event
+
+
 @app.post("/events/{event_id}/replay", response_model=PolicyReplayResponse)
 def policy_replay(
     event_id: str,
@@ -273,6 +296,16 @@ def get_verified_recovery_summary():
         verified_recovery_amount=amount,
         verified_recovery_count=count,
     )
+
+
+@app.get("/batches/{batch_id}/summary", response_model=BatchSummary)
+def get_batch_summary(batch_id: str):
+    return repository.batch_summary(batch_id)
+
+
+@app.get("/batches/{batch_id}/diagnosis-review", response_model=list[BatchDiagnosisReviewItem])
+def get_batch_diagnosis_review(batch_id: str):
+    return repository.batch_diagnosis_review(batch_id)
 
 
 @app.get("/settings")

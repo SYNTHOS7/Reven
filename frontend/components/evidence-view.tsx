@@ -7,8 +7,8 @@ import {
   RefreshCcw,
   Search,
 } from "lucide-react";
-import { loadVerifiedRecoverySummary, runEvaluation } from "@/lib/api";
-import type { DashboardData, VerifiedRecoverySummary } from "@/lib/types";
+import { loadBatchDiagnosisReview, loadBatchSummary, loadVerifiedRecoverySummary, runEvaluation, saveDiagnosisLabel } from "@/lib/api";
+import type { BatchDiagnosisReviewItem, BatchSummary, DashboardData, VerifiedRecoverySummary } from "@/lib/types";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
 import { StatusBadge } from "./status-badge";
@@ -27,13 +27,31 @@ const MIN_LABELLED_CASES_FOR_ACCURACY = 10;
 interface EvidenceViewProps {
   initialData: DashboardData;
   initialRecoverySummary: VerifiedRecoverySummary | null;
+  batchId: string;
+  initialBatchSummary: BatchSummary | null;
+  initialDiagnosisReview: BatchDiagnosisReviewItem[];
 }
 
-export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceViewProps) {
+const DIAGNOSIS_CAUSES = [
+  "temporary_bank_failure",
+  "temporary_funds_shortage",
+  "customer_abandoned_payment",
+  "unsupported_payment_method",
+  "technical_error",
+  "suspicious_activity",
+  "unknown",
+];
+
+export function EvidenceView({ initialData, initialRecoverySummary, batchId, initialBatchSummary, initialDiagnosisReview }: EvidenceViewProps) {
   const [data, setData] = useState<DashboardData>(initialData);
   const [recoverySummary, setRecoverySummary] = useState<VerifiedRecoverySummary | null>(initialRecoverySummary);
+  const [batchSummary, setBatchSummary] = useState<BatchSummary | null>(initialBatchSummary);
+  const [diagnosisReview, setDiagnosisReview] = useState<BatchDiagnosisReviewItem[]>(initialDiagnosisReview);
   const [running, setRunning] = useState(false);
   const [query, setQuery] = useState("");
+  const [operatorToken, setOperatorToken] = useState("");
+  const [labelDrafts, setLabelDrafts] = useState<Record<string, string>>({});
+  const [savingLabel, setSavingLabel] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const filtered = useMemo(() => {
@@ -53,7 +71,14 @@ export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceVi
     try {
       const res = await runEvaluation();
       setData(res);
-      setRecoverySummary(await loadVerifiedRecoverySummary());
+      const [nextRecoverySummary, nextBatchSummary, nextDiagnosisReview] = await Promise.all([
+        loadVerifiedRecoverySummary(),
+        loadBatchSummary(batchId),
+        loadBatchDiagnosisReview(batchId),
+      ]);
+      setRecoverySummary(nextRecoverySummary);
+      setBatchSummary(nextBatchSummary);
+      setDiagnosisReview(nextDiagnosisReview);
       setNotice({
         type: "success",
         text: "Evaluation completed. Stored Test Mode cases were re-evaluated with the current diagnosis and policy safeguards.",
@@ -68,10 +93,38 @@ export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceVi
     }
   }
 
+  async function handleSaveDiagnosisLabel(item: BatchDiagnosisReviewItem) {
+    const cause = labelDrafts[item.event_id];
+    if (!cause || !operatorToken) {
+      setNotice({ type: "error", text: "Choose the true failure cause and enter the operator token before saving." });
+      return;
+    }
+    setSavingLabel(item.event_id);
+    try {
+      await saveDiagnosisLabel(item.event_id, cause, "Batch evidence review", operatorToken);
+      const [nextBatchSummary, nextDiagnosisReview] = await Promise.all([
+        loadBatchSummary(batchId),
+        loadBatchDiagnosisReview(batchId),
+      ]);
+      setBatchSummary(nextBatchSummary);
+      setDiagnosisReview(nextDiagnosisReview);
+      setNotice({ type: "success", text: `Saved human diagnosis label for ${item.event_id}.` });
+    } catch (error) {
+      setNotice({ type: "error", text: error instanceof Error ? error.message : "Could not save the diagnosis label." });
+    } finally {
+      setSavingLabel(null);
+    }
+  }
+
   const score = data.scorecard;
   const connected = data.source === "api";
-  const escalatedCases = data.results.filter((result) => result.decision.action === "escalate_human").length;
-  const hasEnoughLabelledData = score.labeled_cases >= MIN_LABELLED_CASES_FOR_ACCURACY;
+  const escalatedCases = batchSummary?.total_cases ? batchSummary.human_review_escalations : data.results.filter((result) => result.decision.action === "escalate_human").length;
+  const diagnosisLabelledCases = batchSummary?.total_cases
+    ? batchSummary.diagnosis_labelled_cases
+    : (score.diagnosis_labelled_cases ?? score.labeled_cases);
+  const diagnosisAccuracy = batchSummary?.total_cases ? batchSummary.diagnosis_accuracy_pct : score.diagnosis_accuracy_pct;
+  const hasEnoughLabelledData = diagnosisLabelledCases >= MIN_LABELLED_CASES_FOR_ACCURACY && diagnosisAccuracy !== null;
+  const trustGateBlocks = batchSummary?.total_cases ? batchSummary.trust_gate_blocks : score.suspicious_refusals;
 
   return (
     <main className="evidencePage">
@@ -146,7 +199,7 @@ export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceVi
             <span className="kpiLabel">TRUST GATE BLOCKS</span>
             <HelpTooltip topic="trust_gate" />
           </div>
-          <strong className="kpiValue riskText">{score.suspicious_refusals}</strong>
+          <strong className="kpiValue riskText">{trustGateBlocks}</strong>
           <div className="kpiFooter">
             <span className="riskText">Actions safely blocked by Trust Gate</span>
           </div>
@@ -160,29 +213,59 @@ export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceVi
           </div>
           <strong className={hasEnoughLabelledData ? "kpiValue" : "kpiValue kpiValueMessage"}>
             {hasEnoughLabelledData
-              ? `${score.diagnosis_accuracy_pct}%`
-              : `Not enough labelled data yet (n=${score.labeled_cases})`}
+              ? `${diagnosisAccuracy}%`
+              : `Not enough labelled data yet (n=${diagnosisLabelledCases})`}
           </strong>
           <div className="kpiFooter">
-            <span>{hasEnoughLabelledData ? `Measured from n=${score.labeled_cases} human-reviewed cases` : `Needs ${MIN_LABELLED_CASES_FOR_ACCURACY} human-reviewed labels before showing accuracy`}</span>
+            <span>{hasEnoughLabelledData ? `Measured from n=${diagnosisLabelledCases} human-reviewed causes` : `Needs ${MIN_LABELLED_CASES_FOR_ACCURACY} human-reviewed causes before showing accuracy`}</span>
           </div>
         </div>
       </section>
 
       <section className="evidenceBatchSummary" aria-label="Current Test Mode batch summary">
         <div>
-          <span className="utilityLabel">CURRENT TEST MODE BATCH</span>
-          <h2>Evidence is earned case by case.</h2>
-          <p>This is an early Test Mode batch, not a production recovery-rate claim. Every total below comes from stored Razorpay events, operator decisions, and signed paid-webhook confirmation.</p>
+          <span className="utilityLabel">REAL TEST MODE BATCH · {batchId.toUpperCase()}</span>
+          <h2>{batchSummary?.total_cases ? "Evidence is earned case by case." : "The real batch will appear after its first signed webhook."}</h2>
+          <p>{batchSummary?.total_cases ? "These batch totals are separate from all-time evidence. Every number comes from stored Razorpay events, policy decisions, and signed paid-webhook confirmation." : "All-time verified recovery remains above. New signed Razorpay Test Mode events carrying this batch ID populate this section."}</p>
         </div>
         <dl>
-          <div><dt>Cases received</dt><dd>{data.results.length}</dd></div>
+          <div><dt>Cases received</dt><dd>{batchSummary?.total_cases ?? 0}</dd></div>
           <div><dt>Human escalations</dt><dd>{escalatedCases}</dd></div>
-          <div><dt>Trust Gate stops</dt><dd>{score.suspicious_refusals}</dd></div>
-          <div><dt>Verified recoveries</dt><dd>{recoverySummary?.verified_recovery_count ?? "—"}</dd></div>
+          <div><dt>Trust Gate stops</dt><dd>{trustGateBlocks}</dd></div>
+          <div><dt>Verified recoveries</dt><dd>{batchSummary?.verified_recovery_count ?? 0}</dd></div>
         </dl>
-        <small>Known limitation: Test Mode evidence is intentionally small. Reven does not claim stable diagnosis performance until more human-reviewed cases are collected.</small>
+        <small>All-time verified Test Mode recovery stays visible above. Batch metrics only include this batch and do not claim production merchant performance.</small>
       </section>
+
+      {diagnosisReview.length > 0 && (
+        <section className="eventsSection" aria-label="Human diagnosis review">
+          <div className="eventsHeader">
+            <div>
+              <span className="utilityLabel">HUMAN LABEL REVIEW · {batchId.toUpperCase()}</span>
+              <h2>Review AI-assigned failure causes</h2>
+              <p className="sectionIntro">Label the true cause for at least 15–20 cases. Only these human labels affect Diagnosis Agreement; actions remain independently evaluated.</p>
+            </div>
+            <label className="searchBox">
+              <span className="srOnly">Operator token</span>
+              <input value={operatorToken} onChange={(event) => setOperatorToken(event.target.value)} type="password" autoComplete="off" placeholder="Operator token" />
+            </label>
+          </div>
+          <div className="tableWrap">
+            <table>
+              <thead><tr><th>Case</th><th>Processor evidence</th><th>AI diagnosis</th><th>True cause</th><th>Label</th></tr></thead>
+              <tbody>{diagnosisReview.map((item) => (
+                <tr key={item.event_id}>
+                  <td><Link href={`/case/${item.event_id}`} className="fontMono text-primary fontMedium">{item.event_id}</Link><small className="block text-text-muted text-[10px]">{money.format(item.amount)} · {item.failure_code}</small></td>
+                  <td>{item.payment_method ?? "—"}<small className="block text-text-muted text-[10px]">{item.processor_description ?? "No processor description"}</small></td>
+                  <td><span className="fontMedium">{item.ai_assigned_cause.replaceAll("_", " ")}</span><small className="block text-text-muted text-[10px]">{item.diagnosis_method} · {formatConfidence(item.confidence)}</small></td>
+                  <td>{item.human_label ? <span className="recoveryText">{item.human_label.replaceAll("_", " ")}</span> : <select value={labelDrafts[item.event_id] ?? ""} onChange={(event) => setLabelDrafts((current) => ({ ...current, [item.event_id]: event.target.value }))}><option value="">Choose cause</option>{DIAGNOSIS_CAUSES.map((cause) => <option value={cause} key={cause}>{cause.replaceAll("_", " ")}</option>)}</select>}</td>
+                  <td>{item.human_label ? "Reviewed" : <button type="button" className="button buttonSecondary buttonSmall" disabled={savingLabel === item.event_id} onClick={() => handleSaveDiagnosisLabel(item)}>{savingLabel === item.event_id ? "Saving..." : "Save label"}</button>}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Reusable Five Stage Flow */}
       <FiveStageFlow

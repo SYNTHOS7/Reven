@@ -252,6 +252,8 @@ export interface Scorecard {
   pipeline_version: string;
   random_seed: number;
   labeled_cases: number;
+  diagnosis_labelled_cases?: number;
+  action_labelled_cases?: number;
   data_source: string;
 }
 
@@ -324,6 +326,34 @@ export interface VerifiedRecoverySummary {
   verified_recovery_count: number;
   source: string;
   disclaimer: string;
+}
+
+export interface BatchSummary {
+  batch_id: string;
+  total_cases: number;
+  trust_gate_blocks: number;
+  human_review_escalations: number;
+  verified_recovery_count: number;
+  verified_recovery_amount: number;
+  diagnosis_labelled_cases: number;
+  diagnosis_accuracy_pct: number | null;
+  source: string;
+  disclaimer: string;
+}
+
+export interface BatchDiagnosisReviewItem {
+  event_id: string;
+  amount: number;
+  failure_code: string;
+  processor_description: string | null;
+  payment_method: string | null;
+  ai_assigned_cause: string;
+  diagnosis_method: string;
+  confidence: number;
+  decision_action: Action;
+  trust_gate_status: string;
+  human_label: string | null;
+  reviewer_note: string | null;
 }
 
 // ---------------- CSV & Demo Data Types ----------------

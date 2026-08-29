@@ -16,6 +16,8 @@ import type {
   MerchantBriefingRequest,
   MerchantBriefingResponse,
   VerifiedRecoverySummary,
+  BatchSummary,
+  BatchDiagnosisReviewItem,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -280,5 +282,45 @@ export async function loadVerifiedRecoverySummary(): Promise<VerifiedRecoverySum
     return response.ok ? response.json() : null;
   } catch {
     return null;
+  }
+}
+
+export async function loadBatchSummary(batchId: string): Promise<BatchSummary | null> {
+  if (!apiUrl) return null;
+  try {
+    const response = await fetch(`${apiUrl}/batches/${encodeURIComponent(batchId)}/summary`, { cache: "no-store" });
+    return response.ok ? response.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function loadBatchDiagnosisReview(batchId: string): Promise<BatchDiagnosisReviewItem[]> {
+  if (!apiUrl) return [];
+  try {
+    const response = await fetch(`${apiUrl}/batches/${encodeURIComponent(batchId)}/diagnosis-review`, { cache: "no-store" });
+    return response.ok ? response.json() : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveDiagnosisLabel(
+  eventId: string,
+  correctCause: string,
+  reviewerNotes: string,
+  adminToken?: string,
+): Promise<void> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (adminToken) headers["X-Admin-Token"] = adminToken;
+  const response = await fetch(`${apiUrl}/events/${eventId}/diagnosis-label`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ correct_cause: correctCause, reviewer_notes: reviewerNotes }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Failed to save diagnosis label");
   }
 }

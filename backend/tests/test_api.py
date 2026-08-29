@@ -73,6 +73,33 @@ def test_operator_token_protects_policy_and_human_labels(monkeypatch) -> None:
     repository.policy = original_policy
 
 
+def test_batch_diagnosis_review_and_cause_only_label(monkeypatch) -> None:
+    repository.events.clear()
+    repository.results.clear()
+    repository.completed_recoveries.clear()
+    event = PaymentEvent(
+        id="rzp_batch_label", customer_id="batch-label", customer_name="Batch label",
+        type=EventType.PAYMENT_FAILED, amount=101, failure_code="incorrect_otp", batch_id="buildathon-01",
+    )
+    repository.events.append(event)
+    repository.results.append(run_event(event, repository.policy))
+    monkeypatch.setattr(config, "admin_token", "operator-secret")
+
+    with TestClient(app) as client:
+        assert client.get("/batches/buildathon-01/summary").json()["total_cases"] == 1
+        review = client.get("/batches/buildathon-01/diagnosis-review").json()
+        assert review[0]["event_id"] == event.id
+        assert client.patch(
+            f"/events/{event.id}/diagnosis-label",
+            headers={"X-Admin-Token": "operator-secret"},
+            json={"correct_cause": "customer_abandoned_payment", "reviewer_notes": "Verified against Test Mode failure evidence"},
+        ).status_code == 200
+        summary = client.get("/batches/buildathon-01/summary").json()
+        assert summary["diagnosis_labelled_cases"] == 1
+
+    monkeypatch.setattr(config, "admin_token", None)
+
+
 def test_strategy_endpoint_is_read_only_and_returns_policy_bounded_options() -> None:
     repository.events.clear()
     repository.results.clear()

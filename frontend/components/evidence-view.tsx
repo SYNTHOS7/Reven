@@ -22,6 +22,8 @@ const money = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
 });
 
+const MIN_LABELLED_CASES_FOR_ACCURACY = 10;
+
 interface EvidenceViewProps {
   initialData: DashboardData;
   initialRecoverySummary: VerifiedRecoverySummary | null;
@@ -69,7 +71,7 @@ export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceVi
   const score = data.scorecard;
   const connected = data.source === "api";
   const escalatedCases = data.results.filter((result) => result.decision.action === "escalate_human").length;
-  const earlyAgreement = score.labeled_cases > 0 && score.labeled_cases < 10;
+  const hasEnoughLabelledData = score.labeled_cases >= MIN_LABELLED_CASES_FOR_ACCURACY;
 
   return (
     <main className="evidencePage">
@@ -153,12 +155,16 @@ export function EvidenceView({ initialData, initialRecoverySummary }: EvidenceVi
         {/* Diagnosis agreement */}
         <div className="kpiCard">
           <div className="kpiHeader">
-            <span className="kpiLabel">{earlyAgreement ? "EARLY DIAGNOSIS AGREEMENT" : "DIAGNOSIS AGREEMENT"}</span>
+            <span className="kpiLabel">DIAGNOSIS AGREEMENT</span>
             <HelpTooltip topic="diagnosis_confidence" />
           </div>
-          <strong className="kpiValue">{score.labeled_cases ? `${score.diagnosis_accuracy_pct}%` : "—"}</strong>
+          <strong className={hasEnoughLabelledData ? "kpiValue" : "kpiValue kpiValueMessage"}>
+            {hasEnoughLabelledData
+              ? `${score.diagnosis_accuracy_pct}%`
+              : `Not enough labelled data yet (n=${score.labeled_cases})`}
+          </strong>
           <div className="kpiFooter">
-            <span>{score.labeled_cases ? `${earlyAgreement ? "Early evidence" : "Measured"} · n=${score.labeled_cases} human-reviewed cases` : "No human-reviewed cases yet"}</span>
+            <span>{hasEnoughLabelledData ? `Measured from n=${score.labeled_cases} human-reviewed cases` : `Needs ${MIN_LABELLED_CASES_FOR_ACCURACY} human-reviewed labels before showing accuracy`}</span>
           </div>
         </div>
       </section>

@@ -595,6 +595,7 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .kpiCard:last-child { border-right: none; }
 .kpiCard.kpiCard-recovered { background: linear-gradient(160deg, rgba(57, 217, 138, 0.08), transparent 70%); }
 .kpiCard.kpiCard-lost { background: linear-gradient(160deg, rgba(201, 58, 58, 0.06), transparent 70%); }
+.kpiValueMessage { max-width: 230px; font-size: 16px; line-height: 1.3; }
 .kpiHeader { display: flex; justify-content: space-between; align-items: center; }
 .kpiLabel { font: 650 9px/1.2 var(--mono); color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
 .kpiIcon { color: var(--muted); }

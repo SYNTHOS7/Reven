@@ -13,6 +13,9 @@ alter table public.reven_events add column if not exists batch_id text;
 create index if not exists reven_events_batch_created_idx
   on public.reven_events(batch_id, created_at desc);
 
+-- Nullable: existing pre-field evidence remains valid.
+alter table public.reven_events add column if not exists raw_error_code text;
+
 create table if not exists public.pipeline_results (
   id text primary key,
   run_id text not null,

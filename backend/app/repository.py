@@ -144,7 +144,7 @@ class Repository:
         response = httpx.post(
             self._url("reven_events?on_conflict=id"),
             headers=self._headers("resolution=merge-duplicates,return=minimal"),
-            json={"id": event.id, "source": event.source, "source_event_id": event.source_event_id, "batch_id": event.batch_id, "payload": event.model_dump(mode="json")},
+            json={"id": event.id, "source": event.source, "source_event_id": event.source_event_id, "batch_id": event.batch_id, "raw_error_code": event.raw_error_code, "payload": event.model_dump(mode="json")},
             timeout=12,
         )
         response.raise_for_status()

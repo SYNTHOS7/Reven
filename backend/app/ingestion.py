@@ -29,6 +29,7 @@ def payment_event_from_razorpay(payment: dict) -> PaymentEvent:
         type=EventType.PAYMENT_FAILED,
         amount=float(payment.get("amount", 0)) / 100,
         failure_code=failure_code,
+        raw_error_code=payment.get("error_code"),
         occurred_at=created_at,
         retry_count=int(notes.get("reven_retry_count", 0) or 0),
         messages_sent_today=0,

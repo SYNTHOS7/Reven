@@ -45,6 +45,7 @@ def execute_diagnostic_tool(
     if name == "get_processor_context":
         context = {
             "failure_code": event.failure_code,
+            "raw_error_code": event.raw_error_code or "not supplied",
             "error_description": event.error_description or "not supplied",
             "error_source": event.error_source or "not supplied",
             "error_step": event.error_step or "not supplied",

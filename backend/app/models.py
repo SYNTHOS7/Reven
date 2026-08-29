@@ -40,6 +40,7 @@ class PaymentEvent(BaseModel):
     type: EventType
     amount: float = Field(ge=0)
     failure_code: str = "unknown"
+    raw_error_code: str | None = None
     occurred_at: datetime = Field(default_factory=utc_now)
     retry_count: int = 0
     messages_sent_today: int = 0

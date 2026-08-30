@@ -123,6 +123,9 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
     ? batchSummary.diagnosis_labelled_cases
     : (score.diagnosis_labelled_cases ?? score.labeled_cases);
   const diagnosisAccuracy = batchSummary?.total_cases ? batchSummary.diagnosis_accuracy_pct : score.diagnosis_accuracy_pct;
+  const diagnosisExcludedSafetyBlocks = batchSummary?.total_cases
+    ? batchSummary.diagnosis_excluded_safety_blocks
+    : (score.diagnosis_excluded_safety_blocks ?? 0);
   const hasEnoughLabelledData = diagnosisLabelledCases >= MIN_LABELLED_CASES_FOR_ACCURACY && diagnosisAccuracy !== null;
   const trustGateBlocks = batchSummary?.total_cases ? batchSummary.trust_gate_blocks : score.suspicious_refusals;
 
@@ -217,7 +220,7 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
               : `Not enough labelled data yet (n=${diagnosisLabelledCases})`}
           </strong>
           <div className="kpiFooter">
-            <span>{hasEnoughLabelledData ? `Measured from n=${diagnosisLabelledCases} human-reviewed causes` : `Needs ${MIN_LABELLED_CASES_FOR_ACCURACY} human-reviewed causes before showing accuracy`}</span>
+            <span>{hasEnoughLabelledData ? `Measured from n=${diagnosisLabelledCases} human-reviewed causes${diagnosisExcludedSafetyBlocks ? ` · ${diagnosisExcludedSafetyBlocks} Trust Gate safety block${diagnosisExcludedSafetyBlocks === 1 ? "" : "s"} excluded` : ""}` : `Needs ${MIN_LABELLED_CASES_FOR_ACCURACY} human-reviewed causes before showing accuracy`}</span>
           </div>
         </div>
       </section>

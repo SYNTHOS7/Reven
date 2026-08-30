@@ -51,6 +51,7 @@ def test_batch_summary_scopes_new_evidence_without_hiding_legacy_recovery() -> N
         amount=101, failure_code="incorrect_otp", batch_id="buildathon-01",
     )
     recovered.expected_cause = run_event(recovered, repo.policy).diagnosis.cause
+    blocked.expected_cause = "temporary_bank_failure"
     repo.events = [legacy, blocked, escalated, recovered]
     repo.save_results([run_event(event, repo.policy) for event in repo.events])
     repo.record_recovery("legacy-case", "plink-legacy", 100)
@@ -64,6 +65,7 @@ def test_batch_summary_scopes_new_evidence_without_hiding_legacy_recovery() -> N
     assert summary.verified_recovery_count == 1
     assert summary.verified_recovery_amount == 101
     assert summary.diagnosis_labelled_cases == 1
+    assert summary.diagnosis_excluded_safety_blocks == 1
     assert summary.diagnosis_accuracy_pct == 100
     assert repo.verified_recovery_summary() == (201, 2)
     assert repo.batch_summary("missing").total_cases == 0

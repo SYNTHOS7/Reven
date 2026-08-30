@@ -146,6 +146,7 @@ class ScorecardRun(BaseModel):
     random_seed: int = 2408
     labeled_cases: int = 0
     diagnosis_labelled_cases: int = 0
+    diagnosis_excluded_safety_blocks: int = 0
     action_labelled_cases: int = 0
     data_source: str = "razorpay_test"
 
@@ -439,6 +440,7 @@ class BatchSummary(BaseModel):
     verified_recovery_count: int = 0
     verified_recovery_amount: float = 0
     diagnosis_labelled_cases: int = 0
+    diagnosis_excluded_safety_blocks: int = 0
     diagnosis_accuracy_pct: float | None = None
     source: str = "razorpay_test"
     disclaimer: str = (

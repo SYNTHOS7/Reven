@@ -237,7 +237,8 @@ class Repository:
         latest = self._latest_results_by_event()
         results = [latest[event.id] for event in events if event.id in latest]
         labelled = [event for event in events if event.expected_cause is not None and event.id in latest]
-        correct = sum(latest[event.id].diagnosis.cause == event.expected_cause for event in labelled)
+        scored_labelled = [event for event in labelled if latest[event.id].trust_gate.status != "suspicious"]
+        correct = sum(latest[event.id].diagnosis.cause == event.expected_cause for event in scored_labelled)
         verified_event_ids = [event.id for event in events if event.id in self.completed_recoveries]
         return BatchSummary(
             batch_id=batch_id,
@@ -246,8 +247,9 @@ class Repository:
             human_review_escalations=sum(result.decision.action == Action.ESCALATE_HUMAN for result in results),
             verified_recovery_count=len(verified_event_ids),
             verified_recovery_amount=sum(self.completed_recoveries[event_id] for event_id in verified_event_ids),
-            diagnosis_labelled_cases=len(labelled),
-            diagnosis_accuracy_pct=round(correct / len(labelled) * 100, 1) if labelled else None,
+            diagnosis_labelled_cases=len(scored_labelled),
+            diagnosis_excluded_safety_blocks=len(labelled) - len(scored_labelled),
+            diagnosis_accuracy_pct=round(correct / len(scored_labelled) * 100, 1) if scored_labelled else None,
         )
 
     def batch_diagnosis_review(self, batch_id: str) -> list[BatchDiagnosisReviewItem]:

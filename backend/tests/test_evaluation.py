@@ -43,3 +43,24 @@ def test_diagnosis_accuracy_uses_cause_only_labels_without_requiring_action_labe
     assert response.scorecard.diagnosis_labelled_cases == 2
     assert response.scorecard.action_labelled_cases == 1
     assert response.scorecard.diagnosis_accuracy_pct == 50.0
+
+
+def test_diagnosis_accuracy_excludes_human_labelled_trust_gate_blocks() -> None:
+    repo = Repository()
+    blocked = PaymentEvent(
+        id="labelled-safety-block",
+        customer_id="repeat-customer",
+        customer_name="Repeat customer",
+        type=EventType.PAYMENT_FAILED,
+        amount=20,
+        failure_code="payment_failed",
+        attempts_in_window=6,
+        expected_cause="temporary_bank_failure",
+    )
+    repo.events = [blocked]
+
+    response = run_evaluation(repo)
+
+    assert response.scorecard.diagnosis_labelled_cases == 0
+    assert response.scorecard.diagnosis_excluded_safety_blocks == 1
+    assert response.scorecard.diagnosis_accuracy_pct == 0

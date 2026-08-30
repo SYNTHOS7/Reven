@@ -41,7 +41,11 @@ def test_signed_event_path_ingests_and_evaluates_payment_failure() -> None:
         assert events["items"][0]["source"] == "razorpay_test"
 
 
-def test_payment_link_requires_real_test_credentials() -> None:
+def test_payment_link_requires_real_test_credentials(monkeypatch) -> None:
+    # Local developer .env files may contain Test Mode credentials. Force the
+    # unavailable-credentials path so this test can never create an external link.
+    monkeypatch.setattr(config, "razorpay_key_id", None)
+    monkeypatch.setattr(config, "razorpay_key_secret", None)
     with TestClient(app) as client:
         response = client.post("/recovery/payment-link", json={"event_id": "rzp_pay_api_test"})
         assert response.status_code in {409, 503}

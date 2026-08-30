@@ -19,7 +19,12 @@ def run_evaluation(repo: Repository) -> RunResponse:
     event_lookup = {event.id: event for event in repo.events}
     diagnosis_labelled_events = [event for event in repo.events if event.expected_cause is not None]
     action_labelled_events = [event for event in repo.events if event.expected_action is not None]
-    diagnosis_labelled_ids = {event.id for event in diagnosis_labelled_events}
+    latest_by_event = {result.event_id: result for result in results}
+    diagnosis_scored_events = [
+        event for event in diagnosis_labelled_events
+        if latest_by_event[event.id].trust_gate.status != "suspicious"
+    ]
+    diagnosis_labelled_ids = {event.id for event in diagnosis_scored_events}
     action_labelled_ids = {event.id for event in action_labelled_events}
     for result in results:
         event = event_lookup[result.event_id]
@@ -47,7 +52,8 @@ def run_evaluation(repo: Repository) -> RunResponse:
             )
 
     total = len(results)
-    diagnosis_labelled_total = len(diagnosis_labelled_events)
+    diagnosis_labelled_total = len(diagnosis_scored_events)
+    diagnosis_excluded_safety_blocks = len(diagnosis_labelled_events) - diagnosis_labelled_total
     action_labelled_total = len(action_labelled_events)
     policy_violations = sum(
         1
@@ -69,6 +75,7 @@ def run_evaluation(repo: Repository) -> RunResponse:
         policy_snapshot=repo.policy.model_copy(deep=True),
         labeled_cases=diagnosis_labelled_total,
         diagnosis_labelled_cases=diagnosis_labelled_total,
+        diagnosis_excluded_safety_blocks=diagnosis_excluded_safety_blocks,
         action_labelled_cases=action_labelled_total,
     )
     repo.save_results(results)

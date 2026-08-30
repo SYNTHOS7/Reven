@@ -253,6 +253,7 @@ export interface Scorecard {
   random_seed: number;
   labeled_cases: number;
   diagnosis_labelled_cases?: number;
+  diagnosis_excluded_safety_blocks?: number;
   action_labelled_cases?: number;
   data_source: string;
 }
@@ -336,6 +337,7 @@ export interface BatchSummary {
   verified_recovery_count: number;
   verified_recovery_amount: number;
   diagnosis_labelled_cases: number;
+  diagnosis_excluded_safety_blocks: number;
   diagnosis_accuracy_pct: number | null;
   source: string;
   disclaimer: string;

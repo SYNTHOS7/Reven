@@ -17,6 +17,7 @@ RULES: dict[str, tuple[str, str]] = {
     "gateway_technical_error": ("temporary_bank_failure", "The payment gateway reported a technical failure"),
     "server_error": ("temporary_bank_failure", "The processor reported a transient server failure"),
     "card_not_supported": ("unsupported_payment_method", "Processor reported the card or payment method is unsupported"),
+    "international_transaction_not_allowed": ("unsupported_payment_method", "Merchant accepts domestic cards only"),
     "payment_method_not_supported": ("unsupported_payment_method", "Processor reported the payment method is unsupported"),
     "do_not_honor": ("issuer_decline", "Issuer declined the payment without a recoverable reason"),
     "payment_failed": ("technical_error", "Processor reported a technical payment failure"),

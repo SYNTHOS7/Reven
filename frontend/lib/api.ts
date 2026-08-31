@@ -19,6 +19,7 @@ import type {
   BatchSummary,
   BatchDiagnosisReviewItem,
   AdvisoryInvestigationResponse,
+  BatchAiComparisonResponse,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -312,6 +313,16 @@ export async function runAdvisoryInvestigation(eventId: string): Promise<Advisor
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     throw new Error(data?.detail ?? "AI investigation could not run");
+  }
+  return response.json();
+}
+
+export async function runBatchAiComparison(batchId: string): Promise<BatchAiComparisonResponse> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/batches/${encodeURIComponent(batchId)}/ai-comparison`, { method: "POST" });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "AI comparison could not run");
   }
   return response.json();
 }

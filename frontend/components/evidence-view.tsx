@@ -4,11 +4,12 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
+  BrainCircuit,
   RefreshCcw,
   Search,
 } from "lucide-react";
-import { loadBatchDiagnosisReview, loadBatchSummary, loadVerifiedRecoverySummary, runEvaluation, saveDiagnosisLabel } from "@/lib/api";
-import type { BatchDiagnosisReviewItem, BatchSummary, DashboardData, VerifiedRecoverySummary } from "@/lib/types";
+import { loadBatchDiagnosisReview, loadBatchSummary, loadVerifiedRecoverySummary, runBatchAiComparison, runEvaluation, saveDiagnosisLabel } from "@/lib/api";
+import type { BatchAiComparisonResponse, BatchDiagnosisReviewItem, BatchSummary, DashboardData, VerifiedRecoverySummary } from "@/lib/types";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
 import { StatusBadge } from "./status-badge";
@@ -48,6 +49,8 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
   const [batchSummary, setBatchSummary] = useState<BatchSummary | null>(initialBatchSummary);
   const [diagnosisReview, setDiagnosisReview] = useState<BatchDiagnosisReviewItem[]>(initialDiagnosisReview);
   const [running, setRunning] = useState(false);
+  const [runningComparison, setRunningComparison] = useState(false);
+  const [aiComparison, setAiComparison] = useState<BatchAiComparisonResponse | null>(null);
   const [query, setQuery] = useState("");
   const [operatorToken, setOperatorToken] = useState("");
   const [labelDrafts, setLabelDrafts] = useState<Record<string, string>>({});
@@ -113,6 +116,20 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
       setNotice({ type: "error", text: error instanceof Error ? error.message : "Could not save the diagnosis label." });
     } finally {
       setSavingLabel(null);
+    }
+  }
+
+  async function handleRunAiComparison() {
+    setRunningComparison(true);
+    setNotice(null);
+    try {
+      const comparison = await runBatchAiComparison(batchId);
+      setAiComparison(comparison);
+      setNotice({ type: "success", text: `Advisory AI comparison completed for ${comparison.model_calls_completed}/${comparison.eligible_human_reviewed_cases} reviewed Test Mode cases.` });
+    } catch (error) {
+      setNotice({ type: "error", text: error instanceof Error ? error.message : "AI comparison could not run." });
+    } finally {
+      setRunningComparison(false);
     }
   }
 
@@ -242,6 +259,43 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
           <div><dt>Verified Test ₹</dt><dd>{money.format(batchSummary?.verified_recovery_amount ?? 0)}</dd></div>
         </dl>
         <small>Submission scope: {batchId}. The cumulative all-Test-Mode total stays above; this batch does not claim production merchant performance.</small>
+      </section>
+
+      <section className="aiComparison" aria-labelledby="ai-comparison-title">
+        <div className="aiComparisonHeader">
+          <div>
+            <span className="utilityLabel">EVALUATION · RULES VS ADVISORY AI</span>
+            <h2 id="ai-comparison-title">Does the model add diagnostic signal?</h2>
+            <p>Compare the stored diagnosis and a read-only Gemini investigation against the same human-reviewed Test Mode labels. This never changes a case or counts as production accuracy.</p>
+          </div>
+          <button type="button" className="button buttonPrimary buttonSmall" disabled={runningComparison || !connected} onClick={handleRunAiComparison}>
+            <BrainCircuit size={14} /> {runningComparison ? "Comparing…" : "Run AI comparison"}
+          </button>
+        </div>
+        {aiComparison && (
+          <>
+            <div className="aiComparisonMetrics">
+              <div><span>Human-reviewed cases</span><strong>{aiComparison.eligible_human_reviewed_cases}</strong></div>
+              <div><span>Stored-rule agreement</span><strong>{aiComparison.rule_agreement_pct === null ? "—" : `${aiComparison.rule_agreement_pct}%`}</strong></div>
+              <div><span>Advisory-AI agreement</span><strong>{aiComparison.advisory_ai_agreement_pct === null ? "Unavailable" : `${aiComparison.advisory_ai_agreement_pct}%`}</strong></div>
+              <div><span>Model calls completed</span><strong>{aiComparison.model_calls_completed}/{aiComparison.eligible_human_reviewed_cases}</strong></div>
+            </div>
+            <div className="tableWrap aiComparisonTable">
+              <table>
+                <thead><tr><th>Case</th><th>Human-reviewed cause</th><th>Stored rule</th><th>Advisory AI</th></tr></thead>
+                <tbody>{aiComparison.comparisons.map((item) => (
+                  <tr key={item.event_id}>
+                    <td><Link href={`/case/${item.event_id}`} className="fontMono text-primary fontMedium">{item.event_id}</Link></td>
+                    <td>{item.human_label.replaceAll("_", " ")}</td>
+                    <td>{item.stored_diagnosis.cause.replaceAll("_", " ")}<small className="block text-text-muted text-[10px]">{item.stored_diagnosis.method}</small></td>
+                    <td>{item.advisory_diagnosis ? <><span className="fontMedium">{item.advisory_diagnosis.cause.replaceAll("_", " ")}</span><small className="block text-text-muted text-[10px]">{formatConfidence(item.advisory_diagnosis.confidence)} · {item.advisory_diagnosis.tool_calls.join(" · ")}</small></> : <span className="warningText">Model unavailable</span>}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+            <small className="aiComparisonDisclaimer">{aiComparison.disclaimer}</small>
+          </>
+        )}
       </section>
 
       {diagnosisReview.length > 0 && (

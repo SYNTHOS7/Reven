@@ -474,6 +474,30 @@ class BatchDiagnosisReviewItem(BaseModel):
     reviewer_note: str | None = None
 
 
+class AiComparisonItem(BaseModel):
+    event_id: str
+    human_label: str
+    stored_diagnosis: DiagnosisResult
+    advisory_diagnosis: DiagnosisResult | None = None
+    status: Literal["completed", "unavailable"]
+
+
+class BatchAiComparisonResponse(BaseModel):
+    """A transient, advisory-only comparison across human-reviewed Test Mode cases."""
+
+    batch_id: str
+    eligible_human_reviewed_cases: int
+    model_calls_completed: int
+    model_calls_unavailable: int
+    rule_agreement_pct: float | None = None
+    advisory_ai_agreement_pct: float | None = None
+    comparisons: list[AiComparisonItem]
+    disclaimer: str = (
+        "Advisory comparison only. Each model call uses read-only evidence and does not modify the stored diagnosis, "
+        "Trust Gate, policy decision, Payment Link state, or recovery metrics. Results are not production accuracy claims."
+    )
+
+
 class WebhookResponse(BaseModel):
     status: str
     event_id: str | None = None

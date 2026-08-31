@@ -160,6 +160,37 @@ def test_advisory_ai_investigation_never_mutates_pipeline_state(monkeypatch) -> 
     assert repository.results[0].decision == stored.decision
 
 
+def test_batch_ai_comparison_is_advisory_and_reports_completed_calls(monkeypatch) -> None:
+    repository.events.clear()
+    repository.results.clear()
+    for index, expected in enumerate(["customer_abandoned_payment", "temporary_bank_failure"], start=1):
+        event = PaymentEvent(
+            id=f"rzp_batch_ai_{index}", customer_id=f"batch-ai-{index}", customer_name="Batch AI",
+            type=EventType.PAYMENT_FAILED, amount=100, failure_code="customer_cancelled", batch_id="buildathon-01",
+            expected_cause=expected,
+        )
+        repository.events.append(event)
+        repository.results.append(run_event(event, repository.policy))
+
+    monkeypatch.setattr(
+        "app.main.run_advisory_investigation",
+        lambda event, *_args, **_kwargs: DiagnosisResult(
+            cause=event.expected_cause or "unknown", method="llm", confidence=0.7,
+            reason="Advisory only", tool_calls=["Read processor context"],
+        ),
+    )
+    with TestClient(app) as client:
+        response = client.post("/batches/buildathon-01/ai-comparison")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["eligible_human_reviewed_cases"] == 2
+    assert payload["model_calls_completed"] == 2
+    assert payload["advisory_ai_agreement_pct"] == 100
+    assert all(item["status"] == "completed" for item in payload["comparisons"])
+    assert repository.results[0].diagnosis.method == "rule"
+
+
 def test_policy_impact_endpoint_is_a_non_mutating_dry_run() -> None:
     repository.events.clear()
     repository.results.clear()

@@ -373,6 +373,23 @@ export interface AdvisoryInvestigationResponse {
   disclaimer: string;
 }
 
+export interface BatchAiComparisonResponse {
+  batch_id: string;
+  eligible_human_reviewed_cases: number;
+  model_calls_completed: number;
+  model_calls_unavailable: number;
+  rule_agreement_pct: number | null;
+  advisory_ai_agreement_pct: number | null;
+  comparisons: Array<{
+    event_id: string;
+    human_label: string;
+    stored_diagnosis: AdvisoryInvestigationResponse["diagnosis"];
+    advisory_diagnosis: AdvisoryInvestigationResponse["diagnosis"] | null;
+    status: "completed" | "unavailable";
+  }>;
+  disclaimer: string;
+}
+
 // ---------------- CSV & Demo Data Types ----------------
 export type TransactionStatus = "successful" | "failed" | "abandoned" | "recovered";
 

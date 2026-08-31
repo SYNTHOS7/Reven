@@ -14,6 +14,8 @@ from app.ingestion import payment_event_from_razorpay
 from app.models import (
     Action,
     AdvisoryInvestigationResponse,
+    AiComparisonItem,
+    BatchAiComparisonResponse,
     BatchDiagnosisReviewItem,
     BatchSummary,
     DiagnosisLabelUpdate,
@@ -331,6 +333,63 @@ def get_batch_summary(batch_id: str):
 @app.get("/batches/{batch_id}/diagnosis-review", response_model=list[BatchDiagnosisReviewItem])
 def get_batch_diagnosis_review(batch_id: str):
     return repository.batch_diagnosis_review(batch_id)
+
+
+@app.post("/batches/{batch_id}/ai-comparison", response_model=BatchAiComparisonResponse)
+def compare_advisory_ai_to_reviewed_labels(batch_id: str):
+    """Compare advisory Gemini output with stored rules on reviewed Test Mode evidence.
+
+    The result is intentionally transient. It does not overwrite the stored
+    pipeline diagnosis or turn an advisory model call into financial authority.
+    """
+    latest = repository._latest_results_by_event()
+    eligible = [
+        event for event in repository.events
+        if event.batch_id == batch_id
+        and event.expected_cause is not None
+        and event.id in latest
+        and latest[event.id].trust_gate.status != "suspicious"
+    ][:10]
+    comparisons: list[AiComparisonItem] = []
+    completed = 0
+    advisory_matches = 0
+    rule_matches = 0
+    for event in eligible:
+        stored = latest[event.id]
+        if stored.diagnosis.cause == event.expected_cause:
+            rule_matches += 1
+        diagnosis = run_advisory_investigation(
+            event,
+            config,
+            retrieve_historical_diagnosis_examples(event, repository.events),
+            repository.policy,
+        )
+        if diagnosis:
+            completed += 1
+            advisory_matches += diagnosis.cause == event.expected_cause
+            comparisons.append(AiComparisonItem(
+                event_id=event.id,
+                human_label=event.expected_cause,
+                stored_diagnosis=stored.diagnosis,
+                advisory_diagnosis=diagnosis,
+                status="completed",
+            ))
+        else:
+            comparisons.append(AiComparisonItem(
+                event_id=event.id,
+                human_label=event.expected_cause,
+                stored_diagnosis=stored.diagnosis,
+                status="unavailable",
+            ))
+    return BatchAiComparisonResponse(
+        batch_id=batch_id,
+        eligible_human_reviewed_cases=len(eligible),
+        model_calls_completed=completed,
+        model_calls_unavailable=len(eligible) - completed,
+        rule_agreement_pct=round(rule_matches / len(eligible) * 100, 1) if eligible else None,
+        advisory_ai_agreement_pct=round(advisory_matches / completed * 100, 1) if completed else None,
+        comparisons=comparisons,
+    )
 
 
 @app.get("/settings")

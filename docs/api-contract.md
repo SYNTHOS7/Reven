@@ -116,6 +116,14 @@ Gate, policy decision, Payment Link state, customer communication, or recovery
 metrics. A `503` response means the optional model service is unavailable; the
 stored deterministic case result remains authoritative.
 
+### POST /batches/:batch_id/ai-comparison
+
+Runs up to ten human-reviewed, non-Trust-Gate-blocked Razorpay Test Mode cases
+through the same advisory-only Gemini investigation. It returns the stored-rule
+agreement and advisory-model agreement separately, including every compared
+label and any unavailable model calls. The comparison is transient and cannot
+change pipeline, policy, payment, or recovery state.
+
 ### POST /agents/merchant-intelligence/brief
 Returns a concise merchant briefing from aggregate, labelled metrics only.
 The request contains a declared data source, aggregate revenue metrics, priority

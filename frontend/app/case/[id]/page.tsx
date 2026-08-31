@@ -203,19 +203,26 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
           </div>
         )}
 
-        {/* Detailed Decision Trace */}
         <section className="decisionTraceIntro" aria-labelledby="decision-trace-title">
           <div>
-            <span className="utilityLabel">AUDITABLE DECISION TRACE</span>
-            <h2 id="decision-trace-title">Evidence behind the decision</h2>
+            <span className="utilityLabel">JUDGE VIEW · DECISION TRACE</span>
+            <h2 id="decision-trace-title">What happened and what Reven allowed</h2>
           </div>
           <p>
-            AI diagnoses ambiguity. Trust checks and policy rules decide whether an action is permitted.
-            No customer contact or revenue claim is made without an auditable record.
+            Start here: provider evidence, a safety check, a bounded decision, and a verified outcome. The full engineering audit is available below.
           </p>
         </section>
 
         <RecoveryDecisionHarness eventId={result.event_id} result={result} />
+
+        <details className="technicalAudit" aria-label="Technical audit evidence">
+          <summary>
+            <span>
+              <small>TECHNICAL EVIDENCE</small>
+              <strong>Open the full audit trail, AI investigation, and policy replay</strong>
+            </span>
+            <span className="technicalAuditHint">For technical review</span>
+          </summary>
 
         <section className="auditTrail" aria-label="Recovery decision trace">
           {steps.map((step, index) => (
@@ -273,6 +280,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
 
         {/* Policy Replay / Test a Rule Safely */}
         <PolicyReplay eventId={result.event_id} initialPolicy={activePolicy} pipelineResult={result} />
+        </details>
       </main>
     </Shell>
   );

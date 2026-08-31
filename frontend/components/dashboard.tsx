@@ -93,6 +93,9 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
           <p className="welcomeSubtitle">
             Reven sits alongside Razorpay after a signed failure—not in the payment path—to investigate, apply policy, and prove outcomes.
           </p>
+          <span className={`dashboardDataScope ${activeDataSource === "demo" ? "isDemo" : "isLive"}`}>
+            {activeDataSource === "demo" ? "SIMULATED SCENARIO — all amounts and cases below are demo data" : "RAZORPAY TEST MODE — signed webhook evidence"}
+          </span>
         </div>
 
         <div className="welcomeActions">
@@ -128,7 +131,7 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
             {verifiedRecovery === null ? "—" : money.format(verifiedRecovery)}
           </strong>
           <p className="kpiExplainer">
-            Counted only after a signed Razorpay paid webhook.
+            {activeDataSource === "demo" ? "Simulated attributed recovery in the demo scenario." : "Counted only after a signed Razorpay paid webhook."}
           </p>
         </div>
         <div className="harnessPromise">

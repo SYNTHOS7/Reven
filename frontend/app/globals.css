@@ -207,6 +207,15 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .decisionTraceIntro h2 { margin: 9px 0 0; font: 560 clamp(24px, 2.5vw, 34px)/1 var(--mono); letter-spacing: -.05em; }
 .decisionTraceIntro p { margin: 0; max-width: 620px; color: var(--muted); font-size: 12px; line-height: 1.65; }
 .decisionTraceIntro p strong { color: var(--paper); font-weight: 600; }
+.technicalAudit { margin: 22px 36px 0; border: 1px solid var(--grid); background: rgba(255,255,255,.012); }
+.technicalAudit summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 22px; cursor: pointer; list-style: none; }
+.technicalAudit summary::-webkit-details-marker { display: none; }
+.technicalAudit summary > span:first-child { display: grid; gap: 6px; }
+.technicalAudit summary small { color: var(--muted); font: 650 9px/1 var(--mono); letter-spacing: .1em; }
+.technicalAudit summary strong { color: var(--paper); font: 550 13px/1.35 var(--mono); }
+.technicalAuditHint { color: var(--recovery); font: 600 9px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.technicalAudit[open] summary { border-bottom: 1px solid var(--grid); background: rgba(57,217,138,.035); }
+.technicalAudit .auditTrail { margin-inline: 0; border-inline: 0; }
 .auditTrail { margin: 0 36px; border-inline: 1px solid var(--grid); }
 .auditStep { min-height: 145px; display: grid; grid-template-columns: 90px 260px 1fr; border-bottom: 1px solid var(--grid); }
 .stepIndex, .stepTitle, .stepEvidence { padding: 25px; border-right: 1px solid var(--grid); }
@@ -359,6 +368,8 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
   .caseHeader { padding-inline: 20px; align-items: flex-start; flex-direction: column; }
   .caseDecision { justify-items: start; }
   .decisionTraceIntro { margin-inline: 18px; grid-template-columns: 1fr; gap: 20px; }
+  .technicalAudit { margin-inline: 18px; }
+  .technicalAudit summary { align-items: flex-start; flex-direction: column; padding: 16px; }
   .auditTrail { margin-inline: 18px; }
   .auditStep { grid-template-columns: 58px 1fr; }
   .stepTitle { border-right: 0; }
@@ -1756,6 +1767,18 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
   max-width: 600px;
   line-height: 1.5;
 }
+
+.dashboardDataScope {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 12px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-subtle);
+  font: 700 9px/1.35 var(--mono);
+  letter-spacing: .07em;
+}
+.dashboardDataScope.isDemo { color: var(--warning); border-color: rgba(244, 183, 64, .35); background: rgba(244, 183, 64, .06); }
+.dashboardDataScope.isLive { color: var(--primary); border-color: rgba(0, 229, 153, .3); background: rgba(0, 229, 153, .05); }
 
 .guidedDemoBtn {
   display: inline-flex;

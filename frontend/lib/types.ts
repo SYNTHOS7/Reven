@@ -373,6 +373,20 @@ export interface AdvisoryInvestigationResponse {
   disclaimer: string;
 }
 
+export interface ProviderPaymentContextResponse {
+  event_id: string;
+  payment_id: string;
+  order_id: string | null;
+  status: string | null;
+  method: string | null;
+  error_reason: string | null;
+  error_code: string | null;
+  error_description: string | null;
+  bank: string | null;
+  card_network: string | null;
+  disclaimer: string;
+}
+
 export interface BatchAiComparisonResponse {
   batch_id: string;
   eligible_human_reviewed_cases: number;

@@ -15,6 +15,7 @@ import { RecoveryStrategyPanel } from "@/components/recovery-strategy-panel";
 import { RecoveryTimeline } from "@/components/recovery-timeline";
 import { EvidenceAssurance } from "@/components/evidence-assurance";
 import { AdvisoryAiInvestigation } from "@/components/advisory-ai-investigation";
+import { RecoveryDecisionHarness } from "@/components/recovery-decision-harness";
 import { loadCaseDetails, loadPolicy, loadRecoveryStrategies, loadRecoveryTimeline, loadEvidenceQuality, loadEvidenceReceipt } from "@/lib/api";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
@@ -213,6 +214,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             No customer contact or revenue claim is made without an auditable record.
           </p>
         </section>
+
+        <RecoveryDecisionHarness eventId={result.event_id} result={result} />
 
         <section className="auditTrail" aria-label="Recovery decision trace">
           {steps.map((step, index) => (

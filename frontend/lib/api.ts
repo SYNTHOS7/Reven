@@ -20,6 +20,7 @@ import type {
   BatchDiagnosisReviewItem,
   AdvisoryInvestigationResponse,
   BatchAiComparisonResponse,
+  ProviderPaymentContextResponse,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -323,6 +324,16 @@ export async function runBatchAiComparison(batchId: string): Promise<BatchAiComp
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     throw new Error(data?.detail ?? "AI comparison could not run");
+  }
+  return response.json();
+}
+
+export async function loadProviderPaymentContext(eventId: string): Promise<ProviderPaymentContextResponse> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/events/${eventId}/provider-context`, { cache: "no-store" });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "Razorpay provider context is unavailable");
   }
   return response.json();
 }

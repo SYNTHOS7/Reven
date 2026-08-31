@@ -51,6 +51,34 @@ def test_payment_link_requires_real_test_credentials(monkeypatch) -> None:
         assert response.status_code in {409, 503}
 
 
+def test_provider_context_is_read_only_and_redacts_customer_fields(monkeypatch) -> None:
+    repository.events.clear()
+    event = PaymentEvent(
+        id="rzp_provider_context", customer_id="provider-customer", customer_name="Provider context",
+        type=EventType.PAYMENT_FAILED, amount=100, failure_code="payment_failed", source_event_id="pay_provider_context",
+    )
+    repository.events.append(event)
+
+    async def payment_snapshot(_payment_id: str):
+        return {
+            "id": "pay_provider_context", "order_id": "order_test_context", "status": "failed", "method": "card",
+            "error_reason": "payment_failed", "error_code": "GATEWAY_ERROR", "error_description": "Gateway failure",
+            "contact": "+919999999999", "email": "private@example.com", "card": {"network": "Visa", "last4": "1111"},
+        }
+
+    monkeypatch.setattr(razorpay, "fetch_payment", payment_snapshot)
+    with TestClient(app) as client:
+        response = client.get(f"/events/{event.id}/provider-context")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["order_id"] == "order_test_context"
+    assert payload["card_network"] == "Visa"
+    assert "contact" not in payload
+    assert "email" not in payload
+    assert "last4" not in payload
+
+
 def test_operator_token_protects_policy_and_human_labels(monkeypatch) -> None:
     repository.events.clear()
     original_policy = repository.policy.model_copy(deep=True)

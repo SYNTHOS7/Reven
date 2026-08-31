@@ -24,6 +24,7 @@ from app.models import (
     PaymentLinkRequest,
     PolicyReplayRequest,
     PolicyReplayResponse,
+    ProviderPaymentContextResponse,
     PolicyImpactResponse,
     EvidenceQualityResponse,
     EvidenceReceiptResponse,
@@ -222,6 +223,33 @@ def ai_investigation(event_id: str):
             "Advisory-only AI investigation. It used server-executed, read-only evidence tools and did not "
             "change the stored diagnosis, Trust Gate result, policy decision, Payment Link state, or recovery metrics."
         ),
+    )
+
+
+@app.get("/events/{event_id}/provider-context", response_model=ProviderPaymentContextResponse)
+async def provider_payment_context(event_id: str):
+    """Fetch redacted Razorpay Test Mode context without changing stored evidence."""
+    event = next((item for item in repository.events if item.id == event_id), None)
+    if not event or not event.source_event_id:
+        raise HTTPException(status_code=404, detail="Razorpay payment reference is not available for this case")
+    try:
+        payment = await razorpay.fetch_payment(event.source_event_id)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except httpx.HTTPError:
+        raise HTTPException(status_code=503, detail="Razorpay Test Mode context is temporarily unavailable")
+    card = payment.get("card") if isinstance(payment.get("card"), dict) else {}
+    return ProviderPaymentContextResponse(
+        event_id=event.id,
+        payment_id=str(payment.get("id") or event.source_event_id),
+        order_id=str(payment["order_id"]) if payment.get("order_id") else None,
+        status=payment.get("status"),
+        method=payment.get("method"),
+        error_reason=payment.get("error_reason"),
+        error_code=payment.get("error_code"),
+        error_description=payment.get("error_description"),
+        bank=payment.get("bank"),
+        card_network=card.get("network"),
     )
 
 

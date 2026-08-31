@@ -68,6 +68,17 @@ class RazorpayClient:
             response.raise_for_status()
             return response.json()
 
+    async def fetch_payment(self, payment_id: str) -> dict:
+        """Read one Test Mode payment for operator evidence enrichment only."""
+        self._require_test_mode()
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(
+                f"https://api.razorpay.com/v1/payments/{payment_id}",
+                auth=(self.config.razorpay_key_id or "", self.config.razorpay_key_secret or ""),
+            )
+            response.raise_for_status()
+            return response.json()
+
     def verify_webhook(self, body: bytes, signature: str | None) -> bool:
         secret = self.config.razorpay_webhook_secret
         if not secret:

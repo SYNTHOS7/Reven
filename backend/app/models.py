@@ -103,6 +103,25 @@ class AdvisoryInvestigationResponse(BaseModel):
     disclaimer: str
 
 
+class ProviderPaymentContextResponse(BaseModel):
+    """Redacted, read-only context fetched from Razorpay's Payments API."""
+
+    event_id: str
+    payment_id: str
+    order_id: str | None = None
+    status: str | None = None
+    method: str | None = None
+    error_reason: str | None = None
+    error_code: str | None = None
+    error_description: str | None = None
+    bank: str | None = None
+    card_network: str | None = None
+    disclaimer: str = (
+        "Read-only Razorpay Test Mode payment context. Customer contact, email, card number, and full instrument details are never returned. "
+        "This snapshot does not modify recovery state."
+    )
+
+
 class DecisionResult(BaseModel):
     action: Action
     reason: str

@@ -148,6 +148,9 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
     ? Math.round((diagnosisAccuracy / 100) * diagnosisLabelledCases)
     : null;
   const trustGateBlocks = batchSummary?.total_cases ? batchSummary.trust_gate_blocks : score.suspicious_refusals;
+  const aiComparisonComplete = aiComparison !== null
+    && aiComparison.eligible_human_reviewed_cases > 0
+    && aiComparison.model_calls_completed === aiComparison.eligible_human_reviewed_cases;
 
   return (
     <main className="evidencePage">
@@ -277,7 +280,7 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
             <div className="aiComparisonMetrics">
               <div><span>Human-reviewed cases</span><strong>{aiComparison.eligible_human_reviewed_cases}</strong></div>
               <div><span>Stored-rule agreement</span><strong>{aiComparison.rule_agreement_pct === null ? "—" : `${aiComparison.rule_agreement_pct}%`}</strong></div>
-              <div><span>Advisory-AI agreement</span><strong>{aiComparison.advisory_ai_agreement_pct === null ? "Unavailable" : `${aiComparison.advisory_ai_agreement_pct}%`}</strong></div>
+              <div><span>Advisory-AI agreement</span><strong>{aiComparisonComplete && aiComparison.advisory_ai_agreement_pct !== null ? `${aiComparison.advisory_ai_agreement_pct}%` : "Not evaluated"}</strong></div>
               <div><span>Model calls completed</span><strong>{aiComparison.model_calls_completed}/{aiComparison.eligible_human_reviewed_cases}</strong></div>
             </div>
             <div className="tableWrap aiComparisonTable">
@@ -293,7 +296,7 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
                 ))}</tbody>
               </table>
             </div>
-            <small className="aiComparisonDisclaimer">{aiComparison.disclaimer}</small>
+            <small className="aiComparisonDisclaimer">{aiComparisonComplete ? aiComparison.disclaimer : `Incomplete model run: ${aiComparison.model_calls_completed}/${aiComparison.eligible_human_reviewed_cases} calls completed. No AI-agreement conclusion is shown. ${aiComparison.disclaimer}`}</small>
           </>
         )}
       </section>

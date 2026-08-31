@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -6,6 +7,9 @@ from pydantic import BaseModel, Field
 from app.config import AppConfig
 from app.diagnostic_tools import execute_diagnostic_tool, tool_declarations
 from app.models import DiagnosisResult, PaymentEvent, PolicySettings
+
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiDiagnosis(BaseModel):
@@ -84,18 +88,6 @@ def diagnose_ambiguous_with_gemini(
         return None
 
 
-def run_advisory_investigation(
-    event: PaymentEvent,
-    config: AppConfig,
-    historical_examples: list[dict] | None = None,
-    policy: PolicySettings | None = None,
-) -> DiagnosisResult | None:
-    """Run the same bounded Gemini workflow without changing pipeline state.
-
-    This intentionally reuses the allowlisted read-only tools.  Callers must
-    keep the returned result separate from the stored diagnosis and decision.
-    """
-    return diagnose_ambiguous_with_gemini(event, config, historical_examples, policy)
     try:
         from google import genai
         from google.genai import types
@@ -147,7 +139,22 @@ def run_advisory_investigation(
         normalized = normalize_gemini_diagnosis(diagnosis)
         normalized.tool_calls = audit
         return normalized
-    except Exception:
+    except Exception as exc:
         # Model, schema, quota and network failures fail closed. Decision will
         # escalate this low-confidence case instead of inventing an action.
+        logger.warning("Gemini diagnosis unavailable (%s)", type(exc).__name__)
         return None
+
+
+def run_advisory_investigation(
+    event: PaymentEvent,
+    config: AppConfig,
+    historical_examples: list[dict] | None = None,
+    policy: PolicySettings | None = None,
+) -> DiagnosisResult | None:
+    """Run the same bounded Gemini workflow without changing pipeline state.
+
+    This intentionally reuses the allowlisted read-only tools. Callers must
+    keep the returned result separate from the stored diagnosis and decision.
+    """
+    return diagnose_ambiguous_with_gemini(event, config, historical_examples, policy)

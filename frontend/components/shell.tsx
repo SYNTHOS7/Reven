@@ -53,7 +53,7 @@ export function Shell({ children }: { children: ReactNode }) {
             Home
           </Link>
           <Link href="/analyse" className={isAnalyse ? "activeNavLink" : ""}>
-            Analyse
+            Insights
           </Link>
           <Link href="/queue" className={isQueue ? "activeNavLink" : ""}>
             Recovery Queue
@@ -62,7 +62,7 @@ export function Shell({ children }: { children: ReactNode }) {
             Evidence
           </Link>
           <Link href="/rules" className={isRules ? "activeNavLink" : ""}>
-            Rules
+            Safety
           </Link>
         </nav>
 
@@ -142,7 +142,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 className={`mobileNavLink ${isAnalyse ? "activeMobileLink" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Analyse</span>
+                <span>Insights</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
@@ -166,7 +166,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 className={`mobileNavLink ${isRules ? "activeMobileLink" : ""}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span>Rules &amp; Safety</span>
+                <span>Safety</span>
                 <ArrowRight size={14} />
               </Link>
             </nav>

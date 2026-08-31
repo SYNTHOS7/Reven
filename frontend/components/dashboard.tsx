@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
+  ShieldCheck,
   Sparkles,
   Play,
 } from "lucide-react";
@@ -39,19 +40,6 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
     return () => { active = false; };
   }, []);
 
-  // Compute Home Metrics
-  const revenueAtRisk = useMemo(() => {
-    if (activeDataSource === "demo") return metrics.revenueLost;
-    return dashboardData.results.reduce((sum, r) => sum + (r.amount || 0), 0);
-  }, [activeDataSource, metrics.revenueLost, dashboardData.results]);
-
-  const recoverableOpportunity = useMemo(() => {
-    if (activeDataSource === "demo") return metrics.potentiallyRecoverableRevenue;
-    return dashboardData.results
-      .filter((r) => ["retry_later", "create_payment_link", "update_payment_method"].includes(r.decision.action))
-      .reduce((sum, r) => sum + (r.amount || 0), 0);
-  }, [activeDataSource, metrics.potentiallyRecoverableRevenue, dashboardData.results]);
-
   const awaitingReviewCount = useMemo(() => {
     if (activeDataSource === "demo") {
       return transactions.filter((t) => t.status !== "recovered" && t.amount >= 5000).length;
@@ -85,22 +73,25 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
   }, [topOpportunity]);
 
   const recentCases = useMemo(() => {
-    if (activeDataSource === "demo") return transactions.slice(0, 5);
-    return dashboardData.results.slice(0, 5);
+    if (activeDataSource === "demo") return transactions.slice(0, 3);
+    return dashboardData.results.slice(0, 3);
   }, [activeDataSource, dashboardData.results, transactions]);
+
+  const topOpportunityHref = topOpportunity
+    ? ("transaction_id" in topOpportunity ? "/queue" : `/case/${topOpportunity.event_id}`)
+    : "/queue";
 
   return (
     <main className="dashboardPage">
-      {/* Calm Top Welcome Section */}
       <section className="welcomeHero">
         <div className="welcomeCopy">
           <div className="eyebrow">
             <Sparkles size={13} className="text-primary" />
-            <span>FINANCIAL RECOVERY CONTROL</span>
+            <span>RECOVERY DECISION HARNESS</span>
           </div>
-          <h1>Welcome to Reven</h1>
+          <h1>One safe next step for every failed payment.</h1>
           <p className="welcomeSubtitle">
-            Find failed payments, choose safe recovery actions, and verify what comes back.
+            Reven sits alongside Razorpay after a signed failure—not in the payment path—to investigate, apply policy, and prove outcomes.
           </p>
         </div>
 
@@ -117,93 +108,42 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
         </div>
       </section>
 
-      {/* Summary answers only: what is at risk, what is actionable, what needs review, what is verified. */}
-      <section className="homeSummaryGrid" aria-label="Key revenue metrics">
-        {/* 1. Revenue at risk */}
+      <section className="controlStatus" aria-label="Recovery control status">
         <div className="kpiCard">
           <div className="kpiHeader">
-            <span className="kpiLabel">REVENUE AT RISK</span>
-            <HelpTooltip topic="revenue_at_risk" />
-          </div>
-          <strong className="kpiValue riskText">{money.format(revenueAtRisk)}</strong>
-          <p className="kpiExplainer">
-            Money from failed or abandoned payments not yet collected.
-          </p>
-          <div className="kpiCardAction">
-            <Link href="/analyse" className="kpiDetailsLink">
-              <span>View details</span>
-              <ArrowUpRight size={13} />
-            </Link>
-          </div>
-        </div>
-
-        {/* 2. Recoverable opportunity */}
-        <div className="kpiCard">
-          <div className="kpiHeader">
-            <span className="kpiLabel">RECOVERABLE OPPORTUNITY</span>
-            <HelpTooltip topic="recoverable_opportunity" />
-          </div>
-          <strong className="kpiValue warningText">
-            {money.format(recoverableOpportunity)}
-          </strong>
-          <p className="kpiExplainer">
-            Estimated value of payments that may be recovered safely.
-          </p>
-          <div className="kpiCardAction">
-            <Link href="/queue" className="kpiDetailsLink">
-              <span>View details</span>
-              <ArrowUpRight size={13} />
-            </Link>
-          </div>
-        </div>
-
-        {/* 3. Awaiting review */}
-        <div className="kpiCard">
-          <div className="kpiHeader">
-            <span className="kpiLabel">AWAITING REVIEW</span>
+            <span className="kpiLabel">NEEDS A DECISION</span>
             <HelpTooltip topic="human_review" />
           </div>
           <strong className="kpiValue">{awaitingReviewCount} cases</strong>
           <p className="kpiExplainer">
-            High-value or uncertain cases requiring human approval.
+            Uncertain or high-value failures stay with an operator.
           </p>
-          <div className="kpiCardAction">
-            <Link href="/queue" className="kpiDetailsLink">
-              <span>View details</span>
-              <ArrowUpRight size={13} />
-            </Link>
-          </div>
         </div>
-
-        {/* 4. Verified recovery */}
         <div className="kpiCard accentCard">
           <div className="kpiHeader">
-            <span className="kpiLabel">VERIFIED RECOVERY</span>
+            <span className="kpiLabel">PROVIDER-VERIFIED</span>
             <HelpTooltip topic="verified_recovery" />
           </div>
           <strong className="kpiValue recoveryText">
             {verifiedRecovery === null ? "—" : money.format(verifiedRecovery)}
           </strong>
           <p className="kpiExplainer">
-            Revenue counted only after Razorpay payment confirmation.
+            Counted only after a signed Razorpay paid webhook.
           </p>
-          <div className="kpiCardAction">
-            <Link href="/evidence" className="kpiDetailsLink">
-              <span>View details</span>
-              <ArrowUpRight size={13} />
-            </Link>
-          </div>
+        </div>
+        <div className="harnessPromise">
+          <ShieldCheck size={18} />
+          <div><span>POLICY BOUNDARY</span><strong>AI can advise. Policy permits. Razorpay verifies.</strong></div>
+          <Link href="/rules" className="kpiDetailsLink">View safety rules <ArrowUpRight size={13} /></Link>
         </div>
       </section>
 
-      {/* Featured Current Recovery Opportunity */}
       {topOpportunity && (
         <section className="featuredOpportunitySection">
           <div className="featuredOppCard">
             <div className="featuredOppHeader">
               <div className="flex items-center gap-2">
-                <span className="utilityLabel">TOP RECOVERY OPPORTUNITY</span>
-                <span className="highPriorityTag">HIGH VALUE</span>
+                <span className="utilityLabel">NEXT CASE TO REVIEW</span>
               </div>
               <span className="fontMono text-xs text-text-muted">
                 {"transaction_id" in topOpportunity ? topOpportunity.transaction_id : topOpportunity.event_id}
@@ -227,8 +167,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
               </div>
 
               <div className="featuredOppCta">
-                <Link href="/queue" className="button buttonPrimary">
-                  <span>Review in Recovery Queue</span>
+                <Link href={topOpportunityHref} className="button buttonPrimary">
+                  <span>Open decision harness</span>
                   <ArrowRight size={14} />
                 </Link>
               </div>
@@ -240,8 +180,8 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
       <section className="recentCasesPanel" aria-labelledby="recent-cases-title">
         <div className="recentCasesHead">
           <div>
-            <span className="utilityLabel">RECENT ACTIVITY</span>
-            <h2 id="recent-cases-title">Latest recovery cases</h2>
+            <span className="utilityLabel">RECOVERY QUEUE</span>
+            <h2 id="recent-cases-title">Only the cases that need attention</h2>
           </div>
           <Link href={activeDataSource === "demo" ? "/queue" : "/evidence"} className="kpiDetailsLink">View all <ArrowUpRight size={13} /></Link>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, DatabaseZap, ShieldCheck } from "lucide-react";
+import { Activity, Bot, DatabaseZap, ShieldCheck } from "lucide-react";
 
 import { loadProviderPaymentContext } from "@/lib/api";
 import type { PipelineResult, ProviderPaymentContextResponse } from "@/lib/types";
@@ -33,18 +33,19 @@ export function RecoveryDecisionHarness({ eventId, result }: { eventId: string; 
         <div>
           <span className="utilityLabel">RECOVERY DECISION HARNESS</span>
           <h2 id="decision-harness-title">From provider evidence to one bounded next step</h2>
-          <p>Reven combines a signed failure event, live provider context, Trust Gate, advisory AI, policy, and outcome proof. Each layer answers a different question.</p>
+          <p>Follow the evidence graph left to right. AI can explain ambiguity, but it cannot change a payment, contact a customer, or override policy.</p>
         </div>
         <button type="button" className="button buttonSecondary buttonSmall" disabled={loading} onClick={loadContext}>
           <DatabaseZap size={14} /> {loading ? "Reading Razorpay…" : "Load Razorpay context"}
         </button>
       </div>
 
-      <div className="harnessRail" aria-label="Recovery decision layers">
-        <article><span>01 · PROVIDER</span><strong>Failure event received</strong><small>{result.failure_code.replaceAll("_", " ")}</small></article>
-        <article><span>02 · SAFETY</span><strong>{result.trust_gate.status === "suspicious" ? "Recovery stopped" : "Trust Gate cleared"}</strong><small>{result.trust_gate.reason}</small></article>
-        <article><span>03 · POLICY</span><strong>{result.decision.action.replaceAll("_", " ")}</strong><small>{result.decision.reason}</small></article>
-        <article><span>04 · PROOF</span><strong>{outcome}</strong><small>Only Razorpay confirmation can verify recovery</small></article>
+      <div className="harnessRail" aria-label="Evidence graph from Razorpay event to verified outcome">
+        <article><span>01 · RAZORPAY</span><strong>Signed failure</strong><small>{result.failure_code.replaceAll("_", " ")}</small></article>
+        <article><span>02 · TRUST GATE</span><strong>{result.trust_gate.status === "suspicious" ? "Action blocked" : "Safety cleared"}</strong><small>{result.trust_gate.reason}</small></article>
+        <article className="advisoryNode"><span><Bot size={11} /> 03 · AI / DIAGNOSIS</span><strong>{result.diagnosis.cause.replaceAll("_", " ")}</strong><small>Advisory only · {Math.round(result.diagnosis.confidence * 100)}% confidence</small></article>
+        <article><span>04 · POLICY</span><strong>{result.decision.action.replaceAll("_", " ")}</strong><small>{result.decision.reason}</small></article>
+        <article><span>05 · OUTCOME</span><strong>{outcome}</strong><small>Only Razorpay confirmation can verify recovery</small></article>
       </div>
 
       {context && (

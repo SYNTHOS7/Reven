@@ -6,7 +6,7 @@
 
 ### Revenue recovery, under control.
 
-**AI diagnoses. Rules decide. Razorpay proves.**
+**AI investigates ambiguity. Policy decides. Razorpay proves.**
 
 [Live app](https://reven-nine.vercel.app/) · [Open dashboard](https://reven-nine.vercel.app/home) · [API health](https://reven-api.onrender.com/health) · [Source](https://github.com/SYNTHOS7/Reven)
 
@@ -84,6 +84,21 @@ Verified recovery attribution
 
 ## Real Razorpay Test Mode proof
 
+### Buildathon evaluation snapshot — `buildathon-01`
+
+This is the fixed evaluation scope used for the Buildathon story. It is separate from the live, cumulative all-Test-Mode total shown in the product.
+
+| Metric | Result |
+| --- | ---: |
+| Razorpay Test Mode failed-payment cases | 32 |
+| Trust Gate safety stops | 6 |
+| Human-review escalations | 24 |
+| Signed-webhook verified recoveries | 5 |
+| Verified Test Mode recovery | ₹10,822 |
+| Diagnosis agreement | 6/10 (60%) human-reviewed cases |
+
+The diagnosis figure is early agreement evidence, **not production model accuracy**. The system does not rely on it for financial authority: Trust Gate, deterministic policy, and human approval remain separate controls.
+
 This project does not claim fabricated production revenue.
 
 | Evidence | Verified result |
@@ -150,7 +165,7 @@ Reven includes a clearly labelled 500-transaction online-course merchant scenari
 | Capability | What is working | Safety boundary |
 |---|---|---|
 | Failure intake | Signed Razorpay Test Mode `payment.failed` webhooks and batch sync | Signature verification + idempotency key |
-| Diagnosis | Rule-first diagnosis; Gemini may call three read-only evidence tools for ambiguous cases | Low confidence fails closed to human review |
+| Diagnosis | Rule-first diagnosis; Gemini may call three read-only evidence tools for ambiguity, including a separate advisory trace | Low confidence fails closed to human review; advisory AI cannot overwrite the stored result |
 | Decision | Trust Gate plus deterministic confidence, amount, retry, and contact rules | AI cannot execute a payment or override policy |
 | Recovery | Operator-approved Razorpay Test Mode Payment Links | A link is not recovery; a paid webhook or reconciliation is required |
 | Evidence | Readiness checklist, similar-case support, and redacted SHA-256 case fingerprint | No card, OTP, bank, or raw contact data is stored |

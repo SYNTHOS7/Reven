@@ -107,6 +107,15 @@ record. The fingerprint is a comparison aid, not a payment confirmation.
 Reports label coverage, operator agreement, overrides, and diagnosis methods for
 saved Razorpay Test Mode cases only. Simulated merchant data is excluded.
 
+### POST /events/:id/ai-investigation
+
+Runs a **separate, advisory-only** Gemini investigation against one saved case.
+The model can call only the server-executed, read-only diagnostic tools. The
+response is not persisted as the pipeline diagnosis and cannot modify the Trust
+Gate, policy decision, Payment Link state, customer communication, or recovery
+metrics. A `503` response means the optional model service is unavailable; the
+stored deterministic case result remains authoritative.
+
 ### POST /agents/merchant-intelligence/brief
 Returns a concise merchant briefing from aggregate, labelled metrics only.
 The request contains a declared data source, aggregate revenue metrics, priority

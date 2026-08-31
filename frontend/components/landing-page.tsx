@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Activity, ArrowRight, BrainCircuit, CheckCircle2, FileKey2, GitBranch, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
-import { loadVerifiedRecoverySummary } from "@/lib/api";
+import { loadBatchSummary, loadVerifiedRecoverySummary } from "@/lib/api";
 
 const stages = [
   ["01", "Detect", "Receives a failed Razorpay payment event."],
   ["02", "Trust Gate", "Stops risky, repeated, or excessive recovery attempts."],
-  ["03", "Diagnose", "Uses payment evidence and AI to understand the likely cause."],
+  ["03", "Investigate", "Rules resolve clear signals; AI investigates ambiguity with read-only evidence."],
   ["04", "Decide", "Applies rules, confidence thresholds, and human review."],
   ["05", "Verify", "Counts recovery only after Razorpay confirms payment."],
 ];
@@ -17,7 +17,10 @@ const money = new Intl.NumberFormat("en-IN", {
 });
 
 export async function LandingPage() {
-  const recovery = await loadVerifiedRecoverySummary();
+  const [recovery, batch] = await Promise.all([
+    loadVerifiedRecoverySummary(),
+    loadBatchSummary("buildathon-01"),
+  ]);
   return (
     <main className="landingPage">
       <header className="landingNav">
@@ -32,7 +35,7 @@ export async function LandingPage() {
 
       <section className="landingHero">
         <div className="landingHeroCopy">
-          <p className="landingEyebrow"><span /> AI REVENUE RECOVERY</p>
+          <p className="landingEyebrow"><span /> POLICY-BOUNDED RECOVERY</p>
           <h1>Failed payments deserve a <em>better next step.</em></h1>
           <p className="landingLead">Reven helps merchants understand why a payment failed, select a safe recovery action, and verify exactly what comes back.</p>
           <div className="landingActions">
@@ -42,7 +45,7 @@ export async function LandingPage() {
           <div className="landingProofRow">
             <span><CheckCircle2 size={14} /> Evidence-led</span>
             <span><ShieldCheck size={14} /> Human-guarded</span>
-            <span><Sparkles size={14} /> AI-assisted</span>
+            <span><Sparkles size={14} /> AI advisory only</span>
           </div>
         </div>
 
@@ -54,13 +57,14 @@ export async function LandingPage() {
           <div className="caseLine amber"><b>3</b><div><strong>Human review required</strong><span>Reven does not automate uncertain recovery</span></div></div>
           <div className="caseReceipt"><FileKey2 size={14} /><span>Redacted decision receipt <code>SHA-256</code></span></div>
           <div className="caseVerified"><CheckCircle2 size={16} /><div><small>VERIFIED TEST MODE RECOVERY</small><strong>{recovery ? `${money.format(recovery.verified_recovery_amount)} across ${recovery.verified_recovery_count} verified ${recovery.verified_recovery_count === 1 ? "recovery" : "recoveries"}` : "Live evidence temporarily unavailable"}</strong></div></div>
+          {batch && <div className="caseReceipt"><ShieldCheck size={14} /><span><strong>Buildathon-01:</strong> {batch.total_cases} cases · {batch.trust_gate_blocks} stops · {batch.verified_recovery_count} verified recoveries</span></div>}
         </div>
       </section>
 
       <section id="how-it-works" className="landingArchitecture">
         <div className="landingSectionIntro">
           <p className="landingEyebrow">THE ARCHITECTURE</p>
-          <h2>AI diagnoses. Rules decide. Razorpay proves.</h2>
+          <h2>AI investigates ambiguity. Policy decides. Razorpay proves.</h2>
           <p>Reven does not blindly retry every failure. Each payment moves through a visible decision tree before any recovery action is allowed.</p>
         </div>
         <div className="architectureTree">
@@ -94,15 +98,15 @@ export async function LandingPage() {
 
       <section className="landingControlLayer" aria-labelledby="control-layer-title">
         <div className="landingSectionIntro">
-          <p className="landingEyebrow">FOUR BOUNDED AI LAYERS</p>
-          <h2 id="control-layer-title">Each AI layer has one restricted job.</h2>
-          <p>They investigate, recommend, evaluate, and summarise. Deterministic policy and a human operator remain the only path to a recovery action.</p>
+          <p className="landingEyebrow">BOUNDED CAPABILITIES</p>
+          <h2 id="control-layer-title">Four jobs. One hard decision boundary.</h2>
+          <p>AI can investigate and summarise. Policy and a human operator remain the only path to a recovery action.</p>
         </div>
         <div className="controlLayerGrid">
-          <Link href="/case/rzp_pay_TSx3NFbrKdjDCr" className="agentLayerCard"><BrainCircuit size={18} /><small>AGENT 01</small><span>AI Investigation</span><p>Gemini may inspect bounded, read-only processor, retry, and labelled-case context to explain a failure.</p><b>Inspect a live case <ArrowRight size={13} /></b></Link>
-          <Link href="/case/rzp_pay_TSx3NFbrKdjDCr" className="agentLayerCard"><ShieldCheck size={18} /><small>AGENT 02</small><span>Recovery Strategy</span><p>Produces safe options such as retry later, method switch, or review—then policy filters every one.</p><b>See safe strategies <ArrowRight size={13} /></b></Link>
-          <Link href="/evidence" className="agentLayerCard"><ListChecks size={18} /><small>AGENT 03</small><span>Learning &amp; Evaluation</span><p>Measures reviewed Test Mode labels, agreement, and playbook outcomes without learning from guesses.</p><b>View learning health <ArrowRight size={13} /></b></Link>
-          <Link href="/analyse" className="agentLayerCard"><Activity size={18} /><small>AGENT 04</small><span>Merchant Intelligence</span><p>Turns aggregate, labelled metrics into one concise merchant briefing with supporting evidence.</p><b>Read the briefing <ArrowRight size={13} /></b></Link>
+          <Link href="/case/rzp_pay_TSx3NFbrKdjDCr" className="agentLayerCard"><BrainCircuit size={18} /><small>01 · INVESTIGATE</small><span>AI advisory trace</span><p>Gemini may inspect bounded, read-only processor, retry, and labelled-case context. It cannot alter the stored case.</p><b>Inspect a case <ArrowRight size={13} /></b></Link>
+          <Link href="/case/rzp_pay_TSx3NFbrKdjDCr" className="agentLayerCard"><ShieldCheck size={18} /><small>02 · RECOMMEND</small><span>Recovery strategies</span><p>Safe options such as retry later, method switch, or review are filtered by policy before an operator sees them.</p><b>See safe strategies <ArrowRight size={13} /></b></Link>
+          <Link href="/evidence" className="agentLayerCard"><ListChecks size={18} /><small>03 · EVALUATE</small><span>Human-reviewed learning</span><p>Measures agreement only against reviewed Test Mode labels—never guesses or simulated data.</p><b>View the evidence <ArrowRight size={13} /></b></Link>
+          <Link href="/analyse" className="agentLayerCard"><Activity size={18} /><small>04 · SUMMARISE</small><span>Merchant briefing</span><p>Turns aggregate, labelled metrics into one concise narrative with linked evidence.</p><b>Read the briefing <ArrowRight size={13} /></b></Link>
         </div>
         <div className="controlLayerFootnote"><FileKey2 size={15} /> Every layer is read-only or policy-bounded. None can contact a customer, change policy, or create a Payment Link. Recovery still needs Razorpay confirmation.</div>
       </section>

@@ -93,6 +93,16 @@ class DiagnosisResult(BaseModel):
     tool_calls: list[str] = Field(default_factory=list)
 
 
+class AdvisoryInvestigationResponse(BaseModel):
+    """A read-only model investigation kept separate from the pipeline result."""
+
+    event_id: str
+    diagnosis: DiagnosisResult
+    mode: Literal["advisory_only"] = "advisory_only"
+    financial_authority: bool = False
+    disclaimer: str
+
+
 class DecisionResult(BaseModel):
     action: Action
     reason: str

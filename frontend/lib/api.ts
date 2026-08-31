@@ -18,6 +18,7 @@ import type {
   VerifiedRecoverySummary,
   BatchSummary,
   BatchDiagnosisReviewItem,
+  AdvisoryInvestigationResponse,
 } from "./types";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -303,6 +304,16 @@ export async function loadBatchDiagnosisReview(batchId: string): Promise<BatchDi
   } catch {
     return [];
   }
+}
+
+export async function runAdvisoryInvestigation(eventId: string): Promise<AdvisoryInvestigationResponse> {
+  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const response = await fetch(`${apiUrl}/events/${eventId}/ai-investigation`, { method: "POST" });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail ?? "AI investigation could not run");
+  }
+  return response.json();
 }
 
 export async function saveDiagnosisLabel(

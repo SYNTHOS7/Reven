@@ -127,6 +127,9 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
     ? batchSummary.diagnosis_excluded_safety_blocks
     : (score.diagnosis_excluded_safety_blocks ?? 0);
   const hasEnoughLabelledData = diagnosisLabelledCases >= MIN_LABELLED_CASES_FOR_ACCURACY && diagnosisAccuracy !== null;
+  const diagnosisCorrectCases = hasEnoughLabelledData && diagnosisAccuracy !== null
+    ? Math.round((diagnosisAccuracy / 100) * diagnosisLabelledCases)
+    : null;
   const trustGateBlocks = batchSummary?.total_cases ? batchSummary.trust_gate_blocks : score.suspicious_refusals;
 
   return (
@@ -175,12 +178,12 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
         {/* Verified Test Recovery */}
         <div className="kpiCard accentCard">
           <div className="kpiHeader">
-            <span className="kpiLabel">VERIFIED TEST RECOVERY</span>
+            <span className="kpiLabel">ALL TEST MODE RECOVERY</span>
             <HelpTooltip topic="verified_recovery" />
           </div>
           <strong className="kpiValue recoveryText">{recoverySummary ? money.format(recoverySummary.verified_recovery_amount) : "—"}</strong>
           <div className="kpiFooter">
-            <span className="recoveryText">{recoverySummary ? `${recoverySummary.verified_recovery_count} verified recovery record${recoverySummary.verified_recovery_count === 1 ? "" : "s"}` : "Live recovery total unavailable"}</span>
+            <span className="recoveryText">{recoverySummary ? `${recoverySummary.verified_recovery_count} cumulative verified record${recoverySummary.verified_recovery_count === 1 ? "" : "s"} · separate from batch` : "Live recovery total unavailable"}</span>
           </div>
         </div>
 
@@ -211,33 +214,34 @@ export function EvidenceView({ initialData, initialRecoverySummary, batchId, ini
         {/* Diagnosis agreement */}
         <div className="kpiCard">
           <div className="kpiHeader">
-            <span className="kpiLabel">DIAGNOSIS AGREEMENT</span>
+            <span className="kpiLabel">EARLY DIAGNOSIS AGREEMENT</span>
             <HelpTooltip topic="diagnosis_confidence" />
           </div>
           <strong className={hasEnoughLabelledData ? "kpiValue" : "kpiValue kpiValueMessage"}>
             {hasEnoughLabelledData
-              ? `${diagnosisAccuracy}%`
+              ? `${diagnosisAccuracy}% · ${diagnosisCorrectCases}/${diagnosisLabelledCases}`
               : `Not enough labelled data yet (n=${diagnosisLabelledCases})`}
           </strong>
           <div className="kpiFooter">
-            <span>{hasEnoughLabelledData ? `Measured from n=${diagnosisLabelledCases} human-reviewed causes${diagnosisExcludedSafetyBlocks ? ` · ${diagnosisExcludedSafetyBlocks} Trust Gate safety block${diagnosisExcludedSafetyBlocks === 1 ? "" : "s"} excluded` : ""}` : `Needs ${MIN_LABELLED_CASES_FOR_ACCURACY} human-reviewed causes before showing accuracy`}</span>
+            <span>{hasEnoughLabelledData ? `Early human-reviewed agreement, not production model accuracy · n=${diagnosisLabelledCases}${diagnosisExcludedSafetyBlocks ? ` · ${diagnosisExcludedSafetyBlocks} Trust Gate safety block${diagnosisExcludedSafetyBlocks === 1 ? "" : "s"} excluded` : ""}` : `Needs ${MIN_LABELLED_CASES_FOR_ACCURACY} human-reviewed causes before showing agreement`}</span>
           </div>
         </div>
       </section>
 
       <section className="evidenceBatchSummary" aria-label="Current Test Mode batch summary">
         <div>
-          <span className="utilityLabel">REAL TEST MODE BATCH · {batchId.toUpperCase()}</span>
-          <h2>{batchSummary?.total_cases ? "Evidence is earned case by case." : "The real batch will appear after its first signed webhook."}</h2>
-          <p>{batchSummary?.total_cases ? "These batch totals are separate from all-time evidence. Every number comes from stored Razorpay events, policy decisions, and signed paid-webhook confirmation." : "All-time verified recovery remains above. New signed Razorpay Test Mode events carrying this batch ID populate this section."}</p>
+          <span className="utilityLabel">BUILDATHON EVALUATION BATCH · {batchId.toUpperCase()}</span>
+          <h2>{batchSummary?.total_cases ? "One fixed scope for judging." : "The real batch will appear after its first signed webhook."}</h2>
+          <p>{batchSummary?.total_cases ? "These metrics include only this named Test Mode batch, not later cumulative history. Every number comes from stored Razorpay events, policy decisions, and signed paid-webhook confirmation." : "All-time verified recovery remains above. New signed Razorpay Test Mode events carrying this batch ID populate this section."}</p>
         </div>
         <dl>
           <div><dt>Cases received</dt><dd>{batchSummary?.total_cases ?? 0}</dd></div>
           <div><dt>Human escalations</dt><dd>{escalatedCases}</dd></div>
           <div><dt>Trust Gate stops</dt><dd>{trustGateBlocks}</dd></div>
           <div><dt>Verified recoveries</dt><dd>{batchSummary?.verified_recovery_count ?? 0}</dd></div>
+          <div><dt>Verified Test ₹</dt><dd>{money.format(batchSummary?.verified_recovery_amount ?? 0)}</dd></div>
         </dl>
-        <small>All-time verified Test Mode recovery stays visible above. Batch metrics only include this batch and do not claim production merchant performance.</small>
+        <small>Submission scope: {batchId}. The cumulative all-Test-Mode total stays above; this batch does not claim production merchant performance.</small>
       </section>
 
       {diagnosisReview.length > 0 && (

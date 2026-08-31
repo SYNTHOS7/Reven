@@ -358,6 +358,21 @@ export interface BatchDiagnosisReviewItem {
   reviewer_note: string | null;
 }
 
+export interface AdvisoryInvestigationResponse {
+  event_id: string;
+  diagnosis: {
+    cause: string;
+    method: string;
+    confidence: number;
+    reason: string;
+    evidence_used: string[];
+    tool_calls: string[];
+  };
+  mode: "advisory_only";
+  financial_authority: false;
+  disclaimer: string;
+}
+
 // ---------------- CSV & Demo Data Types ----------------
 export type TransactionStatus = "successful" | "failed" | "abandoned" | "recovered";
 

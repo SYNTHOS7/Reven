@@ -13,6 +13,7 @@ from app.evaluation import run_evaluation
 from app.ingestion import payment_event_from_razorpay
 from app.models import (
     Action,
+    AdvisoryInvestigationResponse,
     BatchDiagnosisReviewItem,
     BatchSummary,
     DiagnosisLabelUpdate,
@@ -48,6 +49,7 @@ from app.learning_health import build_learning_health
 from app.operator_queue import build_operator_queue
 from app.readiness import build_readiness
 from app.merchant_intelligence import build_merchant_briefing
+from app.gemini_diagnosis import run_advisory_investigation
 from app.repository import repository
 from app.similar_cases import find_similar_cases, retrieve_historical_diagnosis_examples
 
@@ -196,6 +198,29 @@ def run_single_event(event_id: str):
     result = run_event(event, repository.policy, historical_examples=examples)
     repository.save_results([result])
     return result
+
+
+@app.post("/events/{event_id}/ai-investigation", response_model=AdvisoryInvestigationResponse)
+def ai_investigation(event_id: str):
+    """Run a read-only Gemini investigation without altering recovery state."""
+    event = next((item for item in repository.events if item.id == event_id), None)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    examples = retrieve_historical_diagnosis_examples(event, repository.events)
+    diagnosis = run_advisory_investigation(event, config, examples, repository.policy)
+    if not diagnosis:
+        raise HTTPException(
+            status_code=503,
+            detail="AI investigation is unavailable. The existing deterministic diagnosis and policy decision remain unchanged.",
+        )
+    return AdvisoryInvestigationResponse(
+        event_id=event_id,
+        diagnosis=diagnosis,
+        disclaimer=(
+            "Advisory-only AI investigation. It used server-executed, read-only evidence tools and did not "
+            "change the stored diagnosis, Trust Gate result, policy decision, Payment Link state, or recovery metrics."
+        ),
+    )
 
 
 @app.patch("/events/{event_id}/ground-truth")

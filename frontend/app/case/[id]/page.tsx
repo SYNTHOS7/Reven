@@ -14,6 +14,7 @@ import { SimilarCases } from "@/components/similar-cases";
 import { RecoveryStrategyPanel } from "@/components/recovery-strategy-panel";
 import { RecoveryTimeline } from "@/components/recovery-timeline";
 import { EvidenceAssurance } from "@/components/evidence-assurance";
+import { AdvisoryAiInvestigation } from "@/components/advisory-ai-investigation";
 import { loadCaseDetails, loadPolicy, loadRecoveryStrategies, loadRecoveryTimeline, loadEvidenceQuality, loadEvidenceReceipt } from "@/lib/api";
 import { formatConfidence } from "@/lib/confidence";
 import { getWhyThisAction } from "@/lib/utils";
@@ -240,19 +241,21 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         <section className="aiInvestigationPanel" aria-labelledby="ai-investigation-title">
           <div className="aiInvestigationHeader">
             <div>
-              <span className="utilityLabel">AGENT 01 · AI INVESTIGATION</span>
-              <h2 id="ai-investigation-title">What AI examined before policy decided</h2>
-              <p>AI interprets bounded evidence. It cannot create a link, contact a customer, or override the decision rules.</p>
+              <span className="utilityLabel">STORED PIPELINE DIAGNOSIS</span>
+              <h2 id="ai-investigation-title">What the pipeline used for this decision</h2>
+              <p>Clear processor codes use deterministic rules. Ambiguous evidence may use Gemini with read-only tools. Neither path can create a link, contact a customer, or override policy.</p>
             </div>
-            <span className="aiMethodPill">{result.diagnosis.method === "llm" ? "Gemini structured diagnosis" : "Deterministic diagnosis"}</span>
+            <span className="aiMethodPill">{result.diagnosis.method === "llm" ? "Gemini structured diagnosis" : "Deterministic rule diagnosis"}</span>
           </div>
           <div className="aiInvestigationGrid">
             <article><span>TOOLS / EVIDENCE READ</span><strong>{result.diagnosis.tool_calls?.length ? result.diagnosis.tool_calls.join(" · ") : "Processor evidence mapped by deterministic rules"}</strong></article>
             <article><span>STRUCTURED DIAGNOSIS</span><strong>{result.diagnosis.cause.replaceAll("_", " ")}</strong><small>{formatConfidence(result.diagnosis.confidence)} confidence</small></article>
             <article><span>POLICY RESULT</span><StatusBadge value={result.decision.action} /><small>{result.decision.reason}</small></article>
           </div>
-          <div className="aiInvestigationBoundary">Decision boundary: the model may investigate and explain. Trust Gate, policy, and human approval control every recovery action.</div>
+          <div className="aiInvestigationBoundary">Decision boundary: investigation may explain ambiguity. Trust Gate, policy, and human approval control every recovery action.</div>
         </section>
+
+        <AdvisoryAiInvestigation eventId={result.event_id} />
 
         {recoveryStrategies && <RecoveryStrategyPanel data={recoveryStrategies} />}
 

@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock
 
 from app.main import app, config, razorpay, repository
-from app.models import CustomerHistory, EventType, PaymentEvent
+from app.models import CustomerHistory, DiagnosisResult, EventType, PaymentEvent
 from app.pipeline.engine import run_event
 
 
@@ -127,6 +127,37 @@ def test_strategy_endpoint_is_read_only_and_returns_policy_bounded_options() -> 
     assert payload["strategies"][0]["id"] == "operator-payment-link"
     assert payload["strategies"][0]["status"] == "allowed"
     assert "cannot send a message" in payload["disclaimer"]
+
+
+def test_advisory_ai_investigation_never_mutates_pipeline_state(monkeypatch) -> None:
+    repository.events.clear()
+    repository.results.clear()
+    event = PaymentEvent(
+        id="rzp_advisory_investigation", customer_id="advisory-customer", customer_name="Advisory customer",
+        type=EventType.PAYMENT_FAILED, amount=100, failure_code="payment_failed",
+    )
+    stored = run_event(event, repository.policy)
+    repository.events.append(event)
+    repository.results.append(stored)
+
+    monkeypatch.setattr(
+        "app.main.run_advisory_investigation",
+        lambda *_args, **_kwargs: DiagnosisResult(
+            cause="technical_error", method="llm", confidence=0.71,
+            reason="Read-only evidence indicates a technical processor failure.",
+            tool_calls=["Read processor context"],
+        ),
+    )
+    with TestClient(app) as client:
+        response = client.post(f"/events/{event.id}/ai-investigation")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["mode"] == "advisory_only"
+    assert payload["financial_authority"] is False
+    assert payload["diagnosis"]["method"] == "llm"
+    assert repository.results[0].diagnosis.method == stored.diagnosis.method
+    assert repository.results[0].decision == stored.decision
 
 
 def test_policy_impact_endpoint_is_a_non_mutating_dry_run() -> None:

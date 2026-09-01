@@ -2899,6 +2899,29 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 
 .dashboardPage .welcomeHero { padding-top: 38px; }
 .dashboardPage .welcomeCopy h1 { max-width: 760px; font-size: clamp(30px, 4.2vw, 48px); line-height: 1.02; }
+.dashboardPage .welcomeSubtitle { max-width: 680px; font-size: 16px; line-height: 1.6; }
+.dashboardPage .kpiValue,
+.dashboardPage .oppAmtValue,
+.dashboardPage .recentCasesHead h2 {
+  font-family: var(--display);
+  font-weight: 650;
+  letter-spacing: -.045em;
+}
+.dashboardPage .kpiValue { font-variant-numeric: tabular-nums; }
+.dashboardPage .oppRationaleText,
+.dashboardPage .kpiExplainer,
+.dashboardPage .recentCaseRow span,
+.dashboardPage .recentCaseAction small {
+  font-family: var(--sans);
+  letter-spacing: -.005em;
+}
+.dashboardPage .oppAmtLabel,
+.dashboardPage .oppRationaleTitle,
+.dashboardPage .kpiLabel,
+.dashboardPage .utilityLabel,
+.dashboardPage .dashboardDataScope {
+  font-family: var(--mono);
+}
 .dashboardPage .controlStatus { gap: 10px; }
 .dashboardPage .kpiCard, .dashboardPage .harnessPromise { border-radius: 6px; }
 .featuredOppCard { border-radius: 8px; }

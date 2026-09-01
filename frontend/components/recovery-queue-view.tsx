@@ -195,11 +195,11 @@ export function RecoveryQueueView() {
 
       <section className="pageIntro">
         <div className="eyebrow">
-          <span>03</span> ACTIONABLE WORKLIST
+          <span>RECOVERY QUEUE</span>
         </div>
         <div className="queueHeroHeader">
           <div>
-            <h1>Which payments to recover first</h1>
+            <h1>Review the next safe recovery action.</h1>
             <p>
               Ranked list of payment drop-offs with explainable recommendations and safe actions.
             </p>

@@ -104,11 +104,11 @@ export function RulesSafetyView({
       {/* Top Header */}
       <section className="pageIntro">
         <div className="eyebrow">
-          <span>05</span> BOUNDED SAFETY ENGINE
+          <span>SAFETY POLICY</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1>How Reven stays safe</h1>
+            <h1>Rules that protect the customer and the merchant.</h1>
             <p>
               These rules decide when Reven can suggest recovery and when a human must review it.
             </p>
@@ -217,7 +217,11 @@ export function RulesSafetyView({
         </div>
       </section>
 
-      {/* Five Clear Rule Cards */}
+      <details className="policyDetails" aria-label="Detailed policy explanations">
+        <summary>
+          <span><small>POLICY DETAILS</small><strong>Why each boundary exists</strong></span>
+            <span>Read details</span>
+        </summary>
       <section className="ruleCardsSection" aria-label="Safety Rules">
         <div className="ruleCardsGrid">
           {/* 1. Confidence Rule */}
@@ -416,6 +420,7 @@ export function RulesSafetyView({
           </div>
         </div>
       </section>
+      </details>
 
       {/* Test a Rule Safely (Dry Run Simulation) */}
       <section className="dryRunSimulatorSection" aria-label="Test a rule safely">

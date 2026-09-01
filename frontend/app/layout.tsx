@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { TransactionProvider } from "@/lib/transaction-context";
 import "./globals.css";
 
-const hankenGrotesk = Hanken_Grotesk({
-  variable: "--font-hanken-grotesk",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
 });
 
@@ -22,7 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className="dark">
       <body className="bg-background text-text-primary antialiased min-h-screen">
-        <TransactionProvider><div className={`${hankenGrotesk.variable} ${jetbrainsMono.variable}`}>{children}</div></TransactionProvider>
+        <TransactionProvider><div className={`${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>{children}</div></TransactionProvider>
       </body>
     </html>
   );

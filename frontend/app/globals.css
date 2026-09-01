@@ -30,7 +30,8 @@
   --status-red: #FF6262;
   --max-width: 1440px;
   --mono: var(--font-jetbrains-mono), "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-  --sans: var(--font-hanken-grotesk), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --sans: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --display: var(--font-space-grotesk), var(--font-dm-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -2907,6 +2908,37 @@ td small { display: block; margin-top: 6px; color: var(--muted); font: 500 9px/1
 .harnessRail { background: rgba(0,0,0,.16); }
 .harnessRail article { padding: 16px 14px; }
 .harnessRail strong { font-size: 12px; }
+
+/* Typography: human-readable decisions, machine-readable evidence. */
+.hero h1,
+.pageIntro h1,
+.welcomeCopy h1,
+.caseHeader h1,
+.decisionTraceIntro h2,
+.policyBoundaryGuideIntro h2,
+.merchantBrief h2,
+.analysisCard h2,
+.featuredOppCard h2,
+.rulesSafetyPage h2,
+.recoveryQueuePage h2 {
+  font-family: var(--display);
+  font-weight: 650;
+  letter-spacing: -.045em;
+}
+
+.heroCopy > p,
+.pageIntro > p,
+.welcomeSubtitle,
+.kpiExplainer,
+.decisionTraceIntro p,
+.policyBoundaryGuideIntro p,
+.merchantBrief p,
+.analysisCard p,
+.ruleMeaning,
+.simulatorDesc {
+  font-family: var(--sans);
+  letter-spacing: -.008em;
+}
 
 @media (max-width: 720px) {
   .pageIntro { padding: 38px 20px 30px; }
